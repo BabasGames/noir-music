@@ -18,6 +18,11 @@ An always-on, pure black & white music controller for Android, built for AMOLED 
 
 Noir Music doesn't play music itself: it shows and controls whatever is playing in your other apps (Deezer, Spotify, YouTube Music…) on a minimal full-screen display, meant to stay on next to your desk or in the car.
 
+## Download
+
+- **GitHub**: the signed APK is attached to each [release](https://github.com/BabasGames/noir-music/releases/latest).
+- **F-Droid**: submission in progress. Once accepted, the app will be at [f-droid.org/packages/fr.babas.noir](https://f-droid.org/packages/fr.babas.noir/).
+
 ## Features
 
 - **Controls**: play/pause, previous/next, seek, volume, and the app's own ♥ button when it exposes one. Swipe left/right to change track.
