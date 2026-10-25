@@ -28,6 +28,8 @@ Noir Music doesn't play music itself: it shows and controls whatever is playing 
 - **Source picker**: switch between the apps that have a media session, or pin a preferred one.
 - **14 languages**: English, French, Spanish, German, Italian, Portuguese, Dutch, Polish, Turkish, Russian, Ukrainian, Japanese, Chinese, Korean.
 
+See **[FEATURES.md](FEATURES.md)** for the full list.
+
 ## Gestures
 
 | Gesture | Action |
