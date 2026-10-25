@@ -33,14 +33,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import android.graphics.Paint
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -168,41 +172,64 @@ fun SourceSheet(
 }
 
 /**
- * Veille : tout noir, éventuellement une horloge grise qui change de place chaque minute.
+ * Veille : tout noir, éventuellement une horloge grise au centre exact de l'écran, qui se décale de
+ * quelques dp chaque minute comme le reste de l'appli (réglage « Décalage périodique »).
  * Le premier toucher ne fait que réveiller, il n'actionne rien en dessous.
  */
 @Composable
-fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, onWake: () -> Unit) {
+fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftDp: Int, onWake: () -> Unit) {
+    // Plein écran, sans réserver la bande de la caméra : sinon le « centre » descend de la moitié de cette bande
     Box(
         Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onWake)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(32.dp),
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onWake),
+        contentAlignment = Alignment.Center,
     ) {
         if (!withClock) return@Box
-        // Centrée, avec une petite dérive autour du centre à chaque minute : assez pour ne pas
-        // marquer l'AMOLED, sans donner l'impression d'une horloge mal placée
         var tx by remember { mutableFloatStateOf(0f) }
         var ty by remember { mutableFloatStateOf(0f) }
-        LaunchedEffect(Unit) {
-            while (true) {
+        LaunchedEffect(shiftDp) {
+            tx = 0f
+            ty = 0f
+            while (shiftDp > 0) {
                 val now = SystemClock.elapsedRealtime()
                 delay(60_000 - now % 60_000)
-                tx = Random.nextFloat() * 0.5f - 0.25f
-                ty = Random.nextFloat() * 0.3f - 0.15f
+                tx = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
+                ty = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
             }
         }
-        val bx by animateFloatAsState(tx, tween(2500), label = "veille x")
-        val by by animateFloatAsState(ty, tween(2500), label = "veille y")
+        val dx by animateFloatAsState(tx, tween(2500), label = "veille x")
+        val dy by animateFloatAsState(ty, tween(2500), label = "veille y")
+
+        val density = LocalDensity.current
+        val size = 96.sp
+        // La boîte d'un texte n'est pas son encre : place sous la ligne de base (pour « p », « g »…),
+        // approches des chiffres (le « 1 » de Nothing Dot est tracé décalé dans sa case). On compare la
+        // mise en page réelle au tracé exact des chiffres affichés, et on recentre l'encre.
+        val text = rememberFormatted(pattern, LocalLang.current.locale)
+        var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+        val ink = remember(text, style, density) {
+            val paint = Paint().apply {
+                typeface = style.typeface
+                textSize = with(density) { size.toPx() }
+            }
+            android.graphics.Rect().also { paint.getTextBounds(text, 0, text.length, it) }
+        }
         Text(
-            rememberFormatted(pattern, LocalLang.current.locale),
-            fontSize = 96.sp,
+            text,
+            fontSize = size,
             fontFamily = style.family,
             fontWeight = style.weight,
             color = Color(0xFF5A5A5A),
-            modifier = Modifier.align(BiasAlignment(bx, by)),
+            onTextLayout = { layout = it },
+            modifier = Modifier.graphicsLayer {
+                val l = layout
+                val inkX = if (l == null) 0f else l.size.width / 2f - (ink.left + ink.right) / 2f
+                val inkY = if (l == null) 0f else l.size.height / 2f - (l.firstBaseline + (ink.top + ink.bottom) / 2f)
+                translationX = dx.dp.toPx() + inkX
+                translationY = dy.dp.toPx() + inkY
+            },
         )
     }
 }

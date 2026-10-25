@@ -13,7 +13,7 @@ import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.Strings
 import java.io.File
 
-data class ClockStyle(val family: FontFamily, val weight: FontWeight)
+data class ClockStyle(val family: FontFamily, val weight: FontWeight, val typeface: Typeface)
 
 /**
  * Polices proposées pour l'horloge : génériques, celles du système qu'on reconnaît (les polices Nothing
@@ -31,7 +31,7 @@ object ClockFonts {
         "LetteraMonoLL-Light.otf" to "Lettera Mono",
     )
 
-    private val cache = mutableMapOf<String, FontFamily?>()
+    private val cache = mutableMapOf<String, Typeface?>()
 
     private fun customFile(context: Context) = File(context.filesDir, "clock_font")
 
@@ -50,20 +50,21 @@ object ClockFonts {
     }
 
     fun style(context: Context, id: String, version: String = ""): ClockStyle = when {
-        id == "" -> ClockStyle(FontFamily.Default, FontWeight.Thin)
-        id == "serif" -> ClockStyle(FontFamily.Serif, FontWeight.Light)
-        id == "mono" -> ClockStyle(FontFamily.Monospace, FontWeight.Light)
+        id == "" -> system
+        id == "serif" -> ClockStyle(FontFamily.Serif, FontWeight.Light, Typeface.create(Typeface.SERIF, 300, false))
+        id == "mono" -> ClockStyle(FontFamily.Monospace, FontWeight.Light, Typeface.create(Typeface.MONOSPACE, 300, false))
         else -> {
             val file = if (id == CUSTOM) customFile(context) else File("/system/fonts", id.removePrefix(SYS))
             // Les polices fichier n'ont souvent qu'une graisse : pas de Thin simulé
-            load(file, "$id|$version")?.let { ClockStyle(it, FontWeight.Normal) }
-                ?: ClockStyle(FontFamily.Default, FontWeight.Thin)
+            load(file, "$id|$version")?.let { ClockStyle(FontFamily(it), FontWeight.Normal, it) } ?: system
         }
     }
 
-    private fun load(file: File, key: String): FontFamily? = cache.getOrPut(key) {
+    private val system = ClockStyle(FontFamily.Default, FontWeight.Thin, Typeface.create(Typeface.DEFAULT, 100, false))
+
+    private fun load(file: File, key: String): Typeface? = cache.getOrPut(key) {
         try {
-            FontFamily(Typeface.createFromFile(file))
+            Typeface.createFromFile(file)
         } catch (e: Exception) {
             null
         }

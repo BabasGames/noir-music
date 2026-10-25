@@ -256,7 +256,12 @@ fun PlayerScreen(
             SheetKind.NONE -> {}
         }
         AnimatedVisibility(standby, enter = fadeIn(tween(1500)), exit = fadeOut(tween(300))) {
-            StandbyScreen(prefs.standbyMode == Prefs.STANDBY_CLOCK, clockPattern(prefs), rememberClockStyle(prefs)) { lastTouch = SystemClock.elapsedRealtime() }
+            StandbyScreen(
+                prefs.standbyMode == Prefs.STANDBY_CLOCK,
+                clockPattern(prefs),
+                rememberClockStyle(prefs),
+                shiftDp = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first else 0,
+            ) { lastTouch = SystemClock.elapsedRealtime() }
         }
     }
 }
