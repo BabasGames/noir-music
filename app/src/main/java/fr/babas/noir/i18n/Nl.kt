@@ -35,7 +35,7 @@ object Nl : Strings {
     override fun openApp(name: String) = "$name openen"
 
     override val accessText = "Om de muziek van andere apps (Deezer, Spotify…) te zien en te bedienen, " +
-        "vraagt Android je om meldingstoegang voor Noir aan te zetten."
+        "vraagt Android je om meldingstoegang voor Noir Music aan te zetten."
     override val openSetting = "Instelling openen"
 
     override val language = "Taal"
@@ -139,7 +139,7 @@ object Nl : Strings {
     override val tutoLanguageTitle = "Taal"
     override val welcome1 = "Een bedieningsscherm voor muziek, in zwart-wit, gemaakt om aan te blijven op je bureau of in de auto."
     override val welcome2 = "Het bedient de muziek van andere apps (Deezer, Spotify, KDE Connect…). Daarvoor vraagt Android " +
-        "om meldingstoegang: Noir leest ze niet, het is alleen de toegangspoort naar de spelers."
+        "om meldingstoegang: Noir Music leest ze niet, het is alleen de toegangspoort naar de spelers."
     override val accessGranted = "Toegang verleend"
     override val allowAccess = "Toegang geven"
     override val gestureSwipeH = "Volgend / vorig nummer"

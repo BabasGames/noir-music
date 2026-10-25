@@ -35,7 +35,7 @@ object Uk : Strings {
     override fun openApp(name: String) = "Відкрити $name"
 
     override val accessText = "Щоб бачити музику інших застосунків (Deezer, Spotify…) і керувати нею, " +
-        "Android просить увімкнути для Noir доступ до сповіщень."
+        "Android просить увімкнути для Noir Music доступ до сповіщень."
     override val openSetting = "Відкрити налаштування"
 
     override val language = "Мова"
@@ -139,7 +139,7 @@ object Uk : Strings {
     override val tutoLanguageTitle = "Мова"
     override val welcome1 = "Чорно-білий екран керування музикою, який можна тримати увімкненим на столі чи в машині."
     override val welcome2 = "Він керує музикою інших застосунків (Deezer, Spotify, KDE Connect…). Для цього Android просить " +
-        "дозволити доступ до сповіщень: Noir їх не читає, це просто вхід до плеєрів."
+        "дозволити доступ до сповіщень: Noir Music їх не читає, це просто вхід до плеєрів."
     override val accessGranted = "Доступ надано"
     override val allowAccess = "Дозволити доступ"
     override val gestureSwipeH = "Наступний / попередній трек"

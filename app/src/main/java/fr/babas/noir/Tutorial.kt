@@ -120,7 +120,7 @@ private fun LanguagePage(prefs: Prefs) {
 private fun Welcome(hasAccess: Boolean, onGrant: () -> Unit) {
     val s = LocalStrings.current
     Column {
-        Title("Noir")
+        Title("Noir Music")
         Body(s.welcome1)
         Body(s.welcome2)
         Spacer(Modifier.height(8.dp))

@@ -35,7 +35,7 @@ object Fr : Strings {
     override fun openApp(name: String) = "Ouvrir $name"
 
     override val accessText = "Pour voir et piloter la musique des autres applis (Deezer, Spotify…), " +
-        "Android demande d'activer l'accès aux notifications pour Noir."
+        "Android demande d'activer l'accès aux notifications pour Noir Music."
     override val openSetting = "Ouvrir le réglage"
 
     override val language = "Langue"
@@ -139,7 +139,7 @@ object Fr : Strings {
     override val tutoLanguageTitle = "Langue"
     override val welcome1 = "Un écran de contrôle pour la musique, en noir et blanc, fait pour rester allumé sur le bureau ou en voiture."
     override val welcome2 = "Il pilote la musique des autres applis (Deezer, Spotify, KDE Connect…). Pour ça, Android demande " +
-        "d'autoriser l'accès aux notifications : Noir ne les lit pas, c'est juste la porte d'entrée vers les lecteurs."
+        "d'autoriser l'accès aux notifications : Noir Music ne les lit pas, c'est juste la porte d'entrée vers les lecteurs."
     override val accessGranted = "Accès accordé"
     override val allowAccess = "Autoriser l'accès"
     override val gestureSwipeH = "Morceau suivant / précédent"

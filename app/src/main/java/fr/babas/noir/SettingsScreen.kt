@@ -467,7 +467,7 @@ fun AccessScreen(onGrant: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Noir", fontSize = 40.sp, fontWeight = FontWeight.Thin, color = Color.White)
+        Text("Noir Music", fontSize = 40.sp, fontWeight = FontWeight.Thin, color = Color.White)
         Spacer(Modifier.height(16.dp))
         Text(s.accessText, color = Gray, fontSize = 16.sp)
         Spacer(Modifier.height(24.dp))

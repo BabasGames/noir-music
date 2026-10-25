@@ -35,7 +35,7 @@ object Zh : Strings {
     override fun openApp(name: String) = "打开 ${name}"
 
     override val accessText = "要查看和控制其他应用（Deezer、Spotify 等）中的音乐，" +
-        "Android 要求为 Noir 开启通知使用权。"
+        "Android 要求为 Noir Music 开启通知使用权。"
     override val openSetting = "打开设置"
 
     override val language = "语言"
@@ -139,7 +139,7 @@ object Zh : Strings {
     override val tutoLanguageTitle = "语言"
     override val welcome1 = "一款黑白风格的音乐控制屏，适合在桌上或车里保持常亮。"
     override val welcome2 = "它可以控制其他应用（Deezer、Spotify、KDE Connect 等）中的音乐。为此，Android 要求" +
-        "授予通知使用权：Noir 不会读取你的通知，这只是连接播放器的入口。"
+        "授予通知使用权：Noir Music 不会读取你的通知，这只是连接播放器的入口。"
     override val accessGranted = "已授权"
     override val allowAccess = "授予权限"
     override val gestureSwipeH = "下一首 / 上一首"

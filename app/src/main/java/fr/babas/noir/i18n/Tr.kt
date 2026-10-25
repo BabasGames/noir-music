@@ -35,7 +35,7 @@ object Tr : Strings {
     override fun openApp(name: String) = "$name uygulamasını aç"
 
     override val accessText = "Diğer uygulamaların (Deezer, Spotify…) müziğini görmek ve kontrol etmek için " +
-        "Android, Noir'a bildirim erişimi vermeni istiyor."
+        "Android, Noir Music'e bildirim erişimi vermeni istiyor."
     override val openSetting = "Ayarı aç"
 
     override val language = "Dil"
@@ -139,7 +139,7 @@ object Tr : Strings {
     override val tutoLanguageTitle = "Dil"
     override val welcome1 = "Masada ya da arabada açık kalmak için tasarlanmış, siyah beyaz bir müzik kontrol ekranı."
     override val welcome2 = "Diğer uygulamaların müziğini kontrol eder (Deezer, Spotify, KDE Connect…). Bunun için Android " +
-        "bildirim erişimi izni istiyor: Noir bildirimleri okumaz, bu sadece oynatıcılara açılan kapı."
+        "bildirim erişimi izni istiyor: Noir Music bildirimleri okumaz, bu sadece oynatıcılara açılan kapı."
     override val accessGranted = "Erişim verildi"
     override val allowAccess = "Erişime izin ver"
     override val gestureSwipeH = "Sonraki / önceki parça"

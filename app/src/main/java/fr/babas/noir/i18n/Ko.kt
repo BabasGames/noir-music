@@ -35,7 +35,7 @@ object Ko : Strings {
     override fun openApp(name: String) = "${name} 열기"
 
     override val accessText = "다른 앱(Deezer, Spotify 등)의 음악을 보고 제어하려면 " +
-        "Android에서 Noir의 알림 접근 권한을 허용해야 해요."
+        "Android에서 Noir Music의 알림 접근 권한을 허용해야 해요."
     override val openSetting = "설정 열기"
 
     override val language = "언어"
@@ -139,7 +139,7 @@ object Ko : Strings {
     override val tutoLanguageTitle = "언어"
     override val welcome1 = "책상 위나 차 안에서 켜 두고 쓰는 흑백 음악 컨트롤 화면이에요."
     override val welcome2 = "다른 앱(Deezer, Spotify, KDE Connect 등)의 음악을 제어해요. 이를 위해 Android에서 " +
-        "알림 접근 권한을 허용해야 해요. Noir는 알림을 읽지 않으며, 플레이어에 연결하기 위한 통로일 뿐이에요."
+        "알림 접근 권한을 허용해야 해요. Noir Music은 알림을 읽지 않으며, 플레이어에 연결하기 위한 통로일 뿐이에요."
     override val accessGranted = "권한 허용됨"
     override val allowAccess = "권한 허용"
     override val gestureSwipeH = "다음 곡 / 이전 곡"
