@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var prefs: Prefs
     private lateinit var media: MediaRepository
     private lateinit var lyrics: LyricsRepository
+    private val sleep = SleepTimer()
     private var hasAccess by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +54,12 @@ class MainActivity : ComponentActivity() {
                     Prefs.KEEP_ON_PLAYING -> np.isPlaying
                     else -> false
                 }
-                val brightness = if (prefs.customBrightness) prefs.brightness else null
+                val night = rememberNightActive(prefs)
+                val brightness = when {
+                    night && prefs.nightBrightnessOn -> prefs.nightBrightness
+                    prefs.customBrightness -> prefs.brightness
+                    else -> null
+                }
                 LaunchedEffect(keepOn, prefs.lowRefresh, brightness) {
                     applyWindow(keepOn, prefs.lowRefresh, brightness)
                 }
@@ -65,8 +71,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 LaunchedEffect(prefs.preferredApp) { media.refresh() }
+                SleepTimerEffect(sleep, np)
 
                 when {
+                    !prefs.tutorialDone -> TutorialScreen(prefs, hasAccess, ::openListenerSettings) {
+                        prefs.tutorialDone = true
+                    }
                     !hasAccess -> AccessScreen(onGrant = ::openListenerSettings)
                     showSettings -> {
                         BackHandler { showSettings = false }
@@ -75,11 +85,17 @@ class MainActivity : ComponentActivity() {
                             displayInfo = displayInfo(),
                             candidateApps = remember { media.candidateApps() },
                             onOpenAccess = ::openListenerSettings,
+                            onTutorial = {
+                                showSettings = false
+                                prefs.tutorialDone = false
+                            },
                             onBack = { showSettings = false },
                         )
                     }
                     else -> PlayerScreen(
-                        np, prefs, lyrics,
+                        np, prefs, lyrics, night, sleep,
+                        sessions = media.sessions.collectAsState().value,
+                        onPickSession = media::choose,
                         onOpenSettings = { showSettings = true },
                         onOpenSource = { np.controller?.packageName?.let(::openApp) },
                     )

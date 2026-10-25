@@ -40,6 +40,9 @@ data class NowPlaying(
     }
 }
 
+/** Une appli qui a une session média (en lecture ou en pause), pour le sélecteur de source. */
+data class SessionInfo(val pkg: String, val appName: String, val title: String, val isPlaying: Boolean)
+
 /** Suit les sessions média actives (Deezer, Spotify…) et expose celle à piloter. */
 class MediaRepository(private val context: Context, private val preferredApp: () -> String) {
     private val msm = context.getSystemService(MediaSessionManager::class.java)
@@ -48,6 +51,13 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
 
     private val _state = MutableStateFlow(NowPlaying())
     val state: StateFlow<NowPlaying> = _state
+
+    private val _sessions = MutableStateFlow<List<SessionInfo>>(emptyList())
+    val sessions: StateFlow<List<SessionInfo>> = _sessions
+
+    /** Choisie à la main dans le sélecteur : prime sur tout tant que sa session existe */
+    private var manualPkg: String? = null
+    private val labels = mutableMapOf<String, String>()
 
     private var controllers: List<MediaController> = emptyList()
     private var current: MediaController? = null
@@ -95,6 +105,10 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
      * La liste d'Android est triée par priorité (la plus récemment active d'abord).
      */
     private fun pickSession(list: List<MediaController>, previous: MediaController?): MediaController? {
+        manualPkg?.let { m ->
+            list.firstOrNull { it.packageName == m }?.let { return it }
+            manualPkg = null // session disparue : retour au choix automatique
+        }
         val pref = preferredApp()
         if (pref.isNotEmpty()) list.firstOrNull { it.packageName == pref }?.let { return it }
         list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }?.let { return it }
@@ -115,7 +129,20 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
             .sortedBy { it.second.lowercase() }
     }
 
+    fun choose(pkg: String) {
+        manualPkg = pkg
+        refresh()
+    }
+
     fun refresh() {
+        _sessions.value = controllers.distinctBy { it.packageName }.map {
+            SessionInfo(
+                it.packageName,
+                appLabel(it.packageName),
+                it.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE).orEmpty(),
+                it.playbackState?.state == PlaybackState.STATE_PLAYING,
+            )
+        }
         val c = pickSession(controllers, current)
         current = c
         if (c == null) {
@@ -151,11 +178,13 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
             .any { it in s }
     }
 
-    private fun appLabel(pkg: String): String = try {
-        val pm = context.packageManager
-        pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
-    } catch (e: Exception) {
-        pkg
+    private fun appLabel(pkg: String): String = labels.getOrPut(pkg) {
+        try {
+            val pm = context.packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+        } catch (e: Exception) {
+            pkg
+        }
     }
 
     private fun loadArt(md: MediaMetadata?): Bitmap? {

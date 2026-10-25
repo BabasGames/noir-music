@@ -20,7 +20,7 @@ class Prefs(context: Context) {
     // Affichage
     var clockSize by int("clock_size", CLOCK_BIG)
     var textScale by float("text_scale", 1f)
-    var dimText by bool("dim_text", false)
+    var showDate by bool("show_date", true)
     var showSource by bool("show_source", true)
     var showProgress by bool("show_progress", true)
     var showVolume by bool("show_volume", true)
@@ -35,13 +35,31 @@ class Prefs(context: Context) {
     var customBrightness by bool("custom_brightness", false)
     var brightness by float("brightness", 0.3f)
 
+    // Nuit (l'ancien interrupteur « texte atténué » devient « toujours »)
+    var nightMode by int("night_mode", if (sp.getBoolean("dim_text", false)) NIGHT_ALWAYS else NIGHT_OFF)
+    var nightStart by int("night_start", 22)
+    var nightEnd by int("night_end", 7)
+    var nightBrightnessOn by bool("night_brightness_on", false)
+    var nightBrightness by float("night_brightness", 0.05f)
+
+    // Veille
+    var standbyMode by int("standby_mode", STANDBY_OFF)
+    /** Index dans STANDBY_DELAYS */
+    var standbyDelay by int("standby_delay", 1)
+
     // Musique
+    var gestures by bool("gestures", true)
     /** Paquet à suivre en priorité ("" = automatique) */
     var preferredApp by string("preferred_app", "")
 
     // Paroles
     var lyrics by bool("lyrics", true)
     var lyricsOnMobile by bool("lyrics_mobile", false)
+    var lyricsScale by float("lyrics_scale", 1f)
+    /** Paroles ouvertes : retenu d'un morceau, d'un lancement à l'autre */
+    var lyricsOpen by bool("lyrics_open", false)
+
+    var tutorialDone by bool("tutorial_done", false)
 
     private fun <T> pref(initial: T, write: (T) -> Unit) = object : ReadWriteProperty<Any?, T> {
         var state by mutableStateOf(initial)
@@ -76,6 +94,16 @@ class Prefs(context: Context) {
         const val KEEP_ON_NEVER = 0
         const val KEEP_ON_PLAYING = 1
         const val KEEP_ON_ALWAYS = 2
+
+        const val NIGHT_OFF = 0
+        const val NIGHT_ALWAYS = 1
+        const val NIGHT_SCHEDULE = 2
+        const val NIGHT_DARK = 3
+
+        const val STANDBY_OFF = 0
+        const val STANDBY_CLOCK = 1
+        const val STANDBY_BLACK = 2
+        val STANDBY_DELAYS = listOf(60 to "1 min", 300 to "5 min", 900 to "15 min")
 
         /** Décalage anti-marquage : période en secondes, amplitude en dp */
         val BURN_INTERVALS = listOf(30 to "30 s", 60 to "1 min", 300 to "5 min")

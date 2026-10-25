@@ -1,5 +1,22 @@
 package fr.babas.noir
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.SystemClock
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.core.content.ContextCompat
 import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Bitmap
@@ -28,7 +45,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -166,10 +182,101 @@ fun PlayerScreen(
     np: NowPlaying,
     prefs: Prefs,
     lyricsRepo: LyricsRepository,
+    night: Boolean,
+    sleep: SleepTimer,
+    sessions: List<SessionInfo>,
+    onPickSession: (String) -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenSource: () -> Unit,
+) {
+    var sheet by remember { mutableStateOf(SheetKind.NONE) }
+    var likeFlash by remember { mutableIntStateOf(0) }
+
+    // Veille : X minutes sans musique ni toucher
+    var lastTouch by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
+    var standby by remember { mutableStateOf(false) }
+    val standbyMs = Prefs.STANDBY_DELAYS.getOrElse(prefs.standbyDelay) { Prefs.STANDBY_DELAYS[1] }.first * 1000L
+    LaunchedEffect(np.isPlaying, lastTouch, prefs.standbyMode, standbyMs) {
+        standby = false
+        if (np.isPlaying || prefs.standbyMode == Prefs.STANDBY_OFF) return@LaunchedEffect
+        delay(standbyMs)
+        standby = true
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            // Observe chaque toucher sans le consommer : les boutons en dessous le reçoivent quand même
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    lastTouch = SystemClock.elapsedRealtime()
+                }
+            },
+    ) {
+        Player(
+            np, prefs, lyricsRepo, night, sleep,
+            onLike = {
+                np.likeAction?.let { a ->
+                    np.controller?.transportControls?.sendCustomAction(a, a.extras)
+                    likeFlash++
+                }
+            },
+            onSheet = { sheet = it },
+            onOpenSettings = onOpenSettings,
+            onOpenSource = onOpenSource,
+        )
+        LikeFlash(likeFlash)
+        when (sheet) {
+            SheetKind.SLEEP -> SleepSheet(sleep) { sheet = SheetKind.NONE }
+            SheetKind.SOURCE -> SourceSheet(
+                sessions, np.controller?.packageName, np.appName,
+                onPick = onPickSession,
+                onOpen = onOpenSource,
+                onDismiss = { sheet = SheetKind.NONE },
+            )
+            SheetKind.NONE -> {}
+        }
+        AnimatedVisibility(standby, enter = fadeIn(tween(1500)), exit = fadeOut(tween(300))) {
+            StandbyScreen(prefs.standbyMode == Prefs.STANDBY_CLOCK) { lastTouch = SystemClock.elapsedRealtime() }
+        }
+    }
+}
+
+enum class SheetKind { NONE, SLEEP, SOURCE }
+
+/** Grand cœur qui apparaît puis s'efface après un double-tap. */
+@Composable
+private fun BoxScope.LikeFlash(trigger: Int) {
+    val alpha = remember { Animatable(0f) }
+    LaunchedEffect(trigger) {
+        if (trigger == 0) return@LaunchedEffect
+        alpha.snapTo(0.9f)
+        alpha.animateTo(0f, tween(900))
+    }
+    Icon(
+        Icons.Rounded.Favorite, null,
+        Modifier.align(Alignment.Center).size(120.dp).graphicsLayer { this.alpha = alpha.value },
+        tint = Color.White,
+    )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun Player(
+    np: NowPlaying,
+    prefs: Prefs,
+    lyricsRepo: LyricsRepository,
+    night: Boolean,
+    sleep: SleepTimer,
+    onLike: () -> Unit,
+    onSheet: (SheetKind) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenSource: () -> Unit,
 ) {
     val current by rememberUpdatedState(np)
+    val like by rememberUpdatedState(onLike)
+    val openSource by rememberUpdatedState(onOpenSource)
     val burnTarget = rememberBurnInShift(
         prefs.antiBurn,
         Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] }.first * 1000L,
@@ -180,15 +287,18 @@ fun PlayerScreen(
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
-    var lyricsOpen by rememberSaveable { mutableStateOf(false) }
-    val showLyrics = prefs.lyrics && lyricsOpen
+    val showLyrics = prefs.lyrics && prefs.lyricsOpen
     val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile)
 
-    CompositionLocalProvider(LocalPalette provides if (prefs.dimText) NightPalette else DayPalette) {
+    CompositionLocalProvider(LocalPalette provides if (night) NightPalette else DayPalette) {
         Box(
             Modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .pointerInput(prefs.gestures) {
+                    if (!prefs.gestures) return@pointerInput
+                    detectTapGestures(onDoubleTap = { like() }, onLongPress = { openSource() })
+                }
                 // Gauche/droite = suivant/précédent, haut/bas = paroles (les sliders consomment leurs propres gestes)
                 .pointerInput(Unit) {
                     val threshold = 96.dp.toPx()
@@ -198,7 +308,7 @@ fun PlayerScreen(
                                 val tc = current.controller?.transportControls
                                 if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
                             } else if (prefs.lyrics) {
-                                if (dragY < -threshold) lyricsOpen = true else if (dragY > threshold) lyricsOpen = false
+                                if (dragY < -threshold) prefs.lyricsOpen = true else if (dragY > threshold) prefs.lyricsOpen = false
                             }
                             dragX = 0f
                             dragY = 0f
@@ -224,9 +334,15 @@ fun PlayerScreen(
                     label = "paroles",
                 ) { open ->
                     CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
-                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics) { lyricsOpen = !lyricsOpen } else null
+                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics) { prefs.lyricsOpen = !prefs.lyricsOpen } else null
                         val header: @Composable (Boolean) -> Unit = { withGear ->
-                            Header(np, prefs, landscape, compact = open, if (withGear) onOpenSettings else null, onOpenSource)
+                            Header(
+                                np, prefs, landscape, sleep,
+                                compact = open,
+                                onOpenSettings = if (withGear) onOpenSettings else null,
+                                onClock = { onSheet(SheetKind.SLEEP) },
+                                onSource = { onSheet(SheetKind.SOURCE) },
+                            )
                         }
                         if (landscape) LandscapeLayout(np, prefs, lyr, header)
                         else PortraitLayout(np, prefs, lyr, header, onOpenSettings)
@@ -330,9 +446,11 @@ private fun Header(
     np: NowPlaying,
     prefs: Prefs,
     landscape: Boolean,
+    sleep: SleepTimer,
     compact: Boolean,
     onOpenSettings: (() -> Unit)?,
-    onOpenSource: () -> Unit,
+    onClock: () -> Unit,
+    onSource: () -> Unit,
 ) {
     val pal = LocalPalette.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top) {
@@ -349,14 +467,18 @@ private fun Header(
             }
             if (clockSp > 0f) {
                 Text(
-                    rememberClock(),
+                    rememberFormatted(clockPattern()),
                     fontSize = clockSp.sp,
                     lineHeight = (clockSp * 1.05f).sp,
                     fontWeight = FontWeight.Thin,
                     color = pal.fg,
-                    modifier = Modifier.shared("clock", scale = true),
+                    modifier = Modifier
+                        .shared("clock", scale = true)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onClock),
                 )
             }
+            InfoLine(prefs, sleep, onClock)
             if (prefs.showSource && np.appName.isNotEmpty()) {
                 Text(
                     np.appName,
@@ -365,12 +487,60 @@ private fun Header(
                     modifier = Modifier
                         .shared("source")
                         .clip(RoundedCornerShape(6.dp))
-                        .clickable(onClick = onOpenSource),
+                        .clickable(onClick = onSource),
                 )
             }
         }
         if (onOpenSettings != null) SettingsButton(Modifier, onOpenSettings)
     }
+}
+
+/** « sam. 25 oct. · 82 % ⚡ · ☾ 23 min » : date et batterie (réglage), minuteur s'il tourne. */
+@Composable
+private fun InfoLine(prefs: Prefs, sleep: SleepTimer, onClick: () -> Unit) {
+    val sleepLabel = rememberSleepLabel(sleep)
+    if (!prefs.showDate && sleepLabel == null) return
+    val pal = LocalPalette.current
+    Row(
+        Modifier.shared("info").clip(RoundedCornerShape(6.dp)).clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (prefs.showDate) {
+            val (level, charging) = rememberBattery()
+            val date = rememberFormatted("EEE d MMM")
+            Text(if (level >= 0) "$date · $level %" else date, fontSize = 15.sp, color = pal.fg2)
+            if (charging) Icon(Icons.Rounded.Bolt, "En charge", Modifier.size(16.dp), tint = pal.fg2)
+        }
+        if (sleepLabel != null) {
+            if (prefs.showDate) Text(" · ", fontSize = 15.sp, color = pal.fg2)
+            Icon(Icons.Rounded.Bedtime, "Minuteur", Modifier.size(15.dp), tint = pal.fg2)
+            Text(" $sleepLabel", fontSize = 15.sp, color = pal.fg2)
+        }
+    }
+}
+
+/** Niveau de batterie (en %, -1 si inconnu) et branchement, suivis en direct. */
+@Composable
+private fun rememberBattery(): Pair<Int, Boolean> {
+    val context = LocalContext.current
+    var state by remember { mutableStateOf(-1 to false) }
+    DisposableEffect(Unit) {
+        fun read(i: Intent) {
+            val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+            state = (if (level >= 0 && scale > 0) level * 100 / scale else -1) to
+                (i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0)
+        }
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) = read(i)
+        }
+        // Diffusion « collante » : l'enregistrement renvoie aussitôt le dernier état connu
+        ContextCompat.registerReceiver(
+            context, receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED,
+        )?.let(::read)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
+    return state
 }
 
 @Composable
@@ -476,11 +646,11 @@ private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: 
     when (lyrics) {
         is Lyrics.Synced -> {
             val texts = remember(lyrics) { lyrics.lines.map { it.text } }
-            LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), highlight = true, prefs.textScale, modifier)
+            LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), highlight = true, prefs.lyricsScale, modifier)
         }
         // Sans horodatage : défilement estimé au prorata de la durée, sans ligne mise en avant
         is Lyrics.Plain -> LyricLines(
-            lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), highlight = false, prefs.textScale, modifier,
+            lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), highlight = false, prefs.lyricsScale, modifier,
         )
         else -> Box(modifier, contentAlignment = Alignment.Center) {
             val msg = when {
@@ -492,7 +662,7 @@ private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: 
                 lyrics == Lyrics.MobileData -> "Paroles en pause sur données mobiles\n(réglable dans les paramètres)"
                 else -> "Pas de paroles trouvées"
             }
-            Text(msg, fontSize = (18f * prefs.textScale).sp, color = pal.faint, textAlign = TextAlign.Center)
+            Text(msg, fontSize = (18f * prefs.lyricsScale).sp, color = pal.faint, textAlign = TextAlign.Center)
         }
     }
 }
@@ -722,9 +892,11 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
 }
 
 @Composable
-private fun rememberClock(): String {
-    val context = LocalContext.current
-    val pattern = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm"
+fun clockPattern(): String = if (DateFormat.is24HourFormat(LocalContext.current)) "HH:mm" else "h:mm"
+
+/** Heure ou date formatée, mise à jour pile à chaque changement de minute. */
+@Composable
+fun rememberFormatted(pattern: String): String {
     var text by remember { mutableStateOf("") }
     LaunchedEffect(pattern) {
         val fmt = SimpleDateFormat(pattern, Locale.getDefault())

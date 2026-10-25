@@ -23,6 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -43,6 +47,7 @@ fun SettingsScreen(
     displayInfo: String,
     candidateApps: List<Pair<String, String>>,
     onOpenAccess: () -> Unit,
+    onTutorial: () -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -78,12 +83,45 @@ fun SettingsScreen(
             TEXT_SCALES.map { it.second },
             TEXT_SCALES.indexOfFirst { it.first == prefs.textScale }.coerceAtLeast(0),
         ) { prefs.textScale = TEXT_SCALES[it].first }
-        Toggle("Texte atténué", "Gris au lieu de blanc, pochette assombrie : pour la nuit, et moins d'usure AMOLED", prefs.dimText) {
-            prefs.dimText = it
+        Toggle("Date et batterie", "Sous l'heure · toucher l'heure lance le minuteur de sommeil", prefs.showDate) {
+            prefs.showDate = it
         }
-        Toggle("Nom de l'appli source", "Le toucher ouvre l'appli", prefs.showSource) { prefs.showSource = it }
+        Toggle("Nom de l'appli source", "Le toucher permet de changer d'appli ou de l'ouvrir", prefs.showSource) {
+            prefs.showSource = it
+        }
         Toggle("Barre de progression", null, prefs.showProgress) { prefs.showProgress = it }
         Toggle("Volume", null, prefs.showVolume) { prefs.showVolume = it }
+
+        Section("Nuit")
+        Choice("Mode nuit", listOf("Non", "Toujours", "Horaires", "Pénombre"), prefs.nightMode) { prefs.nightMode = it }
+        Text(
+            when (prefs.nightMode) {
+                Prefs.NIGHT_SCHEDULE -> "Texte gris et pochette assombrie pendant les heures choisies"
+                Prefs.NIGHT_DARK -> "S'active dans le noir, d'après le capteur de luminosité (quelques secondes de délai)"
+                else -> "Texte gris au lieu de blanc, pochette assombrie : pour la nuit, et moins d'usure AMOLED"
+            },
+            fontSize = 13.sp,
+            color = Gray,
+        )
+        if (prefs.nightMode == Prefs.NIGHT_SCHEDULE) {
+            HourStepper("Début", prefs.nightStart) { prefs.nightStart = it }
+            HourStepper("Fin", prefs.nightEnd) { prefs.nightEnd = it }
+        }
+        Toggle(
+            "Luminosité de nuit",
+            "Baisse l'écran quand le mode nuit est actif",
+            prefs.nightBrightnessOn,
+            enabled = prefs.nightMode != Prefs.NIGHT_OFF,
+        ) { prefs.nightBrightnessOn = it }
+        if (prefs.nightBrightnessOn && prefs.nightMode != Prefs.NIGHT_OFF) {
+            Slider(
+                value = prefs.nightBrightness,
+                onValueChange = { prefs.nightBrightness = it },
+                valueRange = 0.01f..0.5f,
+                colors = noirSliderColors(),
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
 
         Section("Écran")
         Choice("Toujours allumé", listOf("Non", "En lecture", "Toujours"), prefs.keepOnMode) { prefs.keepOnMode = it }
@@ -101,6 +139,12 @@ fun SettingsScreen(
                 prefs.burnAmplitude,
             ) { prefs.burnAmplitude = it }
         }
+        Choice("Veille quand rien ne joue", listOf("Non", "Horloge seule", "Écran noir"), prefs.standbyMode) {
+            prefs.standbyMode = it
+        }
+        if (prefs.standbyMode != Prefs.STANDBY_OFF) {
+            Choice("Après", Prefs.STANDBY_DELAYS.map { it.second }, prefs.standbyDelay) { prefs.standbyDelay = it }
+        }
         Toggle("Luminosité personnalisée", "Ignore la luminosité système dans l'appli", prefs.customBrightness) {
             prefs.customBrightness = it
         }
@@ -115,6 +159,7 @@ fun SettingsScreen(
         }
 
         Section("Musique")
+        Toggle("Gestes", "Double-tap : ♥︎ · appui long : ouvrir l'appli qui joue", prefs.gestures) { prefs.gestures = it }
         Text("Appli préférée", fontSize = 17.sp, color = Color.White)
         Text("Suivie en priorité dès qu'elle a une session, même en pause", fontSize = 13.sp, color = Gray)
         Spacer(Modifier.height(4.dp))
@@ -137,9 +182,17 @@ fun SettingsScreen(
             prefs.lyricsOnMobile,
             enabled = prefs.lyrics,
         ) { prefs.lyricsOnMobile = it }
+        Choice(
+            "Taille des paroles",
+            TEXT_SCALES.map { it.second },
+            TEXT_SCALES.indexOfFirst { it.first == prefs.lyricsScale }.coerceAtLeast(0),
+        ) { prefs.lyricsScale = TEXT_SCALES[it].first }
 
         Spacer(Modifier.height(24.dp))
-        OutlinedButton(onClick = onOpenAccess) { Text("Accès aux notifications", color = Color.White) }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = onOpenAccess) { Text("Accès aux notifications", color = Color.White) }
+            OutlinedButton(onClick = onTutorial) { Text("Revoir le tuto", color = Color.White) }
+        }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -201,8 +254,19 @@ private fun Radio(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
+/** Heure de 0 à 23 réglée par − / +, qui boucle (23 h + 1 = 0 h). */
 @Composable
-private fun Toggle(
+private fun HourStepper(label: String, hour: Int, onChange: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, fontSize = 17.sp, color = Color.White, modifier = Modifier.weight(1f))
+        IconButton(onClick = { onChange((hour + 23) % 24) }) { Icon(Icons.Rounded.Remove, "Moins", tint = Gray) }
+        Text("$hour h", fontSize = 17.sp, color = Color.White, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
+        IconButton(onClick = { onChange((hour + 1) % 24) }) { Icon(Icons.Rounded.Add, "Plus", tint = Gray) }
+    }
+}
+
+@Composable
+fun Toggle(
     title: String,
     subtitle: String?,
     checked: Boolean,
