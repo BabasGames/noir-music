@@ -1,0 +1,17 @@
+Noir Music est un contrôleur musique en noir et blanc pur, fait pour rester allumé sur les écrans AMOLED. Il ne joue pas de musique lui-même : il affiche et pilote ce qui joue dans tes autres applis (Deezer, Spotify, YouTube Music, VLC…) sur un écran plein, minimaliste, à laisser allumé sur le bureau ou en voiture.
+
+<b>Fonctions</b>
+* Lecture, pause, précédent, suivant, avance dans le morceau et volume, plus le bouton J'aime de l'appli qui joue quand elle en a un. Glisse à gauche ou à droite pour changer de morceau.
+* Paroles synchronisées depuis LRCLIB, une base libre et communautaire, gardées sur le téléphone pour fonctionner hors ligne. Source de secours NetEase en option, désactivée par défaut.
+* Mode voiture : heure géante, gros boutons en bas, pas de paroles.
+* Fait pour rester allumé : écran maintenu allumé pendant la musique, fréquence réduite, décalage des pixels contre le marquage, mode nuit (toujours, selon l'heure ou dans le noir), écran de veille quand rien ne joue, minuteur de sommeil.
+* Horloge dans la police de ton choix (y compris ton propre fichier), 12 ou 24 h, date traduite et niveau de batterie, placée à côté du trou de la caméra.
+* Choix de la source pour passer d'une appli à l'autre, ou appli préférée qui reste affichée.
+* Dispositions portrait et paysage, pochette en option, nombreux réglages d'affichage.
+* 14 langues.
+
+<b>Permissions</b>
+* Accès aux notifications : le seul moyen qu'offre Android pour voir et piloter les sessions musicales des autres applis. Les notifications elles-mêmes ne sont jamais lues.
+* Internet : uniquement pour chercher les paroles.
+
+Pas de compte, pas de statistiques, pas de pub.

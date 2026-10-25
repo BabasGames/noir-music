@@ -230,6 +230,10 @@ fun SettingsScreen(
                     val uri = LocalUriHandler.current
                     OutlinedButton(onClick = { uri.openUri(GITHUB_URL) }) { Text(s.openGithub, color = Color.White) }
                 }
+                // Version, handy when reporting a bug
+                val context = LocalContext.current
+                val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+                Text("Noir Music $version", fontSize = 12.sp, color = Dim, modifier = Modifier.padding(top = 16.dp))
                 Spacer(Modifier.height(24.dp))
             }
         }

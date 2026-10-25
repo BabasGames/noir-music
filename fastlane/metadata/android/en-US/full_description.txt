@@ -1,0 +1,17 @@
+Noir Music is an always-on, pure black and white music controller built for AMOLED screens. It doesn't play music itself: it shows and controls whatever is playing in your other apps (Deezer, Spotify, YouTube Music, VLC…) on a minimal full-screen display, meant to stay on next to your desk or in the car.
+
+<b>Features</b>
+* Play, pause, previous, next, seek and volume, plus the playing app's own like button when it has one. Swipe left or right to change track.
+* Synced lyrics from LRCLIB, a free community database, kept on the phone for offline use. Optional NetEase fallback, off by default.
+* Car mode: huge clock, big buttons at the bottom, no lyrics.
+* Made to stay on: keeps the screen awake while music plays, reduced refresh rate, pixel shifting against burn-in, night mode (always, on a schedule or in the dark), standby screen when nothing plays, sleep timer.
+* Clock with any font (including your own font file), 12 or 24 h, localized date and battery level, placed next to the camera hole.
+* Source picker to switch between apps, or a preferred app that stays on screen.
+* Portrait and landscape layouts, album art optional, many display settings.
+* 14 languages.
+
+<b>Permissions</b>
+* Notification access: the only way Android lets an app see and control other apps' media sessions. Notifications themselves are never read.
+* Internet: lyrics lookups only.
+
+No account, no analytics, no ads.

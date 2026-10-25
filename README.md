@@ -61,12 +61,13 @@ No account, no analytics, no ads. The only network requests are lyrics lookups (
 Requirements: JDK 17 or newer and the Android SDK (platform 35).
 
 ```sh
-./gradlew assembleRelease
+./gradlew assembleDebug     # installable debug build
+./gradlew assembleRelease   # release build, unsigned unless a signing key is configured
 ```
 
-The APK ends up in `app/build/outputs/apk/release/`. It is signed with the debug key, which is fine for sideloading.
+APKs end up in `app/build/outputs/apk/`. To sign release builds, add these properties to `~/.gradle/gradle.properties` (never to the repo): `noirKeystore`, `noirKeystorePassword`, `noirKeyAlias`, `noirKeyPassword`.
 
-`install.sh [IP:PORT]` builds, installs over ADB (optionally connecting to a wireless-debugging address first), grants notification access and starts the app.
+`install.sh [IP:PORT]` builds a release, installs it over ADB (optionally connecting to a wireless-debugging address first), grants notification access and starts the app.
 
 ## Lyrics disclaimer
 

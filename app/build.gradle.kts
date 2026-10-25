@@ -13,7 +13,22 @@ android {
         minSdk = 29
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+    }
+
+    // Release signing comes from Gradle properties kept outside the repo (~/.gradle/gradle.properties):
+    // noirKeystore, noirKeystorePassword, noirKeyAlias, noirKeyPassword. Without them the release APK
+    // is left unsigned, which is what F-Droid expects (it signs its own builds).
+    val keystore = findProperty("noirKeystore") as String?
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = findProperty("noirKeystorePassword") as String?
+                keyAlias = findProperty("noirKeyAlias") as String?
+                keyPassword = findProperty("noirKeyPassword") as String?
+            }
+        }
     }
 
     buildTypes {
@@ -21,8 +36,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Signed with the debug key: fine for installing it yourself, replace it for a public release
-            signingConfig = signingConfigs.getByName("debug")
+            if (keystore != null) signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

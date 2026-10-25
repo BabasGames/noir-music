@@ -1,0 +1,1 @@
+Première version : lecteur pour toutes les applis de musique, paroles synchronisées (LRCLIB, secours NetEase en option), mode voiture, mode nuit, veille, minuteur, polices d'horloge, disposition autour de la caméra, 14 langues.

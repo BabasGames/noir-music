@@ -1,0 +1,1 @@
+First release: player for any music app, synced lyrics (LRCLIB, optional NetEase fallback), car mode, night mode, standby, sleep timer, custom clock fonts, camera-hole aware layout, 14 languages.
