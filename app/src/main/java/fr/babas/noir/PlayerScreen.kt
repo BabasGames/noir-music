@@ -8,10 +8,36 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.style.TextAlign
+import kotlin.math.abs
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -109,41 +135,94 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
     disabledInactiveTrackColor = Color(0xFF141414),
 )
 
+/** Paroles telles que les voient les dispositions ; null quand la fonction est coupée dans les réglages. */
+private class LyricsUi(val open: Boolean, val state: Lyrics, val toggle: () -> Unit)
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+private class SharedScopes(val layout: SharedTransitionScope, val content: AnimatedVisibilityScope)
+
+private val LocalShared = staticCompositionLocalOf<SharedScopes?> { null }
+
+/** Élément qui « voyage » entre l'écran normal et l'écran paroles (pochette, horloge, appli). */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PlayerScreen(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit, onOpenSource: () -> Unit) {
+private fun Modifier.shared(key: String, scale: Boolean = false): Modifier {
+    val s = LocalShared.current ?: return this
+    return with(s.layout) {
+        val state = rememberSharedContentState(key)
+        // Le texte ne se re-mesure pas en douceur d'une taille de police à l'autre : on le met à l'échelle
+        if (scale) this@shared.sharedBounds(state, s.content, resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds())
+        else this@shared.sharedElement(state, s.content)
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun PlayerScreen(
+    np: NowPlaying,
+    prefs: Prefs,
+    lyricsRepo: LyricsRepository,
+    onOpenSettings: () -> Unit,
+    onOpenSource: () -> Unit,
+) {
     val current by rememberUpdatedState(np)
     val shift = rememberBurnInShift(prefs.antiBurn)
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
+    var dragY by remember { mutableFloatStateOf(0f) }
+    var lyricsOpen by rememberSaveable { mutableStateOf(false) }
+    val showLyrics = prefs.lyrics && lyricsOpen
+    val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile)
 
     CompositionLocalProvider(LocalPalette provides if (prefs.dimText) NightPalette else DayPalette) {
         Box(
             Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                // Glisser à gauche = suivant, à droite = précédent (les sliders consomment leurs propres gestes)
+                // Gauche/droite = suivant/précédent, haut/bas = paroles (les sliders consomment leurs propres gestes)
                 .pointerInput(Unit) {
                     val threshold = 96.dp.toPx()
-                    detectHorizontalDragGestures(
+                    detectDragGestures(
                         onDragEnd = {
-                            val tc = current.controller?.transportControls
-                            if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
+                            if (abs(dragX) > abs(dragY)) {
+                                val tc = current.controller?.transportControls
+                                if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
+                            } else if (prefs.lyrics) {
+                                if (dragY < -threshold) lyricsOpen = true else if (dragY > threshold) lyricsOpen = false
+                            }
                             dragX = 0f
+                            dragY = 0f
                         },
-                        onDragCancel = { dragX = 0f },
-                    ) { change, dx ->
+                        onDragCancel = { dragX = 0f; dragY = 0f },
+                    ) { change, amount ->
                         change.consume()
-                        dragX += dx
+                        dragX += amount.x
+                        dragY += amount.y
                     }
                 }
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .offset { IntOffset(shift.x.roundToPx() + (dragX * 0.3f).roundToInt(), shift.y.roundToPx()) }
+                .offset {
+                    val follow = if (abs(dragX) > abs(dragY)) (dragX * 0.3f).roundToInt() else 0
+                    IntOffset(shift.x.roundToPx() + follow, shift.y.roundToPx())
+                }
                 .padding(if (landscape) 16.dp else 24.dp),
         ) {
-            val header: @Composable (Boolean) -> Unit = { withGear ->
-                Header(np.appName, prefs, landscape, if (withGear) onOpenSettings else null, onOpenSource)
+            SharedTransitionLayout(Modifier.fillMaxSize()) {
+                AnimatedContent(
+                    showLyrics,
+                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
+                    label = "paroles",
+                ) { open ->
+                    CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
+                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics) { lyricsOpen = !lyricsOpen } else null
+                        val header: @Composable (Boolean) -> Unit = { withGear ->
+                            Header(np, prefs, landscape, compact = open, if (withGear) onOpenSettings else null, onOpenSource)
+                        }
+                        if (landscape) LandscapeLayout(np, prefs, lyr, header)
+                        else PortraitLayout(np, prefs, lyr, header, onOpenSettings)
+                    }
+                }
             }
-            if (landscape) LandscapeLayout(np, prefs, header) else PortraitLayout(np, prefs, header, onOpenSettings)
         }
     }
 }
@@ -152,16 +231,36 @@ fun PlayerScreen(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit, onOpe
 private fun PortraitLayout(
     np: NowPlaying,
     prefs: Prefs,
+    lyr: LyricsUi?,
     header: @Composable (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val swap = prefs.showArt && prefs.swapArt
+    if (lyr?.open == true) {
+        // Paroles : pochette et horloge réduites dans l'en-tête, les paroles prennent l'espace libéré
+        Column(Modifier.fillMaxSize()) {
+            header(true)
+            val panel: @Composable () -> Unit = {
+                LyricsPanel(np, lyr.state, prefs, Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp))
+            }
+            if (swap) {
+                Spacer(Modifier.height(16.dp))
+                Controls(np, prefs, lyr = lyr)
+                panel()
+            } else {
+                panel()
+                Controls(np, prefs, lyr = lyr)
+            }
+        }
+        return
+    }
     if (!prefs.showArt) {
         // Sans pochette : horloge + contrôles forment un seul bloc centré, la roue reste dans le coin
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 header(false)
                 Spacer(Modifier.height(40.dp))
-                Controls(np, prefs)
+                Controls(np, prefs, lyr = lyr)
             }
             SettingsButton(Modifier.align(Alignment.TopEnd), onOpenSettings)
         }
@@ -172,59 +271,70 @@ private fun PortraitLayout(
         val art: @Composable () -> Unit = {
             // La boîte prend tout l'espace libre ; la pochette y tient en carré le plus grand possible
             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
-                Artwork(np.art, prefs.grayArt, Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true))
+                Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
             }
         }
-        if (prefs.swapArt) {
+        if (swap) {
             Spacer(Modifier.height(16.dp))
-            Controls(np, prefs)
+            Controls(np, prefs, lyr = lyr)
             art()
         } else {
             art()
-            Controls(np, prefs)
+            Controls(np, prefs, lyr = lyr)
         }
     }
 }
 
 @Composable
-private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, header: @Composable (Boolean) -> Unit) {
+private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header: @Composable (Boolean) -> Unit) {
+    val open = lyr?.open == true
+    val swap = prefs.showArt && prefs.swapArt
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-        val art: @Composable () -> Unit = {
-            Artwork(np.art, prefs.grayArt, Modifier.fillMaxHeight().aspectRatio(1f))
+        // Les paroles prennent la place de la pochette (ou la moitié de l'écran s'il n'y en a pas)
+        val side: @Composable () -> Unit = {
+            if (open) LyricsPanel(np, lyr!!.state, prefs, Modifier.weight(1f).fillMaxHeight())
+            else Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
         }
-        if (prefs.showArt && !prefs.swapArt) {
-            art()
+        val hasSide = open || prefs.showArt
+        if (hasSide && !swap) {
+            side()
             Spacer(Modifier.width(32.dp))
         }
         Column(
             Modifier.weight(1f).fillMaxHeight(),
-            verticalArrangement = if (prefs.showArt) Arrangement.SpaceBetween else Arrangement.Center,
+            verticalArrangement = if (hasSide) Arrangement.SpaceBetween else Arrangement.Center,
         ) {
             header(true)
-            if (!prefs.showArt) Spacer(Modifier.height(16.dp))
-            Column { Controls(np, prefs, compact = true) }
+            if (!hasSide) Spacer(Modifier.height(16.dp))
+            Column { Controls(np, prefs, compact = true, lyr = lyr) }
         }
-        if (prefs.showArt && prefs.swapArt) {
+        if (hasSide && swap) {
             Spacer(Modifier.width(32.dp))
-            art()
+            side()
         }
     }
 }
 
 @Composable
 private fun Header(
-    appName: String,
+    np: NowPlaying,
     prefs: Prefs,
     landscape: Boolean,
+    compact: Boolean,
     onOpenSettings: (() -> Unit)?,
     onOpenSource: () -> Unit,
 ) {
     val pal = LocalPalette.current
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top) {
+        // Écran paroles : la pochette devient une vignette à côté de l'heure
+        if (compact && prefs.showArt) {
+            Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(if (landscape) 64.dp else 76.dp))
+            Spacer(Modifier.width(16.dp))
+        }
         Column(Modifier.weight(1f)) {
             val clockSp = when (prefs.clockSize) {
-                Prefs.CLOCK_BIG -> if (landscape) 72f else 88f
-                Prefs.CLOCK_MEDIUM -> 44f
+                Prefs.CLOCK_BIG -> if (compact) 48f else if (landscape) 72f else 88f
+                Prefs.CLOCK_MEDIUM -> if (compact) 34f else 44f
                 else -> 0f
             }
             if (clockSp > 0f) {
@@ -234,14 +344,18 @@ private fun Header(
                     lineHeight = (clockSp * 1.05f).sp,
                     fontWeight = FontWeight.Thin,
                     color = pal.fg,
+                    modifier = Modifier.shared("clock", scale = true),
                 )
             }
-            if (prefs.showSource && appName.isNotEmpty()) {
+            if (prefs.showSource && np.appName.isNotEmpty()) {
                 Text(
-                    appName,
+                    np.appName,
                     fontSize = 15.sp,
                     color = pal.fg2,
-                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onOpenSource),
+                    modifier = Modifier
+                        .shared("source")
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClick = onOpenSource),
                 )
             }
         }
@@ -261,7 +375,7 @@ private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
 
 /** Titre, progression, boutons, volume : le bloc « contrôles ». */
 @Composable
-private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false) {
+private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false, lyr: LyricsUi? = null) {
     val pal = LocalPalette.current
     val tc = np.controller?.transportControls
     val togglePlay = { if (np.isPlaying) tc?.pause() else tc?.play() }
@@ -316,9 +430,139 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
             enabled,
         ) { togglePlay() }
         CtrlButton(Icons.Rounded.SkipNext, "Suivant", 48.dp, enabled) { tc?.skipToNext() }
-        Spacer(Modifier.size(56.dp)) // équilibre visuel avec le ♥
+        // Bouton paroles, ou vide pour l'équilibre visuel avec le ♥
+        if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
     if (prefs.showVolume) VolumeRow()
+}
+
+@Composable
+private fun LyricsButton(lyr: LyricsUi) {
+    val pal = LocalPalette.current
+    Box(Modifier.size(56.dp).clip(CircleShape).clickable(onClick = lyr.toggle), contentAlignment = Alignment.Center) {
+        Icon(Icons.Rounded.Lyrics, "Paroles", Modifier.size(28.dp), tint = if (lyr.open) pal.fg else pal.faint)
+    }
+}
+
+@Composable
+private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boolean, allowMetered: Boolean): Lyrics {
+    val latest by rememberUpdatedState(np)
+    val state by produceState<Lyrics>(Lyrics.Loading, repo, np.title, np.artist, active, allowMetered) {
+        value = Lyrics.Loading
+        if (!active || np.title.isEmpty()) return@produceState
+        delay(300) // morceaux passés à la chaîne : une seule requête, pour celui où l'on s'arrête
+        value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
+    }
+    return state
+}
+
+@Composable
+private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: Modifier) {
+    val pal = LocalPalette.current
+    when (lyrics) {
+        is Lyrics.Synced -> {
+            val texts = remember(lyrics) { lyrics.lines.map { it.text } }
+            LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), highlight = true, prefs.textScale, modifier)
+        }
+        // Sans horodatage : défilement estimé au prorata de la durée, sans ligne mise en avant
+        is Lyrics.Plain -> LyricLines(
+            lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), highlight = false, prefs.textScale, modifier,
+        )
+        else -> Box(modifier, contentAlignment = Alignment.Center) {
+            val msg = when {
+                np.title.isEmpty() -> ""
+                lyrics == Lyrics.Loading -> "…"
+                lyrics == Lyrics.Instrumental -> "♪  Instrumental"
+                lyrics == Lyrics.Unavailable -> "Paroles indisponibles\n(pas de réseau)"
+                lyrics == Lyrics.MobileData -> "Paroles en pause sur données mobiles\n(réglable dans les paramètres)"
+                else -> "Pas de paroles trouvées"
+            }
+            Text(msg, fontSize = (18f * prefs.textScale).sp, color = pal.faint, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun LyricLines(lines: List<String>, current: Int, highlight: Boolean, scale: Float, modifier: Modifier) {
+    val pal = LocalPalette.current
+    val list = rememberLazyListState()
+    BoxWithConstraints(modifier) {
+        // La ligne en cours se cale au tiers de la hauteur : on voit un peu de passé, surtout ce qui vient
+        val top = maxHeight * 0.3f
+        LaunchedEffect(current) { list.animateScrollToItem(current.coerceAtLeast(0)) }
+        LazyColumn(
+            state = list,
+            userScrollEnabled = false, // le geste vertical sert à ouvrir/fermer les paroles
+            contentPadding = PaddingValues(top = top, bottom = maxHeight - top),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                .drawWithContent {
+                    drawContent()
+                    drawRect(FadeEdges, blendMode = BlendMode.DstIn)
+                },
+        ) {
+            itemsIndexed(lines) { i, line ->
+                val color by animateColorAsState(
+                    when {
+                        !highlight -> pal.fg2
+                        i == current -> pal.fg
+                        i > current -> lerp(pal.faint, pal.fg2, 0.35f)
+                        else -> pal.faint
+                    },
+                    tween(300),
+                    label = "ligne",
+                )
+                Text(
+                    line.ifBlank { "♪" },
+                    fontSize = (22f * scale).sp,
+                    lineHeight = (29f * scale).sp,
+                    fontWeight = FontWeight.Light,
+                    color = color,
+                    modifier = Modifier.padding(vertical = 7.dp),
+                )
+            }
+        }
+    }
+}
+
+private val FadeEdges = Brush.verticalGradient(
+    0f to Color.Transparent,
+    0.12f to Color.Black,
+    0.85f to Color.Black,
+    1f to Color.Transparent,
+)
+
+/** Ligne en cours ; se réveille pile à l'horodatage de la suivante plutôt que de sonder en boucle. */
+@Composable
+private fun rememberSyncedIndex(np: NowPlaying, lines: List<LyricLine>): Int {
+    var idx by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(np, lines) {
+        while (true) {
+            val pos = np.currentPosition()
+            idx = lines.indexOfLast { it.timeMs <= pos }
+            if (!np.isPlaying) break
+            val next = lines.getOrNull(idx + 1) ?: break
+            delay(((next.timeMs - pos) / np.speed).toLong() + 20)
+        }
+    }
+    return idx
+}
+
+@Composable
+private fun rememberEstimatedIndex(np: NowPlaying, count: Int): Int {
+    var idx by remember { mutableIntStateOf(0) }
+    LaunchedEffect(np, count) {
+        if (np.durationMs <= 0 || count == 0) return@LaunchedEffect
+        val per = (np.durationMs / count).coerceAtLeast(1)
+        while (true) {
+            val pos = np.currentPosition()
+            idx = (pos / per).toInt().coerceAtMost(count - 1)
+            if (!np.isPlaying) break
+            delay(per - pos % per + 20)
+        }
+    }
+    return idx
 }
 
 @Composable

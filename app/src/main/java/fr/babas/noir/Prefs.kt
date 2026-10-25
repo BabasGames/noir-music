@@ -36,6 +36,10 @@ class Prefs(context: Context) {
     /** Paquet à suivre en priorité ("" = automatique) */
     var preferredApp by string("preferred_app", "")
 
+    // Paroles
+    var lyrics by bool("lyrics", true)
+    var lyricsOnMobile by bool("lyrics_mobile", false)
+
     private fun <T> pref(initial: T, write: (T) -> Unit) = object : ReadWriteProperty<Any?, T> {
         var state by mutableStateOf(initial)
         override fun getValue(thisRef: Any?, property: KProperty<*>) = state

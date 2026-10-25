@@ -33,6 +33,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity : ComponentActivity() {
     private lateinit var prefs: Prefs
     private lateinit var media: MediaRepository
+    private lateinit var lyrics: LyricsRepository
     private var hasAccess by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         prefs = Prefs(this)
         media = MediaRepository(this) { prefs.preferredApp }
+        lyrics = LyricsRepository(this)
 
         setContent {
             MaterialTheme(colorScheme = NoirColors) {
@@ -77,7 +79,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     else -> PlayerScreen(
-                        np, prefs,
+                        np, prefs, lyrics,
                         onOpenSettings = { showSettings = true },
                         onOpenSource = { np.controller?.packageName?.let(::openApp) },
                     )

@@ -119,6 +119,17 @@ fun SettingsScreen(
             Radio(prefs.preferredApp, selected = true) {}
         }
 
+        Section("Paroles")
+        Toggle("Paroles", "Glisser vers le haut ou bouton en bas à droite · source : LRCLIB", prefs.lyrics) {
+            prefs.lyrics = it
+        }
+        Toggle(
+            "Sur données mobiles",
+            "Sinon, seules les paroles déjà téléchargées s'affichent hors Wi-Fi",
+            prefs.lyricsOnMobile,
+            enabled = prefs.lyrics,
+        ) { prefs.lyricsOnMobile = it }
+
         Spacer(Modifier.height(24.dp))
         OutlinedButton(onClick = onOpenAccess) { Text("Accès aux notifications", color = Color.White) }
         Spacer(Modifier.height(24.dp))
