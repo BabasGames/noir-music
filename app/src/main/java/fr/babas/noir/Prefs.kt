@@ -29,6 +29,9 @@ class Prefs(context: Context) {
     var keepOnMode by int("keep_on_mode", KEEP_ON_PLAYING)
     var lowRefresh by bool("low_refresh", true)
     var antiBurn by bool("anti_burn", true)
+    /** Index dans BURN_INTERVALS / BURN_AMPLITUDES */
+    var burnInterval by int("burn_interval", 1)
+    var burnAmplitude by int("burn_amplitude", 1)
     var customBrightness by bool("custom_brightness", false)
     var brightness by float("brightness", 0.3f)
 
@@ -73,5 +76,9 @@ class Prefs(context: Context) {
         const val KEEP_ON_NEVER = 0
         const val KEEP_ON_PLAYING = 1
         const val KEEP_ON_ALWAYS = 2
+
+        /** Décalage anti-marquage : période en secondes, amplitude en dp */
+        val BURN_INTERVALS = listOf(30 to "30 s", 60 to "1 min", 300 to "5 min")
+        val BURN_AMPLITUDES = listOf(5 to "Faible", 10 to "Moyen", 20 to "Fort")
     }
 }

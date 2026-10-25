@@ -166,7 +166,11 @@ fun PlayerScreen(
     onOpenSource: () -> Unit,
 ) {
     val current by rememberUpdatedState(np)
-    val shift = rememberBurnInShift(prefs.antiBurn)
+    val shift = rememberBurnInShift(
+        prefs.antiBurn,
+        Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] }.first * 1000L,
+        Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first,
+    )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
@@ -714,15 +718,18 @@ private fun rememberClock(): String {
     return text
 }
 
-/** Décalage aléatoire de ±10 dp chaque minute pour ne pas marquer l'AMOLED. */
+/** Décalage aléatoire de ±amplitude dp toutes les intervalMs pour ne pas marquer l'AMOLED. */
 @Composable
-private fun rememberBurnInShift(enabled: Boolean): DpOffset {
+private fun rememberBurnInShift(enabled: Boolean, intervalMs: Long, amplitude: Int): DpOffset {
     var shift by remember { mutableStateOf(DpOffset(0.dp, 0.dp)) }
-    LaunchedEffect(enabled) {
+    LaunchedEffect(enabled, intervalMs, amplitude) {
         shift = DpOffset(0.dp, 0.dp)
         while (enabled) {
-            delay(60_000)
-            shift = DpOffset(Random.nextInt(-10, 11).dp, Random.nextInt(-10, 11).dp)
+            delay(intervalMs)
+            shift = DpOffset(
+                Random.nextInt(-amplitude, amplitude + 1).dp,
+                Random.nextInt(-amplitude, amplitude + 1).dp,
+            )
         }
     }
     return shift

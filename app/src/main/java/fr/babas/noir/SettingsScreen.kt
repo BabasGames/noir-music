@@ -89,10 +89,18 @@ fun SettingsScreen(
         Choice("Toujours allumé", listOf("Non", "En lecture", "Toujours"), prefs.keepOnMode) { prefs.keepOnMode = it }
         Toggle("Rafraîchissement réduit", displayInfo, prefs.lowRefresh) { prefs.lowRefresh = it }
         Toggle(
-            "Anti-marquage",
-            "Décale l'affichage de quelques pixels chaque minute",
+            "Décalage périodique",
+            "Anti-marquage : déplace tout l'affichage de quelques pixels, au hasard",
             prefs.antiBurn,
         ) { prefs.antiBurn = it }
+        if (prefs.antiBurn) {
+            Choice("Fréquence", Prefs.BURN_INTERVALS.map { it.second }, prefs.burnInterval) { prefs.burnInterval = it }
+            Choice(
+                "Amplitude",
+                Prefs.BURN_AMPLITUDES.map { "${it.second} (±${it.first})" },
+                prefs.burnAmplitude,
+            ) { prefs.burnAmplitude = it }
+        }
         Toggle("Luminosité personnalisée", "Ignore la luminosité système dans l'appli", prefs.customBrightness) {
             prefs.customBrightness = it
         }
