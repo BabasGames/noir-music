@@ -72,6 +72,8 @@ Requirements: JDK 17 or newer and the Android SDK (platform 35).
 
 APKs end up in `app/build/outputs/apk/`. To sign release builds, add these properties to `~/.gradle/gradle.properties` (never to the repo): `noirKeystore`, `noirKeystorePassword`, `noirKeyAlias`, `noirKeyPassword`.
 
+`release.sh [vX.Y.Z]` builds the release APK from a clean clone of a tag (the latest one by default) into `dist/`. Release APKs are reproducible: built this way, they match F-Droid's build apart from the signature.
+
 `install.sh [IP:PORT]` builds a release, installs it over ADB (optionally connecting to a wireless-debugging address first), grants notification access and starts the app.
 
 ## Lyrics disclaimer
