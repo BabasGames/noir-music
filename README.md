@@ -42,6 +42,10 @@ See **[FEATURES.md](FEATURES.md)** for the full list.
 | Tap the clock | Sleep timer |
 | Tap the app name | Switch source |
 
+## Compatibility
+
+Requires Android 10 or newer. Tested on Android 17; older versions should work but haven't been tested yet, so feedback is welcome.
+
 ## Permissions
 
 | Permission | Why |
