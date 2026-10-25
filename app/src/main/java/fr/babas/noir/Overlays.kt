@@ -31,6 +31,8 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -180,19 +182,23 @@ fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, onWake
             .padding(32.dp),
     ) {
         if (!withClock) return@Box
-        var bx by remember { mutableFloatStateOf(0f) }
-        var by by remember { mutableFloatStateOf(-0.3f) }
+        // Centrée, avec une petite dérive autour du centre à chaque minute : assez pour ne pas
+        // marquer l'AMOLED, sans donner l'impression d'une horloge mal placée
+        var tx by remember { mutableFloatStateOf(0f) }
+        var ty by remember { mutableFloatStateOf(0f) }
         LaunchedEffect(Unit) {
             while (true) {
                 val now = SystemClock.elapsedRealtime()
                 delay(60_000 - now % 60_000)
-                bx = Random.nextFloat() * 2 - 1
-                by = Random.nextFloat() * 2 - 1
+                tx = Random.nextFloat() * 0.5f - 0.25f
+                ty = Random.nextFloat() * 0.3f - 0.15f
             }
         }
+        val bx by animateFloatAsState(tx, tween(2500), label = "veille x")
+        val by by animateFloatAsState(ty, tween(2500), label = "veille y")
         Text(
             rememberFormatted(pattern, LocalLang.current.locale),
-            fontSize = 72.sp,
+            fontSize = 96.sp,
             fontFamily = style.family,
             fontWeight = style.weight,
             color = Color(0xFF5A5A5A),
