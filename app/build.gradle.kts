@@ -49,6 +49,12 @@ android {
     buildFeatures {
         compose = true
     }
+    // No Google "dependency metadata" block in the APK signature: it's encrypted for Google only,
+    // and F-Droid rejects APKs that contain it
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {
