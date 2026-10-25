@@ -104,7 +104,7 @@ object Pt : Strings {
     override val keepOn = "Tela sempre ligada"
     override val keepOnPlaying = "Tocando"
     override val lowRefresh = "Taxa de atualização reduzida"
-    override fun refreshInfo(current: Int, available: String) = "Atual: $current Hz · disponíveis: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Player: ${current} Hz · disponíveis: ${available} Hz"
     override val burnShift = "Deslocamento periódico"
     override val burnShiftSub = "Anti burn-in: desloca toda a imagem alguns pixels, aleatoriamente"
     override val frequency = "Frequência"
@@ -166,4 +166,14 @@ object Pt : Strings {
     override val tutoScreen2 = "Para proteger o AMOLED, a imagem se desloca alguns pixels de vez em quando. " +
         "O modo noturno atenua o texto e a capa, e o repouso desliga tudo quando nada está tocando."
     override val tutoScreen3 = "Tudo se ajusta pela engrenagem, no canto superior direito."
+
+    override val clockSide = "Posição do relógio"
+    override val sideLeft = "Esquerda"
+    override val sideRight = "Direita"
+    override val clockSideSub = "Auto: ao lado do furo da câmera, no lado com espaço"
+    override val lyricsDisclaimer = "As letras vêm de bancos de dados da comunidade: podem estar fora de sincronia ou não corresponder. Toque na fonte abaixo da letra para tentar a outra."
+    override val lyricsNothingOther = "Nenhuma outra versão encontrada"
+    override val camera = "Furo da câmera"
+    override val center = "Centro"
+    override val cameraSub = "Auto: posição informada pelo Android, às vezes errada. O relógio e a engrenagem ficam um de cada lado."
 }

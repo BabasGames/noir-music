@@ -104,7 +104,7 @@ object De : Strings {
     override val keepOn = "Bildschirm anlassen"
     override val keepOnPlaying = "Bei Musik"
     override val lowRefresh = "Reduzierte Bildwiederholrate"
-    override fun refreshInfo(current: Int, available: String) = "Aktuell: $current Hz · verfügbar: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Player: ${current} Hz · verfügbar: ${available} Hz"
     override val burnShift = "Pixelverschiebung"
     override val burnShiftSub = "Gegen Einbrennen: verschiebt die ganze Anzeige zufällig um ein paar Pixel"
     override val frequency = "Häufigkeit"
@@ -166,4 +166,14 @@ object De : Strings {
     override val tutoScreen2 = "Zum Schutz des AMOLED verschiebt sich die Anzeige ab und zu um ein paar Pixel. " +
         "Der Nachtmodus dimmt Text und Cover, und der Standby schaltet alles ab, wenn nichts läuft."
     override val tutoScreen3 = "Alles lässt sich über das Zahnrad oben rechts einstellen."
+
+    override val clockSide = "Position der Uhr"
+    override val sideLeft = "Links"
+    override val sideRight = "Rechts"
+    override val clockSideSub = "Auto: neben dem Kameraloch, auf der Seite mit Platz"
+    override val lyricsDisclaimer = "Songtexte stammen aus Community-Datenbanken: Sie können verschoben sein oder nicht passen. Tippe auf die Quelle unter dem Text, um die andere zu probieren."
+    override val lyricsNothingOther = "Keine andere Version gefunden"
+    override val camera = "Kameraloch"
+    override val center = "Mitte"
+    override val cameraSub = "Auto: von Android gemeldete Position, manchmal falsch. Uhr und Zahnrad kommen links und rechts davon."
 }

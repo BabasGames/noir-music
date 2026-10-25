@@ -104,7 +104,7 @@ object Ru : Strings {
     override val keepOn = "Не выключать"
     override val keepOnPlaying = "Когда играет"
     override val lowRefresh = "Пониженная частота обновления"
-    override fun refreshInfo(current: Int, available: String) = "Сейчас: $current Гц · доступно: $available Гц"
+    override fun refreshInfo(current: Int, available: String) = "Плеер: ${current} Гц · доступно: ${available} Гц"
     override val burnShift = "Периодический сдвиг"
     override val burnShiftSub = "Против выгорания: сдвигает всё изображение на несколько пикселей в случайную сторону"
     override val frequency = "Частота"
@@ -166,4 +166,14 @@ object Ru : Strings {
     override val tutoScreen2 = "Чтобы защитить AMOLED, изображение время от времени сдвигается на несколько пикселей. " +
         "Ночной режим приглушает текст и обложку, а режим ожидания гасит всё, когда ничего не играет."
     override val tutoScreen3 = "Всё настраивается значком шестерёнки в правом верхнем углу."
+
+    override val clockSide = "Положение часов"
+    override val sideLeft = "Слева"
+    override val sideRight = "Справа"
+    override val clockSideSub = "Авто: рядом с вырезом камеры, с той стороны, где есть место"
+    override val lyricsDisclaimer = "Тексты берутся из баз, которые ведёт сообщество: они могут отставать или не совпадать. Нажми на источник под текстом, чтобы попробовать другой."
+    override val lyricsNothingOther = "Другой версии не нашлось"
+    override val camera = "Вырез камеры"
+    override val center = "Центр"
+    override val cameraSub = "Авто: положение, которое сообщает Android, иногда неверное. Часы и шестерёнка встают по бокам."
 }

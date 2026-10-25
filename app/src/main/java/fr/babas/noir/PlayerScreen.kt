@@ -129,6 +129,19 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.material.icons.rounded.DirectionsCar
 import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.LocalStrings
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.toSize
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -161,7 +174,7 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
 private enum class Mode { NORMAL, LYRICS, CAR }
 
 /** Paroles telles que les voient les dispositions ; null quand la fonction est coupée dans les réglages. */
-private class LyricsUi(val open: Boolean, val state: Lyrics, val toggle: () -> Unit)
+private class LyricsUi(val open: Boolean, val state: LyricsCtl, val toggle: () -> Unit)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 private class SharedScopes(val layout: SharedTransitionScope, val content: AnimatedVisibilityScope)
@@ -233,7 +246,7 @@ fun PlayerScreen(
         )
         LikeFlash(likeFlash)
         when (sheet) {
-            SheetKind.SLEEP -> SleepSheet(sleep) { sheet = SheetKind.NONE }
+            SheetKind.SLEEP -> SleepSheet(sleep, np) { sheet = SheetKind.NONE }
             SheetKind.SOURCE -> SourceSheet(
                 sessions, np.controller?.packageName, np.appName,
                 onPick = onPickSession,
@@ -292,6 +305,38 @@ private fun Player(
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
+
+    // Trou de la caméra : en portrait, le haut n'est plus réservé ; l'en-tête se place à côté du trou
+    val view = LocalView.current
+    val density = LocalDensity.current
+    var frame by remember { mutableStateOf(Rect.Zero) }
+    var cutouts by remember { mutableStateOf(emptyList<android.graphics.Rect>()) }
+    val pad = if (landscape) PaddingValues(16.dp) else PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 36.dp)
+    val reported = cutouts.firstOrNull { it.top <= 0 && it.bottom > 0 }
+    // Position manuelle : même taille que ce qu'annonce Android (ou un trou typique), recentrée là où il est
+    val camera = if (prefs.cameraPos == Prefs.CAM_AUTO) reported else with(density) {
+        val w = reported?.width() ?: 36.dp.roundToPx()
+        val h = reported?.bottom ?: 40.dp.roundToPx()
+        val screen = view.width
+        val cx = when (prefs.cameraPos) {
+            Prefs.CAM_LEFT -> (screen * 0.12f).toInt()
+            Prefs.CAM_RIGHT -> (screen * 0.88f).toInt()
+            else -> screen / 2
+        }
+        android.graphics.Rect(cx - w / 2, 0, cx + w / 2, h)
+    }
+    val hole = if (landscape) null else camera?.let { c ->
+        with(density) {
+            val left = frame.left + 24.dp.toPx()
+            val top = frame.top + 14.dp.toPx()
+            val shiftMargin = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first.dp.toPx() else 0f
+            Hole(
+                Rect(c.left - left, c.top - top, c.right - left, c.bottom - top),
+                width = frame.width - 48.dp.toPx(),
+                margin = 6.dp.toPx() + shiftMargin,
+            )
+        }
+    }
     // Voiture : pas de paroles, elles attirent le regard
     val showLyrics = prefs.lyrics && prefs.lyricsOpen && !prefs.carMode
     val mode = when {
@@ -331,13 +376,24 @@ private fun Player(
                         dragY += amount.y
                     }
                 }
-                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .windowInsetsPadding(
+                    if (landscape) WindowInsets.safeDrawing
+                    else WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+                )
+                // Cadre avant décalage anti-marquage (la marge du trou en tient compte) ; le trou se lit ici,
+                // une fois les encarts du système connus (ils changent avec la rotation)
+                .onGloballyPositioned { c ->
+                    frame = Rect(c.positionInWindow(), c.size.toSize())
+                    val rects = view.rootWindowInsets?.displayCutout?.boundingRects.orEmpty()
+                    if (rects != cutouts) cutouts = rects
+                }
                 .offset {
                     val follow = if (abs(dragX) > abs(dragY)) (dragX * 0.3f).roundToInt() else 0
                     IntOffset(shift.x.roundToPx() + follow, shift.y.roundToPx())
                 }
-                .padding(if (landscape) 16.dp else 24.dp),
+                .padding(pad),
         ) {
+            CompositionLocalProvider(LocalHole provides hole) {
             SharedTransitionLayout(Modifier.fillMaxSize()) {
                 AnimatedContent(
                     mode,
@@ -351,6 +407,7 @@ private fun Player(
                             Header(
                                 np, prefs, landscape, sleep,
                                 compact = open,
+                                atTop = withGear,
                                 onOpenSettings = if (withGear) onOpenSettings else null,
                                 onClock = { onSheet(SheetKind.SLEEP) },
                                 onSource = { onSheet(SheetKind.SOURCE) },
@@ -363,6 +420,7 @@ private fun Player(
                         }
                     }
                 }
+            }
             }
         }
     }
@@ -403,7 +461,18 @@ private fun PortraitLayout(
                 Spacer(Modifier.height(40.dp))
                 Controls(np, prefs, lyr = lyr)
             }
-            SettingsButton(Modifier.align(Alignment.TopEnd), onOpenSettings)
+            val hole = LocalHole.current
+            val mirror = mirrorClock(prefs, hole)
+            val gearTop = hole?.let { h ->
+                with(LocalDensity.current) {
+                    val g = 48.dp.toPx()
+                    (if (mirror) h.pushDown(0f, g) else h.pushDown(h.width - g, h.width)).toDp()
+                }
+            } ?: 0.dp
+            SettingsButton(
+                Modifier.align(if (mirror) Alignment.TopStart else Alignment.TopEnd).padding(top = gearTop),
+                onOpenSettings,
+            )
         }
         return
     }
@@ -456,6 +525,22 @@ private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header
     }
 }
 
+/** Trou de la caméra en coordonnées du contenu (px), avec la largeur du contenu et une marge de sécurité. */
+class Hole(val rect: Rect, val width: Float, val margin: Float) {
+    /** Décalage vers le bas d'un élément posé en haut entre x0 et x1 : 0 s'il passe à côté du trou. */
+    fun pushDown(x0: Float, x1: Float): Float =
+        if (rect.bottom > 0f && x1 > rect.left - margin && x0 < rect.right + margin) rect.bottom + margin else 0f
+}
+
+val LocalHole = staticCompositionLocalOf<Hole?> { null }
+
+/** Heure à droite (roue à gauche) : réglage, ou en auto quand il y a plus de place à droite du trou. */
+private fun mirrorClock(prefs: Prefs, hole: Hole?): Boolean = when (prefs.clockSide) {
+    Prefs.SIDE_LEFT -> false
+    Prefs.SIDE_RIGHT -> true
+    else -> hole != null && hole.rect.bottom > 0f && hole.width - hole.rect.right > hole.rect.left
+}
+
 @Composable
 private fun Header(
     np: NowPlaying,
@@ -463,32 +548,87 @@ private fun Header(
     landscape: Boolean,
     sleep: SleepTimer,
     compact: Boolean,
+    atTop: Boolean,
     onOpenSettings: (() -> Unit)?,
     onClock: () -> Unit,
     onSource: () -> Unit,
 ) {
     val pal = LocalPalette.current
-    Row(Modifier.fillMaxWidth(), verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top) {
-        // Écran paroles : la pochette devient une vignette à côté de l'heure
-        if (compact && prefs.showArt) {
-            Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(if (landscape) 64.dp else 76.dp))
+    val density = LocalDensity.current
+    val anyHole = LocalHole.current
+    val mirror = mirrorClock(prefs, anyHole)
+    // Le trou ne gêne que l'en-tête du haut de l'écran
+    val hole = if (atTop) anyHole else null
+    val baseSp = when (prefs.clockSize) {
+        Prefs.CLOCK_BIG -> if (compact) 48f else if (landscape) 72f else 88f
+        Prefs.CLOCK_MEDIUM -> if (compact) 34f else 44f
+        else -> 0f
+    }
+    val style = rememberClockStyle(prefs)
+    val time = rememberFormatted(clockPattern(prefs), LocalLang.current.locale)
+    val thumb = compact && prefs.showArt
+    val thumbSize = if (landscape) 64.dp else 76.dp
+
+    // L'heure monte à côté du trou en rétrécissant juste ce qu'il faut ; si elle devait trop
+    // rétrécir, tout l'en-tête passe sous le trou
+    val measurer = rememberTextMeasurer()
+    var clockSp = baseSp
+    var headerTop = 0f
+    var gearTop = 0f
+    if (hole != null && hole.rect.bottom > 0f) with(density) {
+        if (baseSp > 0f) {
+            // Chiffres remplacés par des 0 : la taille ne saute pas d'une minute à l'autre
+            val w = measurer.measure(
+                time.replace(Regex("\\d"), "0"),
+                TextStyle(fontSize = baseSp.sp, fontFamily = style.family, fontWeight = style.weight),
+            ).size.width
+            val side = if (thumb) (thumbSize + 16.dp).toPx() else 0f
+            val free = (if (mirror) hole.width - hole.rect.right else hole.rect.left) - hole.margin - side
+            val fit = if (w > 0) (free / w).coerceAtMost(1f) else 1f
+            if (fit >= 0.6f) clockSp = baseSp * fit else headerTop = hole.rect.bottom + hole.margin
+        } else {
+            headerTop = hole.rect.bottom + hole.margin
+        }
+        if (headerTop == 0f) {
+            val g = 48.dp.toPx()
+            gearTop = if (mirror) hole.pushDown(0f, g) else hole.pushDown(hole.width - g, hole.width)
+        }
+    }
+
+    val gear: @Composable () -> Unit = {
+        if (onOpenSettings != null) {
+            SettingsButton(Modifier.padding(top = with(density) { gearTop.toDp() }), onOpenSettings)
+        }
+    }
+    val thumbnail: @Composable () -> Unit = {
+        Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(thumbSize))
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(top = with(density) { headerTop.toDp() }),
+        verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top,
+    ) {
+        if (mirror) {
+            gear()
+            Spacer(Modifier.weight(1f))
+        } else if (thumb) {
+            // Écran paroles : la pochette devient une vignette à côté de l'heure
+            thumbnail()
             Spacer(Modifier.width(16.dp))
         }
-        Column(Modifier.weight(1f)) {
-            val clockSp = when (prefs.clockSize) {
-                Prefs.CLOCK_BIG -> if (compact) 48f else if (landscape) 72f else 88f
-                Prefs.CLOCK_MEDIUM -> if (compact) 34f else 44f
-                else -> 0f
-            }
+        Column(
+            if (mirror) Modifier else Modifier.weight(1f),
+            horizontalAlignment = if (mirror) Alignment.End else Alignment.Start,
+        ) {
             if (clockSp > 0f) {
-                val style = rememberClockStyle(prefs)
                 Text(
-                    rememberFormatted(clockPattern(prefs), LocalLang.current.locale),
+                    time,
                     fontSize = clockSp.sp,
                     lineHeight = (clockSp * 1.05f).sp,
                     fontFamily = style.family,
                     fontWeight = style.weight,
                     color = pal.fg,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier
                         .shared("clock", scale = true)
                         .clip(RoundedCornerShape(8.dp))
@@ -508,7 +648,14 @@ private fun Header(
                 )
             }
         }
-        if (onOpenSettings != null) SettingsButton(Modifier, onOpenSettings)
+        if (mirror) {
+            if (thumb) {
+                Spacer(Modifier.width(16.dp))
+                thumbnail()
+            }
+        } else {
+            gear()
+        }
     }
 }
 
@@ -563,7 +710,7 @@ private fun rememberBattery(): Pair<Int, Boolean> {
 @Composable
 private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
     Box(
-        modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick),
+        modifier.shared("gear").size(48.dp).clip(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Settings, LocalStrings.current.settings, tint = LocalPalette.current.faint, modifier = Modifier.size(26.dp))
@@ -573,6 +720,12 @@ private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
 /** Titre, progression, boutons, volume : le bloc « contrôles ». */
 @Composable
 private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false, lyr: LyricsUi? = null) {
+    // Un seul bloc qui glisse entre l'écran normal et l'écran paroles, comme l'heure et la pochette
+    Column(Modifier.shared("controls")) { ControlsContent(np, prefs, compact, lyr) }
+}
+
+@Composable
+private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: Boolean, lyr: LyricsUi?) {
     val str = LocalStrings.current
     val pal = LocalPalette.current
     val tc = np.controller?.transportControls
@@ -658,17 +811,33 @@ private fun CarButton(prefs: Prefs) {
 @Composable
 private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: @Composable (Boolean) -> Unit) {
     if (landscape) {
+        // Pochette à gauche (ou à droite si inversée) ; à côté, une colonne : heure, titre, et une seule
+        // rangée voiture · ◀ · ▶ · ▶▶ · ♥ pour tenir dans la hauteur
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            val art: @Composable () -> Unit = {
+                Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
+            }
+            val swap = prefs.swapArt
+            if (prefs.showArt && !swap) {
+                art()
+                Spacer(Modifier.width(28.dp))
+            }
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
                 header(true)
                 Column {
-                    CarTitle(np, prefs, titleSp = 34f, artistSp = 22f, maxLines = 1)
+                    CarTitle(np, prefs, titleSp = 30f, artistSp = 20f, maxLines = 1)
                     if (prefs.showProgress) Progress(np)
                 }
-                CarFooter(np, prefs)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    CarButton(prefs)
+                    CarButtons(np, Modifier.weight(1f), side = 60.dp, main = 88.dp)
+                    LikeButton(np)
+                }
             }
-            Spacer(Modifier.width(24.dp))
-            CarButtons(np, Modifier.weight(1f), side = 72.dp, main = 112.dp)
+            if (prefs.showArt && swap) {
+                Spacer(Modifier.width(28.dp))
+                art()
+            }
         }
     } else {
         Column(Modifier.fillMaxSize()) {
@@ -748,12 +917,19 @@ private fun LyricsButton(lyr: LyricsUi) {
     }
 }
 
+/** Paroles du morceau en cours, et de quoi essayer l'autre source quand elles sont fausses ou décalées. */
+private class LyricsCtl(val value: Lyrics, val busy: Boolean, val nothingOther: Boolean, val switch: () -> Unit)
+
 @Composable
-private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boolean, allowMetered: Boolean): Lyrics {
+private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boolean, allowMetered: Boolean): LyricsCtl {
     val latest by rememberUpdatedState(np)
-    val state by produceState<Lyrics>(Lyrics.Loading, repo, np.title, np.artist, active, allowMetered) {
+    var value by remember { mutableStateOf<Lyrics>(Lyrics.Loading) }
+    var busy by remember { mutableStateOf(false) }
+    var nothingOther by remember { mutableStateOf(false) }
+    LaunchedEffect(repo, np.title, np.artist, active, allowMetered) {
         value = Lyrics.Loading
-        if (!active || np.title.isEmpty()) return@produceState
+        nothingOther = false
+        if (!active || np.title.isEmpty()) return@LaunchedEffect
         delay(300) // morceaux passés à la chaîne : une seule requête, pour celui où l'on s'arrête
         while (true) {
             value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
@@ -761,22 +937,62 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
             delay(30_000)
         }
     }
-    return state
+    val scope = rememberCoroutineScope()
+    val switch = {
+        val source = (value as? Lyrics.Synced)?.source ?: (value as? Lyrics.Plain)?.source
+        if (source != null && !busy) scope.launch {
+            busy = true
+            val track = latest.title
+            val other = repo.loadOther(latest.title, latest.artist, latest.durationMs, source, allowMetered)
+            busy = false
+            if (latest.title != track) return@launch // morceau changé entre-temps
+            if (other != null) {
+                value = other
+            } else {
+                nothingOther = true
+                delay(3000)
+                nothingOther = false
+            }
+        }
+        Unit
+    }
+    return LyricsCtl(value, busy, nothingOther, switch)
 }
 
 @Composable
-private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: Modifier) {
+private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: Modifier) {
     val str = LocalStrings.current
     val pal = LocalPalette.current
-    when (lyrics) {
-        is Lyrics.Synced -> {
-            val texts = remember(lyrics) { lyrics.lines.map { it.text } }
-            LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), highlight = true, prefs.lyricsScale, modifier)
+    when (val lyrics = ctl.value) {
+        is Lyrics.Synced, is Lyrics.Plain -> Column(modifier) {
+            val area = Modifier.weight(1f).fillMaxWidth()
+            if (lyrics is Lyrics.Synced) {
+                val texts = remember(lyrics) { lyrics.lines.map { it.text } }
+                LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, prefs.lyricsScale, area)
+            } else if (lyrics is Lyrics.Plain) {
+                // Sans horodatage : défilement estimé au prorata de la durée, et libre au doigt
+                LyricLines(
+                    lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), synced = false, prefs.lyricsScale, area,
+                )
+            }
+            // Source discrète sur sa propre ligne sous les paroles (posée dessus, elle masquait du texte) ;
+            // la toucher essaie l'autre (paroles décalées ou fausses)
+            val source = (lyrics as? Lyrics.Synced)?.source ?: (lyrics as Lyrics.Plain).source
+            Text(
+                when {
+                    ctl.busy -> "…"
+                    ctl.nothingOther -> str.lyricsNothingOther
+                    else -> "$source  ⇄"
+                },
+                fontSize = 12.sp,
+                color = pal.faint,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable(onClick = ctl.switch)
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
         }
-        // Sans horodatage : défilement estimé au prorata de la durée, sans ligne mise en avant
-        is Lyrics.Plain -> LyricLines(
-            lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), highlight = false, prefs.lyricsScale, modifier,
-        )
         else -> Box(modifier, contentAlignment = Alignment.Center) {
             val msg = when {
                 np.title.isEmpty() -> ""
@@ -793,16 +1009,24 @@ private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: 
 }
 
 @Composable
-private fun LyricLines(lines: List<String>, current: Int, highlight: Boolean, scale: Float, modifier: Modifier) {
+private fun LyricLines(lines: List<String>, current: Int, synced: Boolean, scale: Float, modifier: Modifier) {
     val pal = LocalPalette.current
+    val highlight = synced
     val list = rememberLazyListState()
+    // Non synchronisées : on peut faire défiler au doigt ; le suivi automatique attend alors 8 s
+    val dragged by list.interactionSource.collectIsDraggedAsState()
+    var touchedAt by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(dragged) { if (dragged) touchedAt = SystemClock.elapsedRealtime() }
     BoxWithConstraints(modifier) {
         // La ligne en cours se cale au tiers de la hauteur : on voit un peu de passé, surtout ce qui vient
         val top = maxHeight * 0.3f
-        LaunchedEffect(current) { list.animateScrollToItem(current.coerceAtLeast(0)) }
+        LaunchedEffect(current) {
+            if (SystemClock.elapsedRealtime() - touchedAt > 8000) list.animateScrollToItem(current.coerceAtLeast(0))
+        }
         LazyColumn(
             state = list,
-            userScrollEnabled = false, // le geste vertical sert à ouvrir/fermer les paroles
+            // Synchronisées : verrouillées, le geste vertical sert à ouvrir/fermer les paroles
+            userScrollEnabled = !synced,
             contentPadding = PaddingValues(top = top, bottom = maxHeight - top),
             modifier = Modifier
                 .fillMaxSize()

@@ -108,7 +108,7 @@ fun SheetItem(
 }
 
 @Composable
-fun SleepSheet(timer: SleepTimer, onDismiss: () -> Unit) {
+fun SleepSheet(timer: SleepTimer, np: NowPlaying, onDismiss: () -> Unit) {
     val s = LocalStrings.current
     Sheet(s.sleepTimerTitle, onDismiss) {
         listOf(15, 30, 45, 60).forEach { min ->
@@ -118,7 +118,7 @@ fun SleepSheet(timer: SleepTimer, onDismiss: () -> Unit) {
             }
         }
         SheetItem(s.endOfTrack, selected = timer.endOfTrack) {
-            timer.startEndOfTrack()
+            timer.startEndOfTrack(np)
             onDismiss()
         }
         if (timer.active) {

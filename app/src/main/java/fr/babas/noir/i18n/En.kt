@@ -104,7 +104,7 @@ object En : Strings {
     override val keepOn = "Keep screen on"
     override val keepOnPlaying = "When playing"
     override val lowRefresh = "Lower refresh rate"
-    override fun refreshInfo(current: Int, available: String) = "Current: $current Hz · available: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Player: ${current} Hz · available: ${available} Hz"
     override val burnShift = "Pixel shift"
     override val burnShiftSub = "Burn-in protection: randomly moves the whole display by a few pixels"
     override val frequency = "Frequency"
@@ -166,4 +166,14 @@ object En : Strings {
     override val tutoScreen2 = "To protect the AMOLED, the display shifts by a few pixels every now and then. " +
         "Night mode dims the text and album art, and standby turns everything off when nothing's playing."
     override val tutoScreen3 = "You can set everything up with the gear icon, at the top right."
+
+    override val clockSide = "Clock position"
+    override val sideLeft = "Left"
+    override val sideRight = "Right"
+    override val clockSideSub = "Auto: next to the camera hole, on whichever side has room"
+    override val lyricsDisclaimer = "Lyrics come from community databases: they may be out of sync or not match. Tap the source under the lyrics to try the other one."
+    override val lyricsNothingOther = "No other version found"
+    override val camera = "Camera hole"
+    override val center = "Center"
+    override val cameraSub = "Auto: position reported by Android, sometimes wrong. The clock and the gear go on either side."
 }

@@ -104,7 +104,7 @@ object Nl : Strings {
     override val keepOn = "Altijd aan"
     override val keepOnPlaying = "Bij afspelen"
     override val lowRefresh = "Lagere verversingssnelheid"
-    override fun refreshInfo(current: Int, available: String) = "Huidig: $current Hz · beschikbaar: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Speler: ${current} Hz · beschikbaar: ${available} Hz"
     override val burnShift = "Periodieke verschuiving"
     override val burnShiftSub = "Tegen inbranden: verschuift het hele beeld willekeurig een paar pixels"
     override val frequency = "Frequentie"
@@ -166,4 +166,14 @@ object Nl : Strings {
     override val tutoScreen2 = "Om het AMOLED-scherm te beschermen, verschuift het beeld af en toe een paar pixels. " +
         "De nachtmodus dimt de tekst en de hoes, en stand-by zet alles uit als er niets speelt."
     override val tutoScreen3 = "Je stelt alles in via het tandwiel rechtsboven."
+
+    override val clockSide = "Positie van de klok"
+    override val sideLeft = "Links"
+    override val sideRight = "Rechts"
+    override val clockSideSub = "Auto: naast het cameragaatje, aan de kant met ruimte"
+    override val lyricsDisclaimer = "Songteksten komen uit community-databases: ze kunnen verschoven zijn of niet kloppen. Tik op de bron onder de tekst om de andere te proberen."
+    override val lyricsNothingOther = "Geen andere versie gevonden"
+    override val camera = "Cameragaatje"
+    override val center = "Midden"
+    override val cameraSub = "Auto: positie die Android doorgeeft, soms verkeerd. De klok en het tandwiel komen aan weerszijden."
 }

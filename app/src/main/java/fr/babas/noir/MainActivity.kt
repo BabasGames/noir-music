@@ -17,6 +17,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
+import android.hardware.display.DisplayManager
+import android.os.Handler
+import android.os.Looper
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.LaunchedEffect
 import fr.babas.noir.i18n.Lang
 import fr.babas.noir.i18n.LocalLang
@@ -68,8 +74,11 @@ class MainActivity : ComponentActivity() {
                     prefs.customBrightness -> prefs.brightness
                     else -> null
                 }
-                LaunchedEffect(keepOn, prefs.lowRefresh, brightness) {
-                    applyWindow(keepOn, prefs.lowRefresh, brightness)
+                // Fréquence réduite seulement sur le lecteur : tuto et réglages défilent à la fréquence normale
+                val onPlayer = prefs.tutorialDone && hasAccess && !showSettings
+                val lowRefresh = prefs.lowRefresh && onPlayer
+                LaunchedEffect(keepOn, lowRefresh, brightness) {
+                    applyWindow(keepOn, lowRefresh, brightness)
                 }
                 LaunchedEffect(prefs.orientation) {
                     requestedOrientation = when (prefs.orientation) {
@@ -90,7 +99,10 @@ class MainActivity : ComponentActivity() {
                         BackHandler { showSettings = false }
                         SettingsScreen(
                             prefs = prefs,
-                            displayInfo = displayInfo(),
+                            // Ce que le lecteur utilisera (les réglages, eux, tournent toujours à pleine fréquence)
+                            displayInfo = rememberDisplayInfo().let { (cur, rates) ->
+                                (if (prefs.lowRefresh) lowestMode()?.refreshRate?.let(Math::round) ?: cur else cur) to rates
+                            },
                             candidateApps = remember { media.candidateApps() },
                             onOpenAccess = ::openListenerSettings,
                             onTutorial = {
@@ -190,11 +202,29 @@ class MainActivity : ComponentActivity() {
             .minByOrNull { it.refreshRate }
     }
 
-    /** Fréquence actuelle et liste des fréquences possibles (« 30, 60, 90, 120 »). */
-    private fun displayInfo(): Pair<Int, String> {
-        val d = currentDisplay()
-        val rates = d.supportedModes.map { Math.round(it.refreshRate) }.distinct().sorted()
-        return Math.round(d.refreshRate) to rates.joinToString(", ")
+    /**
+     * Fréquence actuelle et liste des fréquences possibles (« 30, 60, 90, 120 »).
+     * Suivie en direct : le changement de mode arrive après coup, une lecture unique affichait l'ancienne valeur.
+     */
+    @Composable
+    private fun rememberDisplayInfo(): Pair<Int, String> {
+        val rates = remember {
+            currentDisplay().supportedModes.map { Math.round(it.refreshRate) }.distinct().sorted().joinToString(", ")
+        }
+        var current by remember { mutableIntStateOf(Math.round(currentDisplay().refreshRate)) }
+        DisposableEffect(Unit) {
+            val dm = getSystemService(DisplayManager::class.java)
+            val listener = object : DisplayManager.DisplayListener {
+                override fun onDisplayChanged(id: Int) {
+                    current = Math.round(currentDisplay().refreshRate)
+                }
+                override fun onDisplayAdded(id: Int) {}
+                override fun onDisplayRemoved(id: Int) {}
+            }
+            dm.registerDisplayListener(listener, Handler(Looper.getMainLooper()))
+            onDispose { dm.unregisterDisplayListener(listener) }
+        }
+        return current to rates
     }
 }
 

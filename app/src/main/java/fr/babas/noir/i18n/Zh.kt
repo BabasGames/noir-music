@@ -104,7 +104,7 @@ object Zh : Strings {
     override val keepOn = "屏幕常亮"
     override val keepOnPlaying = "播放时"
     override val lowRefresh = "降低刷新率"
-    override fun refreshInfo(current: Int, available: String) = "当前：${current} Hz · 可用：${available} Hz"
+    override fun refreshInfo(current: Int, available: String) = "播放器：${current} Hz · 可用：${available} Hz"
     override val burnShift = "定期偏移画面"
     override val burnShiftSub = "防烧屏：随机将整个画面移动几个像素"
     override val frequency = "频率"
@@ -166,4 +166,14 @@ object Zh : Strings {
     override val tutoScreen2 = "为保护 AMOLED 屏幕，画面会不时偏移几个像素。" +
         "夜间模式会调暗文字和封面，无播放时待机功能会关闭全部显示。"
     override val tutoScreen3 = "所有选项都可通过右上角的齿轮图标设置。"
+
+    override val clockSide = "时钟位置"
+    override val sideLeft = "左"
+    override val sideRight = "右"
+    override val clockSideSub = "自动：放在摄像头开孔旁有空间的一侧"
+    override val lyricsDisclaimer = "歌词来自社区数据库，可能不同步或与歌曲不符。点按歌词下方的来源即可尝试另一个。"
+    override val lyricsNothingOther = "未找到其他版本"
+    override val camera = "摄像头开孔"
+    override val center = "居中"
+    override val cameraSub = "自动：使用 Android 报告的位置，有时不准。时钟和齿轮放在两侧。"
 }

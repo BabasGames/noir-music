@@ -104,7 +104,7 @@ object Tr : Strings {
     override val keepOn = "Hep açık"
     override val keepOnPlaying = "Çalarken"
     override val lowRefresh = "Düşük yenileme hızı"
-    override fun refreshInfo(current: Int, available: String) = "Şu an: $current Hz · kullanılabilir: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Oynatıcı: ${current} Hz · mevcut: ${available} Hz"
     override val burnShift = "Periyodik kaydırma"
     override val burnShiftSub = "Ekran yanmasına karşı: tüm görüntüyü rastgele birkaç piksel kaydırır"
     override val frequency = "Sıklık"
@@ -166,4 +166,14 @@ object Tr : Strings {
     override val tutoScreen2 = "AMOLED ekranı korumak için görüntü arada bir birkaç piksel kayar. " +
         "Gece modu metni ve kapağı soldurur, bekleme modu da hiçbir şey çalmıyorken her şeyi kapatır."
     override val tutoScreen3 = "Her şeyi sağ üstteki dişli simgesinden ayarlayabilirsin."
+
+    override val clockSide = "Saat konumu"
+    override val sideLeft = "Sol"
+    override val sideRight = "Sağ"
+    override val clockSideSub = "Otomatik: kamera deliğinin yanında, yer olan tarafta"
+    override val lyricsDisclaimer = "Şarkı sözleri topluluk veritabanlarından gelir: kayık olabilir ya da uyuşmayabilir. Diğerini denemek için sözlerin altındaki kaynağa dokun."
+    override val lyricsNothingOther = "Başka sürüm bulunamadı"
+    override val camera = "Kamera deliği"
+    override val center = "Orta"
+    override val cameraSub = "Otomatik: Android'in bildirdiği konum, bazen yanlış. Saat ve dişli iki yanına yerleşir."
 }

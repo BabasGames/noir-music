@@ -104,7 +104,7 @@ object Ko : Strings {
     override val keepOn = "화면 항상 켜기"
     override val keepOnPlaying = "재생 중"
     override val lowRefresh = "주사율 낮추기"
-    override fun refreshInfo(current: Int, available: String) = "현재: ${current}Hz · 사용 가능: ${available}Hz"
+    override fun refreshInfo(current: Int, available: String) = "플레이어: ${current} Hz · 지원: ${available} Hz"
     override val burnShift = "주기적 화면 이동"
     override val burnShiftSub = "번인 방지: 전체 화면을 몇 픽셀씩 무작위로 이동"
     override val frequency = "빈도"
@@ -166,4 +166,14 @@ object Ko : Strings {
     override val tutoScreen2 = "AMOLED 화면을 보호하기 위해 화면이 가끔 몇 픽셀씩 이동해요. " +
         "야간 모드는 글자와 앨범 아트를 어둡게 하고, 재생 중인 음악이 없으면 대기 모드가 화면을 모두 꺼요."
     override val tutoScreen3 = "모든 설정은 오른쪽 상단의 톱니바퀴에서 바꿀 수 있어요."
+
+    override val clockSide = "시계 위치"
+    override val sideLeft = "왼쪽"
+    override val sideRight = "오른쪽"
+    override val clockSideSub = "자동: 카메라 구멍 옆, 공간이 있는 쪽에 배치"
+    override val lyricsDisclaimer = "가사는 커뮤니티 데이터베이스에서 가져와요. 싱크가 맞지 않거나 곡과 다를 수 있어요. 가사 아래의 출처를 탭하면 다른 쪽을 시도해요."
+    override val lyricsNothingOther = "다른 버전을 찾지 못했어요"
+    override val camera = "카메라 구멍"
+    override val center = "가운데"
+    override val cameraSub = "자동: Android가 알려 주는 위치로, 가끔 틀려요. 시계와 톱니바퀴를 양옆에 배치해요."
 }

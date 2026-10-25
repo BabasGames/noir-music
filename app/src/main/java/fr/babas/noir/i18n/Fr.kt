@@ -104,7 +104,7 @@ object Fr : Strings {
     override val keepOn = "Toujours allumé"
     override val keepOnPlaying = "En lecture"
     override val lowRefresh = "Rafraîchissement réduit"
-    override fun refreshInfo(current: Int, available: String) = "Actuel : $current Hz · disponibles : $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Lecteur : ${current} Hz · disponibles : ${available} Hz"
     override val burnShift = "Décalage périodique"
     override val burnShiftSub = "Anti-marquage : déplace tout l'affichage de quelques pixels, au hasard"
     override val frequency = "Fréquence"
@@ -166,4 +166,14 @@ object Fr : Strings {
     override val tutoScreen2 = "Pour protéger l'AMOLED, l'affichage se décale de quelques pixels de temps en temps. " +
         "Le mode nuit atténue le texte et la pochette, et la veille éteint tout quand rien ne joue."
     override val tutoScreen3 = "Tout se règle avec la roue dentée, en haut à droite."
+
+    override val clockSide = "Position de l'heure"
+    override val sideLeft = "Gauche"
+    override val sideRight = "Droite"
+    override val clockSideSub = "Auto : à côté du trou de la caméra, du côté où il y a la place"
+    override val lyricsDisclaimer = "Les paroles viennent de bases communautaires : elles peuvent être décalées ou ne pas correspondre. Touche la source sous les paroles pour essayer l'autre."
+    override val lyricsNothingOther = "Pas d'autre version trouvée"
+    override val camera = "Trou de la caméra"
+    override val center = "Centre"
+    override val cameraSub = "Auto : position donnée par Android, parfois fausse. L'heure et la roue se placent de chaque côté."
 }

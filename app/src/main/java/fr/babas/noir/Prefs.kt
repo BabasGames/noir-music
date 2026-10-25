@@ -29,6 +29,9 @@ class Prefs(context: Context) {
     var clockFontName by string("clock_font_name", "")
     var clockFormat by int("clock_format", FORMAT_AUTO)
     var dateFormat by int("date_format", DATE_SHORT)
+    var clockSide by int("clock_side", SIDE_AUTO)
+    /** Trou de la caméra : position donnée par Android, ou choisie à la main quand Android se trompe */
+    var cameraPos by int("camera_pos", CAM_AUTO)
     var textScale by float("text_scale", 1f)
     var showDate by bool("show_date", true)
     var showSource by bool("show_source", true)
@@ -108,6 +111,15 @@ class Prefs(context: Context) {
         const val FORMAT_AUTO = 0
         const val FORMAT_24 = 1
         const val FORMAT_12 = 2
+
+        const val CAM_AUTO = 0
+        const val CAM_LEFT = 1
+        const val CAM_CENTER = 2
+        const val CAM_RIGHT = 3
+
+        const val SIDE_AUTO = 0
+        const val SIDE_LEFT = 1
+        const val SIDE_RIGHT = 2
 
         const val DATE_SHORT = 0
         const val DATE_LONG = 1

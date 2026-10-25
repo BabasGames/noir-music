@@ -20,8 +20,8 @@ data class LyricLine(val timeMs: Long, val text: String)
 
 sealed interface Lyrics {
     data object Loading : Lyrics
-    data class Synced(val lines: List<LyricLine>) : Lyrics
-    data class Plain(val lines: List<String>) : Lyrics
+    data class Synced(val lines: List<LyricLine>, val source: String) : Lyrics
+    data class Plain(val lines: List<String>, val source: String) : Lyrics
     data object Instrumental : Lyrics
     data object NotFound : Lyrics
     /** Aucun réseau du tout */
@@ -41,11 +41,11 @@ class LyricsRepository(context: Context) {
     /** Introuvables pendant cette session : ne pas réinterroger à chaque ouverture */
     private val missing = mutableSetOf<String>()
 
-    private val sources = listOf("LRCLIB" to ::fromLrclib, "NetEase" to ::fromNetease)
+    private val sources = listOf(LRCLIB to ::fromLrclib, NETEASE_NAME to ::fromNetease)
 
     suspend fun load(title: String, artist: String, durationMs: Long, allowMetered: Boolean): Lyrics =
         withContext(Dispatchers.IO) {
-            val key = sha1("${artist.lowercase()}\n${title.lowercase()}")
+            val key = key(title, artist)
             val file = File(dir, "$key.json")
             if (file.exists()) {
                 try {
@@ -55,8 +55,9 @@ class LyricsRepository(context: Context) {
                 }
             }
             if (key in missing) return@withContext Lyrics.NotFound
-            if (cm.activeNetwork == null) return@withContext Lyrics.Offline
-            if (cm.isActiveNetworkMetered && !allowMetered) return@withContext Lyrics.MobileData
+            if (!networkAllowed(allowMetered)) {
+                return@withContext if (cm.activeNetwork == null) Lyrics.Offline else Lyrics.MobileData
+            }
 
             var failed = false
             for ((name, source) in sources) {
@@ -68,7 +69,7 @@ class LyricsRepository(context: Context) {
                     null
                 } ?: continue
                 dir.mkdirs()
-                file.writeText(found.toString())
+                file.writeText(found.put("source", name).toString())
                 return@withContext parse(found)
             }
             // Une source en panne a peut-être les paroles : ne pas mémoriser l'échec, on réessaiera
@@ -76,6 +77,33 @@ class LyricsRepository(context: Context) {
             missing += key
             Lyrics.NotFound
         }
+
+    /**
+     * Paroles décalées ou fausses : essaie les autres sources pour ce morceau. La trouvaille remplace
+     * le cache, donc le choix est retenu. null si aucune autre source n'a mieux.
+     */
+    suspend fun loadOther(title: String, artist: String, durationMs: Long, current: String, allowMetered: Boolean): Lyrics? =
+        withContext(Dispatchers.IO) {
+            if (!networkAllowed(allowMetered)) return@withContext null
+            for ((name, source) in sources) {
+                if (name == current) continue
+                val found = try {
+                    source(title, artist, durationMs)
+                } catch (e: Exception) {
+                    Log.w(TAG, "$name : échec pour « $artist – $title »", e)
+                    null
+                } ?: continue
+                dir.mkdirs()
+                File(dir, "${key(title, artist)}.json").writeText(found.put("source", name).toString())
+                return@withContext parse(found)
+            }
+            null
+        }
+
+    private fun networkAllowed(allowMetered: Boolean) =
+        cm.activeNetwork != null && (allowMetered || !cm.isActiveNetworkMetered)
+
+    private fun key(title: String, artist: String) = sha1("${artist.lowercase()}\n${title.lowercase()}")
 
     // ── LRCLIB ──────────────────────────────────────────────────────────────
 
@@ -125,7 +153,7 @@ class LyricsRepository(context: Context) {
         if (lrc.isBlank()) return null
         if ("纯音乐" in lrc) return JSONObject().put("instrumental", true) // « musique pure, profitez-en »
         val synced = parseLrc(lrc).any { it.timeMs > 0 && it.text.isNotEmpty() }
-        return JSONObject().put("source", "netease").put(if (synced) "syncedLyrics" else "plainLyrics", lrc)
+        return JSONObject().put(if (synced) "syncedLyrics" else "plainLyrics", lrc)
     }
 
     // ── Commun ──────────────────────────────────────────────────────────────
@@ -152,14 +180,22 @@ class LyricsRepository(context: Context) {
         error("inatteignable")
     }
 
-    private fun parse(o: JSONObject): Lyrics = when {
-        o.optBoolean("instrumental") -> Lyrics.Instrumental
-        o.hasText("syncedLyrics") -> parseLrc(o.getString("syncedLyrics"))
-            .takeIf { it.isNotEmpty() }?.let(Lyrics::Synced) ?: Lyrics.NotFound
-        o.hasText("plainLyrics") -> Lyrics.Plain(
-            o.getString("plainLyrics").lines().map { it.replace(STAMPS, "").trim() }.dropWhile { it.isEmpty() },
-        )
-        else -> Lyrics.NotFound
+    private fun parse(o: JSONObject): Lyrics {
+        // Anciennes entrées du cache : pas de champ « source », elles venaient toutes de LRCLIB
+        val source = when (o.optString("source")) {
+            "", LRCLIB -> LRCLIB
+            else -> NETEASE_NAME // y compris l'ancien « netease » en minuscules
+        }
+        return when {
+            o.optBoolean("instrumental") -> Lyrics.Instrumental
+            o.hasText("syncedLyrics") -> parseLrc(o.getString("syncedLyrics"))
+                .takeIf { it.isNotEmpty() }?.let { Lyrics.Synced(it, source) } ?: Lyrics.NotFound
+            o.hasText("plainLyrics") -> Lyrics.Plain(
+                o.getString("plainLyrics").lines().map { it.replace(STAMPS, "").trim() }.dropWhile { it.isEmpty() },
+                source,
+            )
+            else -> Lyrics.NotFound
+        }
     }
 
     private fun JSONArray.objects() = (0 until length()).mapNotNull { optJSONObject(it) }
@@ -173,6 +209,8 @@ class LyricsRepository(context: Context) {
 
     companion object {
         private const val TAG = "NoirParoles"
+        const val LRCLIB = "LRCLIB"
+        const val NETEASE_NAME = "NetEase"
         private val NETEASE = mapOf("User-Agent" to "Mozilla/5.0", "Referer" to "https://music.163.com")
         private val STAMP = Regex("""^\[(\d+):(\d{1,2}(?:[.:]\d{1,3})?)]""")
         private val STAMPS = Regex("""^(\[[^]]*])+""")

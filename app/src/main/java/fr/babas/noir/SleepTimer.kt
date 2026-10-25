@@ -17,6 +17,8 @@ class SleepTimer {
         private set
     var endOfTrack by mutableStateOf(false)
         private set
+    /** Morceau en cours quand « fin du morceau » a été choisi */
+    private var armedTrack: String? = null
 
     val active get() = endAt != null || endOfTrack
 
@@ -25,14 +27,21 @@ class SleepTimer {
         endOfTrack = false
     }
 
-    fun startEndOfTrack() {
+    fun startEndOfTrack(np: NowPlaying) {
         endAt = null
         endOfTrack = true
+        armedTrack = trackKey(np)
     }
+
+    /** Le morceau a changé depuis l'armement : la fin est passée sans qu'on ait pu mettre en pause. */
+    fun trackChanged(np: NowPlaying) = armedTrack != null && trackKey(np) != armedTrack
+
+    private fun trackKey(np: NowPlaying) = "${np.controller?.packageName}|${np.artist}|${np.title}"
 
     fun cancel() {
         endAt = null
         endOfTrack = false
+        armedTrack = null
     }
 }
 
@@ -42,6 +51,13 @@ fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
     LaunchedEffect(timer.endAt, timer.endOfTrack, np) {
         val tc = np.controller?.transportControls ?: return@LaunchedEffect
         val end = timer.endAt
+        // Filet de sécurité : l'appli a enchaîné avant notre pause (fondu enchaîné, position mal
+        // annoncée…) ; on coupe aussitôt au début du morceau suivant plutôt que jamais
+        if (timer.endOfTrack && timer.trackChanged(np)) {
+            tc.pause()
+            timer.cancel()
+            return@LaunchedEffect
+        }
         val wait = when {
             end != null -> end - SystemClock.elapsedRealtime()
             // Un peu avant la toute fin, sinon le morceau suivant a le temps de démarrer

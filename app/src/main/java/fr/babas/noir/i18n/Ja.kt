@@ -104,7 +104,7 @@ object Ja : Strings {
     override val keepOn = "画面を常にオン"
     override val keepOnPlaying = "再生中"
     override val lowRefresh = "リフレッシュレートを下げる"
-    override fun refreshInfo(current: Int, available: String) = "現在：${current} Hz · 利用可能：${available} Hz"
+    override fun refreshInfo(current: Int, available: String) = "プレーヤー：${current} Hz · 対応：${available} Hz"
     override val burnShift = "表示位置の定期移動"
     override val burnShiftSub = "焼き付き防止：表示全体を数ピクセルずつランダムに移動します"
     override val frequency = "頻度"
@@ -166,4 +166,14 @@ object Ja : Strings {
     override val tutoScreen2 = "AMOLED を保護するため、表示位置がときどき数ピクセルずれます。" +
         "夜間モードでは文字とアートが暗くなり、何も再生していない時は待機画面で表示がすべて消えます。"
     override val tutoScreen3 = "設定はすべて右上の歯車アイコンから変更できます。"
+
+    override val clockSide = "時計の位置"
+    override val sideLeft = "左"
+    override val sideRight = "右"
+    override val clockSideSub = "自動：カメラ穴の横、空いている側に配置"
+    override val lyricsDisclaimer = "歌詞はコミュニティのデータベースから取得しています。ずれていたり、曲と合わないことがあります。歌詞の下のソースをタップすると、もう一方を試せます。"
+    override val lyricsNothingOther = "ほかのバージョンは見つかりません"
+    override val camera = "カメラ穴"
+    override val center = "中央"
+    override val cameraSub = "自動：Android が報告する位置（ずれることがあります）。時計と歯車をその両側に配置します。"
 }

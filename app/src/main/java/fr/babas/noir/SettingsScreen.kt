@@ -108,6 +108,12 @@ fun SettingsScreen(
                 Choice(s.clockFormat, listOf(s.formatAuto, s.format24, s.format12), prefs.clockFormat) {
                     prefs.clockFormat = it
                 }
+                Choice(s.camera, listOf(s.formatAuto, s.sideLeft, s.center, s.sideRight), prefs.cameraPos) {
+                    prefs.cameraPos = it
+                }
+                Text(s.cameraSub, fontSize = 13.sp, color = Gray)
+                Choice(s.clockSide, listOf(s.formatAuto, s.sideLeft, s.sideRight), prefs.clockSide) { prefs.clockSide = it }
+                Text(s.clockSideSub, fontSize = 13.sp, color = Gray)
                 ClockFontPicker(prefs)
                 Choice(
                     s.textSize,
@@ -200,6 +206,7 @@ fun SettingsScreen(
 
                 Section(s.lyrics)
                 Toggle(s.lyrics, s.lyricsSub, prefs.lyrics) { prefs.lyrics = it }
+                Text(s.lyricsDisclaimer, fontSize = 13.sp, color = Gray)
                 Toggle(s.onMobile, s.onMobileSub, prefs.lyricsOnMobile, enabled = prefs.lyrics) { prefs.lyricsOnMobile = it }
                 Choice(
                     s.lyricsSize,

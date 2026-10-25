@@ -104,7 +104,7 @@ object It : Strings {
     override val keepOn = "Schermo sempre acceso"
     override val keepOnPlaying = "Con musica"
     override val lowRefresh = "Frequenza di aggiornamento ridotta"
-    override fun refreshInfo(current: Int, available: String) = "Attuale: $current Hz · disponibili: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Player: ${current} Hz · disponibili: ${available} Hz"
     override val burnShift = "Spostamento periodico"
     override val burnShiftSub = "Anti burn-in: sposta tutta la schermata di qualche pixel, a caso"
     override val frequency = "Frequenza"
@@ -166,4 +166,14 @@ object It : Strings {
     override val tutoScreen2 = "Per proteggere l'AMOLED, la schermata si sposta di qualche pixel ogni tanto. " +
         "La modalità notte attenua testo e copertina, e lo standby spegne tutto quando non suona nulla."
     override val tutoScreen3 = "Puoi regolare tutto con l'ingranaggio, in alto a destra."
+
+    override val clockSide = "Posizione dell'ora"
+    override val sideLeft = "Sinistra"
+    override val sideRight = "Destra"
+    override val clockSideSub = "Auto: accanto al foro della fotocamera, dal lato con più spazio"
+    override val lyricsDisclaimer = "I testi provengono da database della community: possono essere sfasati o non corrispondere. Tocca la fonte sotto il testo per provare l'altra."
+    override val lyricsNothingOther = "Nessun'altra versione trovata"
+    override val camera = "Foro della fotocamera"
+    override val center = "Centro"
+    override val cameraSub = "Auto: posizione indicata da Android, a volte sbagliata. L'ora e l'ingranaggio si mettono ai lati."
 }

@@ -104,7 +104,7 @@ object Pl : Strings {
     override val keepOn = "Zawsze włączony"
     override val keepOnPlaying = "Gdy gra"
     override val lowRefresh = "Niższe odświeżanie"
-    override fun refreshInfo(current: Int, available: String) = "Obecnie: $current Hz · dostępne: $available Hz"
+    override fun refreshInfo(current: Int, available: String) = "Odtwarzacz: ${current} Hz · dostępne: ${available} Hz"
     override val burnShift = "Okresowe przesunięcie"
     override val burnShiftSub = "Przeciw wypaleniu: losowo przesuwa cały obraz o kilka pikseli"
     override val frequency = "Częstotliwość"
@@ -166,4 +166,14 @@ object Pl : Strings {
     override val tutoScreen2 = "Aby chronić ekran AMOLED, obraz co jakiś czas przesuwa się o kilka pikseli. " +
         "Tryb nocny przygasza tekst i okładkę, a uśpienie wygasza wszystko, gdy nic nie gra."
     override val tutoScreen3 = "Wszystko ustawisz kołem zębatym w prawym górnym rogu."
+
+    override val clockSide = "Położenie zegara"
+    override val sideLeft = "Lewo"
+    override val sideRight = "Prawo"
+    override val clockSideSub = "Auto: obok otworu aparatu, po stronie, gdzie jest miejsce"
+    override val lyricsDisclaimer = "Teksty pochodzą z baz tworzonych przez społeczność: mogą być przesunięte lub niepasujące. Dotknij źródła pod tekstem, aby spróbować drugiego."
+    override val lyricsNothingOther = "Nie znaleziono innej wersji"
+    override val camera = "Otwór aparatu"
+    override val center = "Środek"
+    override val cameraSub = "Auto: położenie podane przez Androida, czasem błędne. Zegar i zębatka trafiają po obu stronach."
 }

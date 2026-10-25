@@ -164,6 +164,7 @@ private fun LyricsPage(prefs: Prefs) {
     Column {
         Title(s.lyrics)
         Body(s.tutoLyrics)
+        Body(s.lyricsDisclaimer)
         Toggle(s.downloadOnMobile, s.onMobileSub, prefs.lyricsOnMobile) { prefs.lyricsOnMobile = it }
     }
 }

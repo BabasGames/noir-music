@@ -210,4 +210,15 @@ interface Strings {
     val tutoScreen1: String
     val tutoScreen2: String
     val tutoScreen3: String
+
+    // ── Ajouts : position de l'heure, fiabilité des paroles ──
+    val clockSide: String
+    val sideLeft: String
+    val sideRight: String
+    val clockSideSub: String
+    val lyricsDisclaimer: String
+    val lyricsNothingOther: String
+    val camera: String
+    val center: String
+    val cameraSub: String
 }
