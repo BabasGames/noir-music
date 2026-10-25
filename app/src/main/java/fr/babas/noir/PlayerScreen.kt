@@ -49,6 +49,8 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,108 +91,182 @@ import kotlin.random.Random
 val Gray = Color(0xFF9A9A9A)
 val Dim = Color(0xFF3A3A3A)
 
+/** Couleurs du lecteur ; la variante « nuit » atténue tout le blanc. */
+data class Palette(val fg: Color, val fg2: Color, val faint: Color, val track: Color)
+
+private val DayPalette = Palette(Color.White, Gray, Dim, Color(0xFF2A2A2A))
+private val NightPalette = Palette(Color(0xFF8C8C8C), Color(0xFF555555), Color(0xFF2A2A2A), Color(0xFF1E1E1E))
+
+val LocalPalette = staticCompositionLocalOf { DayPalette }
+
 @Composable
-fun noirSliderColors(): SliderColors = SliderDefaults.colors(
-    thumbColor = Color.White,
-    activeTrackColor = Color.White,
-    inactiveTrackColor = Color(0xFF2A2A2A),
-    disabledThumbColor = Dim,
-    disabledActiveTrackColor = Dim,
-    disabledInactiveTrackColor = Color(0xFF1A1A1A),
+fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = SliderDefaults.colors(
+    thumbColor = pal.fg,
+    activeTrackColor = pal.fg,
+    inactiveTrackColor = pal.track,
+    disabledThumbColor = pal.faint,
+    disabledActiveTrackColor = pal.faint,
+    disabledInactiveTrackColor = Color(0xFF141414),
 )
 
 @Composable
-fun PlayerScreen(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit) {
+fun PlayerScreen(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit, onOpenSource: () -> Unit) {
     val current by rememberUpdatedState(np)
     val shift = rememberBurnInShift(prefs.antiBurn)
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            // Glisser à gauche = suivant, à droite = précédent (les sliders consomment leurs propres gestes)
-            .pointerInput(Unit) {
-                val threshold = 96.dp.toPx()
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        val tc = current.controller?.transportControls
-                        if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
-                        dragX = 0f
-                    },
-                    onDragCancel = { dragX = 0f },
-                ) { change, dx ->
-                    change.consume()
-                    dragX += dx
+    CompositionLocalProvider(LocalPalette provides if (prefs.dimText) NightPalette else DayPalette) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                // Glisser à gauche = suivant, à droite = précédent (les sliders consomment leurs propres gestes)
+                .pointerInput(Unit) {
+                    val threshold = 96.dp.toPx()
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            val tc = current.controller?.transportControls
+                            if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
+                            dragX = 0f
+                        },
+                        onDragCancel = { dragX = 0f },
+                    ) { change, dx ->
+                        change.consume()
+                        dragX += dx
+                    }
                 }
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .offset { IntOffset(shift.x.roundToPx() + (dragX * 0.3f).roundToInt(), shift.y.roundToPx()) }
+                .padding(if (landscape) 16.dp else 24.dp),
+        ) {
+            val header: @Composable (Boolean) -> Unit = { withGear ->
+                Header(np.appName, prefs, landscape, if (withGear) onOpenSettings else null, onOpenSource)
             }
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .offset { IntOffset(shift.x.roundToPx() + (dragX * 0.3f).roundToInt(), shift.y.roundToPx()) }
-            .padding(if (landscape) 16.dp else 24.dp),
-    ) {
-        if (landscape) LandscapeLayout(np, prefs, onOpenSettings) else PortraitLayout(np, prefs, onOpenSettings)
+            if (landscape) LandscapeLayout(np, prefs, header) else PortraitLayout(np, prefs, header, onOpenSettings)
+        }
     }
 }
 
 @Composable
-private fun PortraitLayout(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit) {
+private fun PortraitLayout(
+    np: NowPlaying,
+    prefs: Prefs,
+    header: @Composable (Boolean) -> Unit,
+    onOpenSettings: () -> Unit,
+) {
+    if (!prefs.showArt) {
+        // Sans pochette : horloge + contrôles forment un seul bloc centré, la roue reste dans le coin
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                header(false)
+                Spacer(Modifier.height(40.dp))
+                Controls(np, prefs)
+            }
+            SettingsButton(Modifier.align(Alignment.TopEnd), onOpenSettings)
+        }
+        return
+    }
     Column(Modifier.fillMaxSize()) {
-        Header(np.appName, bigClock = !prefs.showArt, onOpenSettings = onOpenSettings)
-        if (prefs.showArt) {
+        header(true)
+        val art: @Composable () -> Unit = {
             // La boîte prend tout l'espace libre ; la pochette y tient en carré le plus grand possible
             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
                 Artwork(np.art, prefs.grayArt, Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true))
             }
-        } else {
-            Spacer(Modifier.weight(1f))
         }
-        Controls(np)
+        if (prefs.swapArt) {
+            Spacer(Modifier.height(16.dp))
+            Controls(np, prefs)
+            art()
+        } else {
+            art()
+            Controls(np, prefs)
+        }
     }
 }
 
 @Composable
-private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, onOpenSettings: () -> Unit) {
+private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, header: @Composable (Boolean) -> Unit) {
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-        if (prefs.showArt) {
+        val art: @Composable () -> Unit = {
             Artwork(np.art, prefs.grayArt, Modifier.fillMaxHeight().aspectRatio(1f))
+        }
+        if (prefs.showArt && !prefs.swapArt) {
+            art()
             Spacer(Modifier.width(32.dp))
         }
-        Column(Modifier.weight(1f).fillMaxHeight()) {
-            Header(np.appName, bigClock = !prefs.showArt, onOpenSettings = onOpenSettings)
-            Spacer(Modifier.weight(1f))
-            Controls(np, compact = true)
+        Column(
+            Modifier.weight(1f).fillMaxHeight(),
+            verticalArrangement = if (prefs.showArt) Arrangement.SpaceBetween else Arrangement.Center,
+        ) {
+            header(true)
+            if (!prefs.showArt) Spacer(Modifier.height(16.dp))
+            Column { Controls(np, prefs, compact = true) }
+        }
+        if (prefs.showArt && prefs.swapArt) {
+            Spacer(Modifier.width(32.dp))
+            art()
         }
     }
 }
 
 @Composable
-private fun Header(appName: String, bigClock: Boolean, onOpenSettings: () -> Unit) {
+private fun Header(
+    appName: String,
+    prefs: Prefs,
+    landscape: Boolean,
+    onOpenSettings: (() -> Unit)?,
+    onOpenSource: () -> Unit,
+) {
+    val pal = LocalPalette.current
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text(
-                rememberClock(),
-                fontSize = if (bigClock) 88.sp else 44.sp,
-                fontWeight = FontWeight.Thin,
-                color = Color.White,
-                lineHeight = if (bigClock) 92.sp else 48.sp,
-            )
-            if (appName.isNotEmpty()) Text(appName, fontSize = 15.sp, color = Gray)
+            val clockSp = when (prefs.clockSize) {
+                Prefs.CLOCK_BIG -> if (landscape) 72f else 88f
+                Prefs.CLOCK_MEDIUM -> 44f
+                else -> 0f
+            }
+            if (clockSp > 0f) {
+                Text(
+                    rememberClock(),
+                    fontSize = clockSp.sp,
+                    lineHeight = (clockSp * 1.05f).sp,
+                    fontWeight = FontWeight.Thin,
+                    color = pal.fg,
+                )
+            }
+            if (prefs.showSource && appName.isNotEmpty()) {
+                Text(
+                    appName,
+                    fontSize = 15.sp,
+                    color = pal.fg2,
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onOpenSource),
+                )
+            }
         }
-        Box(
-            Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onOpenSettings),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Rounded.Settings, "Paramètres", tint = Dim, modifier = Modifier.size(26.dp))
-        }
+        if (onOpenSettings != null) SettingsButton(Modifier, onOpenSettings)
     }
 }
 
-/** Titre, progression, boutons, volume : la moitié basse en portrait, la droite en paysage. */
 @Composable
-private fun ColumnScope.Controls(np: NowPlaying, compact: Boolean = false) {
+private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Rounded.Settings, "Paramètres", tint = LocalPalette.current.faint, modifier = Modifier.size(26.dp))
+    }
+}
+
+/** Titre, progression, boutons, volume : le bloc « contrôles ». */
+@Composable
+private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false) {
+    val pal = LocalPalette.current
     val tc = np.controller?.transportControls
     val togglePlay = { if (np.isPlaying) tc?.pause() else tc?.play() }
+    val scale = prefs.textScale
+    val titleSp = (if (compact) 26f else 30f) * scale
 
     Column(
         Modifier
@@ -203,23 +279,27 @@ private fun ColumnScope.Controls(np: NowPlaying, compact: Boolean = false) {
     ) {
         Text(
             np.title.ifEmpty { "Rien en lecture" },
-            fontSize = if (compact) 26.sp else 30.sp,
-            lineHeight = if (compact) 30.sp else 36.sp,
+            fontSize = titleSp.sp,
+            lineHeight = (titleSp * 1.2f).sp,
             fontWeight = FontWeight.Light,
-            color = Color.White,
+            color = pal.fg,
             maxLines = if (compact) 1 else 2,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             np.artist.ifEmpty { if (np.controller == null) "Lance la musique dans Deezer, Spotify…" else "" },
-            fontSize = 19.sp,
-            color = Gray,
+            fontSize = (19f * scale).sp,
+            color = pal.fg2,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
     }
-    Spacer(Modifier.height(if (compact) 4.dp else 12.dp))
-    Progress(np)
+    if (prefs.showProgress) {
+        Spacer(Modifier.height(if (compact) 4.dp else 12.dp))
+        Progress(np)
+    } else {
+        Spacer(Modifier.height(if (compact) 8.dp else 16.dp))
+    }
 
     Row(
         Modifier.fillMaxWidth(),
@@ -238,7 +318,7 @@ private fun ColumnScope.Controls(np: NowPlaying, compact: Boolean = false) {
         CtrlButton(Icons.Rounded.SkipNext, "Suivant", 48.dp, enabled) { tc?.skipToNext() }
         Spacer(Modifier.size(56.dp)) // équilibre visuel avec le ♥
     }
-    VolumeRow()
+    if (prefs.showVolume) VolumeRow()
 }
 
 @Composable
@@ -247,7 +327,8 @@ private fun CtrlButton(icon: ImageVector, desc: String, size: Dp, enabled: Boole
         Modifier.size(size + 20.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, desc, Modifier.size(size), tint = if (enabled) Color.White else Dim)
+        val pal = LocalPalette.current
+        Icon(icon, desc, Modifier.size(size), tint = if (enabled) pal.fg else pal.faint)
     }
 }
 
@@ -267,9 +348,9 @@ private fun LikeButton(np: NowPlaying) {
         val icon = remember(np.likeIcon) { np.likeIcon?.toBitmap(96, 96)?.asImageBitmap() }
         if (icon != null) {
             // Icône de l'appli source, recolorée en blanc : la forme pleine/vide indique l'état
-            Image(icon, action.name.toString(), Modifier.size(28.dp), colorFilter = ColorFilter.tint(Color.White))
+            Image(icon, action.name.toString(), Modifier.size(28.dp), colorFilter = ColorFilter.tint(LocalPalette.current.fg))
         } else {
-            Icon(Icons.Rounded.FavoriteBorder, action.name.toString(), Modifier.size(28.dp), tint = Color.White)
+            Icon(Icons.Rounded.FavoriteBorder, action.name.toString(), Modifier.size(28.dp), tint = LocalPalette.current.fg)
         }
     }
 }
@@ -305,9 +386,10 @@ private fun Progress(np: NowPlaying) {
         modifier = Modifier.height(32.dp),
     )
     Row(Modifier.fillMaxWidth()) {
-        Text(formatTime(shown), fontSize = 13.sp, color = Gray)
+        val pal = LocalPalette.current
+        Text(formatTime(shown), fontSize = 13.sp, color = pal.fg2)
         Spacer(Modifier.weight(1f))
-        Text(if (dur > 0) formatTime(dur) else "", fontSize = 13.sp, color = Gray)
+        Text(if (dur > 0) formatTime(dur) else "", fontSize = 13.sp, color = pal.fg2)
     }
 }
 
@@ -336,7 +418,7 @@ private fun VolumeRow() {
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(44.dp).clip(CircleShape).clickable { set(vol - 1) }, contentAlignment = Alignment.Center) {
-            Icon(Icons.AutoMirrored.Rounded.VolumeDown, "Baisser", tint = Gray)
+            Icon(Icons.AutoMirrored.Rounded.VolumeDown, "Baisser", tint = LocalPalette.current.fg2)
         }
         Slider(
             value = vol.toFloat(),
@@ -346,7 +428,7 @@ private fun VolumeRow() {
             modifier = Modifier.weight(1f).height(32.dp),
         )
         Box(Modifier.size(44.dp).clip(CircleShape).clickable { set(vol + 1) }, contentAlignment = Alignment.Center) {
-            Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Monter", tint = Gray)
+            Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Monter", tint = LocalPalette.current.fg2)
         }
     }
 }
@@ -365,7 +447,7 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
                 colorFilter = if (gray) Grayscale else null,
             )
         } else {
-            Icon(Icons.Rounded.MusicNote, null, Modifier.size(64.dp), tint = Dim)
+            Icon(Icons.Rounded.MusicNote, null, Modifier.size(64.dp), tint = LocalPalette.current.faint)
         }
     }
 }

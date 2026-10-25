@@ -1,6 +1,7 @@
 package fr.babas.noir
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -19,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
@@ -37,18 +39,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         prefs = Prefs(this)
-        media = MediaRepository(this)
+        media = MediaRepository(this) { prefs.preferredApp }
 
         setContent {
             MaterialTheme(colorScheme = NoirColors) {
                 val np by media.state.collectAsState()
                 var showSettings by rememberSaveable { mutableStateOf(false) }
 
-                val keepOn = prefs.keepOn && np.isPlaying
+                val keepOn = when (prefs.keepOnMode) {
+                    Prefs.KEEP_ON_ALWAYS -> true
+                    Prefs.KEEP_ON_PLAYING -> np.isPlaying
+                    else -> false
+                }
                 val brightness = if (prefs.customBrightness) prefs.brightness else null
                 LaunchedEffect(keepOn, prefs.lowRefresh, brightness) {
                     applyWindow(keepOn, prefs.lowRefresh, brightness)
                 }
+                LaunchedEffect(prefs.orientation) {
+                    requestedOrientation = when (prefs.orientation) {
+                        Prefs.ORIENT_PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                        Prefs.ORIENT_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        else -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+                    }
+                }
+                LaunchedEffect(prefs.preferredApp) { media.refresh() }
 
                 when {
                     !hasAccess -> AccessScreen(onGrant = ::openListenerSettings)
@@ -57,14 +71,23 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             prefs = prefs,
                             displayInfo = displayInfo(),
+                            candidateApps = remember { media.candidateApps() },
                             onOpenAccess = ::openListenerSettings,
                             onBack = { showSettings = false },
                         )
                     }
-                    else -> PlayerScreen(np, prefs, onOpenSettings = { showSettings = true })
+                    else -> PlayerScreen(
+                        np, prefs,
+                        onOpenSettings = { showSettings = true },
+                        onOpenSource = { np.controller?.packageName?.let(::openApp) },
+                    )
                 }
             }
         }
+    }
+
+    private fun openApp(pkg: String) {
+        packageManager.getLaunchIntentForPackage(pkg)?.let(::startActivity)
     }
 
     override fun onResume() {

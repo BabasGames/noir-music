@@ -2,6 +2,7 @@ package fr.babas.noir
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
@@ -40,7 +41,7 @@ data class NowPlaying(
 }
 
 /** Suit les sessions média actives (Deezer, Spotify…) et expose celle à piloter. */
-class MediaRepository(private val context: Context) {
+class MediaRepository(private val context: Context, private val preferredApp: () -> String) {
     private val msm = context.getSystemService(MediaSessionManager::class.java)
     private val component = ComponentName(context, MediaListenerService::class.java)
     private val handler = Handler(Looper.getMainLooper())
@@ -94,13 +95,27 @@ class MediaRepository(private val context: Context) {
      * La liste d'Android est triée par priorité (la plus récemment active d'abord).
      */
     private fun pickSession(list: List<MediaController>, previous: MediaController?): MediaController? {
+        val pref = preferredApp()
+        if (pref.isNotEmpty()) list.firstOrNull { it.packageName == pref }?.let { return it }
         list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }?.let { return it }
         // Rien ne joue : rester sur la même appli plutôt que sauter vers une autre session en pause
         list.firstOrNull { it.sessionToken == previous?.sessionToken }?.let { return it }
         return list.firstOrNull()
     }
 
-    private fun refresh() {
+    /** Applis proposées comme « appli préférée » : celles qui exposent un service média + sessions en cours. */
+    fun candidateApps(): List<Pair<String, String>> {
+        val pm = context.packageManager
+        val browsers = pm.queryIntentServices(Intent("android.media.browse.MediaBrowserService"), 0)
+            .map { it.serviceInfo.packageName }
+        return (browsers + controllers.map { it.packageName })
+            .distinct()
+            .filter { it != context.packageName }
+            .map { it to appLabel(it) }
+            .sortedBy { it.second.lowercase() }
+    }
+
+    fun refresh() {
         val c = pickSession(controllers, current)
         current = c
         if (c == null) {
