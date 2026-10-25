@@ -78,7 +78,7 @@ fun SettingsScreen(
             TEXT_SCALES.map { it.second },
             TEXT_SCALES.indexOfFirst { it.first == prefs.textScale }.coerceAtLeast(0),
         ) { prefs.textScale = TEXT_SCALES[it].first }
-        Toggle("Texte atténué", "Gris au lieu de blanc : pour la nuit, et moins d'usure AMOLED", prefs.dimText) {
+        Toggle("Texte atténué", "Gris au lieu de blanc, pochette assombrie : pour la nuit, et moins d'usure AMOLED", prefs.dimText) {
             prefs.dimText = it
         }
         Toggle("Nom de l'appli source", "Le toucher ouvre l'appli", prefs.showSource) { prefs.showSource = it }
@@ -128,7 +128,7 @@ fun SettingsScreen(
         }
 
         Section("Paroles")
-        Toggle("Paroles", "Glisser vers le haut ou bouton en bas à droite · source : LRCLIB", prefs.lyrics) {
+        Toggle("Paroles", "Glisser vers le haut ou bouton en bas à droite · sources : LRCLIB, NetEase", prefs.lyrics) {
             prefs.lyrics = it
         }
         Toggle(

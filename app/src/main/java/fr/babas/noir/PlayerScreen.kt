@@ -121,10 +121,11 @@ val Gray = Color(0xFF9A9A9A)
 val Dim = Color(0xFF3A3A3A)
 
 /** Couleurs du lecteur ; la variante « nuit » atténue tout le blanc. */
-data class Palette(val fg: Color, val fg2: Color, val faint: Color, val track: Color)
+data class Palette(val fg: Color, val fg2: Color, val faint: Color, val track: Color, val artLevel: Float)
 
-private val DayPalette = Palette(Color.White, Gray, Dim, Color(0xFF2A2A2A))
-private val NightPalette = Palette(Color(0xFF8C8C8C), Color(0xFF555555), Color(0xFF2A2A2A), Color(0xFF1E1E1E))
+private val DayPalette = Palette(Color.White, Gray, Dim, Color(0xFF2A2A2A), artLevel = 1f)
+// La pochette est assombrie dans la même proportion que le blanc du texte (0x8C ≈ 55 %)
+private val NightPalette = Palette(Color(0xFF8C8C8C), Color(0xFF555555), Color(0xFF2A2A2A), Color(0xFF1E1E1E), artLevel = 0.55f)
 
 val LocalPalette = staticCompositionLocalOf { DayPalette }
 
@@ -460,7 +461,11 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
         value = Lyrics.Loading
         if (!active || np.title.isEmpty()) return@produceState
         delay(300) // morceaux passés à la chaîne : une seule requête, pour celui où l'on s'arrête
-        value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
+        while (true) {
+            value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
+            if (value != Lyrics.Unavailable && value != Lyrics.Offline) break
+            delay(30_000)
+        }
     }
     return state
 }
@@ -482,7 +487,8 @@ private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: 
                 np.title.isEmpty() -> ""
                 lyrics == Lyrics.Loading -> "…"
                 lyrics == Lyrics.Instrumental -> "♪  Instrumental"
-                lyrics == Lyrics.Unavailable -> "Paroles indisponibles\n(pas de réseau)"
+                lyrics == Lyrics.Offline -> "Pas de réseau\n(nouvel essai toutes les 30 s)"
+                lyrics == Lyrics.Unavailable -> "Les sources de paroles ne répondent pas\n(nouvel essai toutes les 30 s)"
                 lyrics == Lyrics.MobileData -> "Paroles en pause sur données mobiles\n(réglable dans les paramètres)"
                 else -> "Pas de paroles trouvées"
             }
@@ -689,6 +695,16 @@ private fun VolumeRow() {
 @Composable
 private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
     val img = remember(art) { art?.asImageBitmap() }
+    val level = LocalPalette.current.artLevel
+    val filter = remember(gray, level) {
+        if (!gray && level == 1f) null
+        else ColorFilter.colorMatrix(
+            ColorMatrix().apply {
+                if (gray) setToSaturation(0f)
+                if (level < 1f) timesAssign(ColorMatrix().apply { setToScale(level, level, level, 1f) })
+            },
+        )
+    }
     Box(
         modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF0C0C0C)),
         contentAlignment = Alignment.Center,
@@ -697,15 +713,13 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
             Image(
                 img, null, Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                colorFilter = if (gray) Grayscale else null,
+                colorFilter = filter,
             )
         } else {
             Icon(Icons.Rounded.MusicNote, null, Modifier.size(64.dp), tint = LocalPalette.current.faint)
         }
     }
 }
-
-private val Grayscale = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
 
 @Composable
 private fun rememberClock(): String {
