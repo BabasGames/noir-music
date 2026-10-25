@@ -619,7 +619,7 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val enabled = np.controller != null
-        LikeButton(np)
+        CarButton(prefs)
         CtrlButton(Icons.Rounded.SkipPrevious, str.previous, 48.dp, enabled) { tc?.skipToPrevious() }
         CtrlButton(
             if (np.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
@@ -628,13 +628,15 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
             enabled,
         ) { togglePlay() }
         CtrlButton(Icons.Rounded.SkipNext, str.next, 48.dp, enabled) { tc?.skipToNext() }
-        // Bouton paroles, ou vide pour l'équilibre visuel avec le ♥
+        // Bouton paroles, ou vide pour l'équilibre visuel avec le bouton voiture
         if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
-    // En bas à gauche : le bouton voiture, puis le volume s'il est affiché
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        CarButton(prefs)
-        if (prefs.showVolume) VolumeRow(Modifier.weight(1f))
+    // En bas : le ♥ s'il existe (Deezer oui, KDE Connect non), puis le volume
+    if (np.likeAction != null || prefs.showVolume) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (np.likeAction != null) LikeButton(np)
+            if (prefs.showVolume) VolumeRow(Modifier.weight(1f))
+        }
     }
 }
 
@@ -642,11 +644,11 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
 private fun CarButton(prefs: Prefs) {
     val pal = LocalPalette.current
     Box(
-        Modifier.size(44.dp).clip(CircleShape).clickable { prefs.carMode = !prefs.carMode },
+        Modifier.shared("car").size(56.dp).clip(CircleShape).clickable { prefs.carMode = !prefs.carMode },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            Icons.Rounded.DirectionsCar, LocalStrings.current.carMode, Modifier.size(24.dp),
+            Icons.Rounded.DirectionsCar, LocalStrings.current.carMode, Modifier.size(28.dp),
             tint = if (prefs.carMode) pal.fg else pal.faint,
         )
     }
@@ -889,6 +891,7 @@ private fun LikeButton(np: NowPlaying) {
     val action = np.likeAction
     Box(
         Modifier
+            .shared("like")
             .size(56.dp)
             .clip(CircleShape)
             .clickable(enabled = action != null) {
