@@ -568,8 +568,8 @@ private fun Header(
     val hole = if (atTop) anyHole?.takeIf { it.rect.bottom > 0f } else null
     val baseSp = when (prefs.clockSize) {
         // Voiture : la plus grande heure possible, ramenée ensuite à la largeur disponible
-        Prefs.CLOCK_BIG -> if (car) (if (landscape) 96f else 200f) else if (compact) 48f else if (landscape) 72f else 88f
-        Prefs.CLOCK_MEDIUM -> if (car) (if (landscape) 72f else 120f) else if (compact) 34f else 44f
+        Prefs.CLOCK_BIG -> if (car) (if (landscape) 80f else 200f) else if (compact) 48f else if (landscape) 72f else 88f
+        Prefs.CLOCK_MEDIUM -> if (car) (if (landscape) 56f else 120f) else if (compact) 34f else 44f
         else -> 0f
     }
     val style = rememberClockStyle(prefs)
@@ -613,9 +613,9 @@ private fun Header(
                 // B : sous le trou (ou tout en haut s'il n'y en a pas), sur toute la largeur libre
                 mainTop = hole?.let { it.rect.bottom + it.margin } ?: 0f
                 if (buttons && mainTop < gearTop + groupH) {
-                    // En voiture, l'heure passe sous les boutons pour prendre toute la largeur ;
-                    // sinon elle reste à leur hauteur, à côté d'eux
-                    if (car) mainTop = gearTop + groupH else mainEndPad = groupW + 8.dp.toPx()
+                    // En voiture portrait, l'heure passe sous les boutons pour prendre toute la largeur ;
+                    // sinon (et en paysage, où c'est la hauteur qui manque) elle reste à côté d'eux
+                    if (car && !landscape) mainTop = gearTop + groupH else mainEndPad = groupW + 8.dp.toPx()
                 }
                 if (w > 0f) clockSp = baseSp * ((width - side - mainEndPad) / w).coerceAtMost(1f)
             }
@@ -856,14 +856,15 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
                 art()
                 Spacer(Modifier.width(28.dp))
             }
-            Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
+            // Les boutons ont leur taille fixe et passent en premier : c'est l'espace vide au-dessus
+            // du titre qui s'adapte (avant, posés en dernier, ils étaient écrasés par manque de hauteur)
+            Column(Modifier.weight(1f).fillMaxHeight()) {
                 header(true)
-                Column {
-                    CarTitle(np, prefs, titleSp = 30f, artistSp = 20f, maxLines = 1)
-                    if (prefs.showProgress) Progress(np)
-                }
+                Spacer(Modifier.weight(1f))
+                CarTitle(np, prefs, titleSp = 26f, artistSp = 18f, maxLines = 1)
+                if (prefs.showProgress) Progress(np)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    CarButtons(np, Modifier.weight(1f), side = 60.dp, main = 88.dp)
+                    CarButtons(np, Modifier.weight(1f), side = 72.dp, main = 104.dp)
                     if (np.likeAction != null) LikeButton(np)
                 }
             }
