@@ -181,6 +181,7 @@ object Es : Strings {
     override val tutoOpenTitle = "Código abierto"
     override val tutoOpen1 = "Noir Music es de código abierto y sigue en desarrollo, así que puede haber errores."
     override val tutoOpen2 = "¿Un error o una idea? Abre una «issue» en GitHub, cada comentario ayuda."
+    override val tutoOpen3 = "¿La instalaste desde GitHub? Revisa de vez en cuando la página de versiones (Releases): tu versión aparece al final de los ajustes. Con F-Droid, las actualizaciones son automáticas."
     override val openGithub = "Ver en GitHub"
     override val lyricsKeep = "Conservar letras"
     override val lyricsKeepSub = "La letra de una canción se borra si no se vuelve a escuchar en este tiempo"

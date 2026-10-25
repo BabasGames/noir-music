@@ -186,7 +186,7 @@ private fun CarPage() {
     }
 }
 
-/** Last page: the app is in development, bugs and ideas go to GitHub. */
+/** Last page: the app is in development, bugs and ideas go to GitHub, and where to look for updates. */
 @Composable
 private fun OpenSourcePage() {
     val s = LocalStrings.current
@@ -195,6 +195,7 @@ private fun OpenSourcePage() {
         Title(s.tutoOpenTitle)
         Body(s.tutoOpen1)
         Body(s.tutoOpen2)
+        Body(s.tutoOpen3)
         Spacer(Modifier.height(8.dp))
         OutlinedButton(onClick = { uri.openUri("$GITHUB_URL/issues") }) { Text(s.openGithub, color = Color.White) }
     }

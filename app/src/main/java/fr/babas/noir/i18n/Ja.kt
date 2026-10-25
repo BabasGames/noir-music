@@ -181,6 +181,7 @@ object Ja : Strings {
     override val tutoOpenTitle = "オープンソース"
     override val tutoOpen1 = "Noir Music はオープンソースで、現在も開発中です。不具合があるかもしれません。"
     override val tutoOpen2 = "不具合を見つけたり、機能のアイデアがあれば、GitHub で Issue を作成してください。どんなフィードバックも助かります。"
+    override val tutoOpen3 = "GitHub からインストールした場合は、ときどきリリースページで更新を確認してください。現在のバージョンは設定の一番下に表示されます。F-Droid なら自動で更新されます。"
     override val openGithub = "GitHub で見る"
     override val lyricsKeep = "歌詞の保存期間"
     override val lyricsKeepSub = "この期間に再生されなかった曲の歌詞は削除されます"

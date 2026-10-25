@@ -181,6 +181,7 @@ object Ko : Strings {
     override val tutoOpenTitle = "오픈 소스"
     override val tutoOpen1 = "Noir Music은 오픈 소스이고 아직 개발 중이라 버그가 있을 수 있어요."
     override val tutoOpen2 = "버그를 찾았거나 기능 아이디어가 있나요? GitHub에 이슈를 남겨 주세요. 모든 의견이 도움이 돼요."
+    override val tutoOpen3 = "GitHub에서 설치했다면 가끔 릴리스 페이지에서 업데이트를 확인하세요. 현재 버전은 설정 맨 아래에 있습니다. F-Droid는 자동으로 업데이트됩니다."
     override val openGithub = "GitHub에서 보기"
     override val lyricsKeep = "가사 보관 기간"
     override val lyricsKeepSub = "이 기간 동안 다시 재생하지 않은 곡의 가사는 삭제돼요"

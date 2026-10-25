@@ -228,6 +228,8 @@ interface Strings {
     val tutoOpenTitle: String
     val tutoOpen1: String
     val tutoOpen2: String
+    /** Updates: GitHub installs are never told, F-Droid ones are */
+    val tutoOpen3: String
     val openGithub: String
 
     // ── Lyrics retention ──────────

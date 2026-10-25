@@ -181,6 +181,7 @@ object En : Strings {
     override val tutoOpenTitle = "Open source"
     override val tutoOpen1 = "Noir Music is open source and still in development, so some bugs may be lurking."
     override val tutoOpen2 = "Found a bug or have a feature idea? Open an issue on GitHub, every bit of feedback helps."
+    override val tutoOpen3 = "Installed from GitHub? Check the releases page now and then for updates: your version is at the bottom of the settings. F-Droid updates the app on its own."
     override val openGithub = "View on GitHub"
     override val lyricsKeep = "Keep lyrics"
     override val lyricsKeepSub = "A track's lyrics are deleted if it isn't played again within this time"

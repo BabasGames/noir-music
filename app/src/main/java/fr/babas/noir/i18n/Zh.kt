@@ -181,6 +181,7 @@ object Zh : Strings {
     override val tutoOpenTitle = "开源"
     override val tutoOpen1 = "Noir Music 是开源应用，仍在开发中，可能会有 bug。"
     override val tutoOpen2 = "发现 bug 或有功能想法？请在 GitHub 上提交 issue，每条反馈都有帮助。"
+    override val tutoOpen3 = "从 GitHub 安装的？请不时查看发布页（Releases）是否有更新：当前版本显示在设置底部。通过 F-Droid 安装会自动更新。"
     override val openGithub = "在 GitHub 上查看"
     override val lyricsKeep = "歌词保留时间"
     override val lyricsKeepSub = "歌曲在此期间内未再次播放，其歌词将被删除"
