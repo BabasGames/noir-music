@@ -407,6 +407,7 @@ private fun Player(
                             Header(
                                 np, prefs, landscape, sleep,
                                 compact = open,
+                                car = m == Mode.CAR,
                                 atTop = withGear,
                                 onOpenSettings = if (withGear) onOpenSettings else null,
                                 onClock = { onSheet(SheetKind.SLEEP) },
@@ -465,13 +466,13 @@ private fun PortraitLayout(
             val mirror = mirrorClock(prefs, hole)
             val gearTop = hole?.let { h ->
                 with(LocalDensity.current) {
-                    val g = 48.dp.toPx()
+                    val g = 96.dp.toPx()
                     (if (mirror) h.pushDown(0f, g) else h.pushDown(h.width - g, h.width)).toDp()
                 }
             } ?: 0.dp
-            SettingsButton(
+            TopButtons(
+                prefs, mirror, onOpenSettings,
                 Modifier.align(if (mirror) Alignment.TopStart else Alignment.TopEnd).padding(top = gearTop),
-                onOpenSettings,
             )
         }
         return
@@ -548,6 +549,7 @@ private fun Header(
     landscape: Boolean,
     sleep: SleepTimer,
     compact: Boolean,
+    car: Boolean,
     atTop: Boolean,
     onOpenSettings: (() -> Unit)?,
     onClock: () -> Unit,
@@ -558,103 +560,136 @@ private fun Header(
     val anyHole = LocalHole.current
     val mirror = mirrorClock(prefs, anyHole)
     // Le trou ne gêne que l'en-tête du haut de l'écran
-    val hole = if (atTop) anyHole else null
+    val hole = if (atTop) anyHole?.takeIf { it.rect.bottom > 0f } else null
     val baseSp = when (prefs.clockSize) {
-        Prefs.CLOCK_BIG -> if (compact) 48f else if (landscape) 72f else 88f
-        Prefs.CLOCK_MEDIUM -> if (compact) 34f else 44f
+        // Voiture : la plus grande heure possible, ramenée ensuite à la largeur disponible
+        Prefs.CLOCK_BIG -> if (car) (if (landscape) 96f else 200f) else if (compact) 48f else if (landscape) 72f else 88f
+        Prefs.CLOCK_MEDIUM -> if (car) (if (landscape) 72f else 120f) else if (compact) 34f else 44f
         else -> 0f
     }
     val style = rememberClockStyle(prefs)
     val time = rememberFormatted(clockPattern(prefs), LocalLang.current.locale)
     val thumb = compact && prefs.showArt
     val thumbSize = if (landscape) 64.dp else 76.dp
-
-    // L'heure monte à côté du trou en rétrécissant juste ce qu'il faut ; si elle devait trop
-    // rétrécir, tout l'en-tête passe sous le trou
     val measurer = rememberTextMeasurer()
-    var clockSp = baseSp
-    var headerTop = 0f
-    var gearTop = 0f
-    if (hole != null && hole.rect.bottom > 0f) with(density) {
-        if (baseSp > 0f) {
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Boutons voiture + roue : toujours en haut, dans la bande du trou s'ils passent à côté
+        val buttons = onOpenSettings != null
+        var clockSp = baseSp
+        var mainTop = 0f
+        var gearTop = 0f
+        var mainEndPad = 0f
+        with(density) {
+            val width = constraints.maxWidth.toFloat()
+            val groupW = if (buttons) 96.dp.toPx() else 0f
+            val groupH = 48.dp.toPx()
+            if (hole != null && buttons) {
+                gearTop = if (mirror) hole.pushDown(0f, groupW) else hole.pushDown(width - groupW, width)
+            }
+            val side = if (thumb) (thumbSize + 16.dp).toPx() else 0f
             // Chiffres remplacés par des 0 : la taille ne saute pas d'une minute à l'autre
-            val w = measurer.measure(
+            val w = if (baseSp > 0f) measurer.measure(
                 time.replace(Regex("\\d"), "0"),
                 TextStyle(fontSize = baseSp.sp, fontFamily = style.family, fontWeight = style.weight),
-            ).size.width
-            val side = if (thumb) (thumbSize + 16.dp).toPx() else 0f
-            val free = (if (mirror) hole.width - hole.rect.right else hole.rect.left) - hole.margin - side
-            val fit = if (w > 0) (free / w).coerceAtMost(1f) else 1f
-            if (fit >= 0.6f) clockSp = baseSp * fit else headerTop = hole.rect.bottom + hole.margin
-        } else {
-            headerTop = hole.rect.bottom + hole.margin
-        }
-        if (headerTop == 0f) {
-            val g = 48.dp.toPx()
-            gearTop = if (mirror) hole.pushDown(0f, g) else hole.pushDown(hole.width - g, hole.width)
-        }
-    }
+            ).size.width.toFloat() else 0f
 
-    val gear: @Composable () -> Unit = {
-        if (onOpenSettings != null) {
-            SettingsButton(Modifier.padding(top = with(density) { gearTop.toDp() }), onOpenSettings)
+            // A : l'heure dans la bande du trou, à côté de lui (rétrécie s'il le faut)
+            val fitBeside = if (hole == null || w == 0f) 0f else {
+                val free = (if (mirror) width - hole.rect.right else hole.rect.left) - hole.margin - side
+                (free / w).coerceAtMost(1f)
+            }
+            // En voiture l'heure doit rester grande : plutôt sous le trou que rétrécie à côté
+            val minBeside = if (car) 0.97f else 0.6f
+            if (hole != null && baseSp > 0f && fitBeside >= minBeside) {
+                clockSp = baseSp * fitBeside
+                mainEndPad = groupW
+            } else {
+                // B : sous le trou (ou tout en haut s'il n'y en a pas), sur toute la largeur libre
+                mainTop = hole?.let { it.rect.bottom + it.margin } ?: 0f
+                if (buttons && mainTop < gearTop + groupH) {
+                    // En voiture, l'heure passe sous les boutons pour prendre toute la largeur ;
+                    // sinon elle reste à leur hauteur, à côté d'eux
+                    if (car) mainTop = gearTop + groupH else mainEndPad = groupW + 8.dp.toPx()
+                }
+                if (w > 0f) clockSp = baseSp * ((width - side - mainEndPad) / w).coerceAtMost(1f)
+            }
         }
-    }
-    val thumbnail: @Composable () -> Unit = {
-        Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(thumbSize))
-    }
-    Row(
-        Modifier.fillMaxWidth().padding(top = with(density) { headerTop.toDp() }),
-        verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top,
-    ) {
-        if (mirror) {
-            gear()
-            Spacer(Modifier.weight(1f))
-        } else if (thumb) {
-            // Écran paroles : la pochette devient une vignette à côté de l'heure
-            thumbnail()
-            Spacer(Modifier.width(16.dp))
-        }
-        Column(
-            if (mirror) Modifier else Modifier.weight(1f),
-            horizontalAlignment = if (mirror) Alignment.End else Alignment.Start,
+
+        Row(
+            Modifier
+                .align(if (mirror) Alignment.TopEnd else Alignment.TopStart)
+                .padding(top = with(density) { mainTop.toDp() })
+                .padding(
+                    start = if (mirror) with(density) { mainEndPad.toDp() } else 0.dp,
+                    end = if (mirror) 0.dp else with(density) { mainEndPad.toDp() },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (clockSp > 0f) {
-                Text(
-                    time,
-                    fontSize = clockSp.sp,
-                    lineHeight = (clockSp * 1.05f).sp,
-                    fontFamily = style.family,
-                    fontWeight = style.weight,
-                    color = pal.fg,
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier
-                        .shared("clock", scale = true)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onClock),
-                )
+            val thumbnail: @Composable () -> Unit = {
+                Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(thumbSize))
             }
-            InfoLine(prefs, sleep, onClock)
-            if (prefs.showSource && np.appName.isNotEmpty()) {
-                Text(
-                    np.appName,
-                    fontSize = 15.sp,
-                    color = pal.fg2,
-                    modifier = Modifier
-                        .shared("source")
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable(onClick = onSource),
-                )
+            if (thumb && !mirror) {
+                // Écran paroles : la pochette devient une vignette à côté de l'heure
+                thumbnail()
+                Spacer(Modifier.width(16.dp))
             }
-        }
-        if (mirror) {
-            if (thumb) {
+            Column(horizontalAlignment = if (mirror) Alignment.End else Alignment.Start) {
+                if (clockSp > 0f) {
+                    Text(
+                        time,
+                        fontSize = clockSp.sp,
+                        lineHeight = (clockSp * 1.05f).sp,
+                        fontFamily = style.family,
+                        fontWeight = style.weight,
+                        color = pal.fg,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier
+                            .shared("clock", scale = true)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onClock),
+                    )
+                }
+                InfoLine(prefs, sleep, onClock)
+                if (prefs.showSource && np.appName.isNotEmpty()) {
+                    Text(
+                        np.appName,
+                        fontSize = 15.sp,
+                        color = pal.fg2,
+                        modifier = Modifier
+                            .shared("source")
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable(onClick = onSource),
+                    )
+                }
+            }
+            if (thumb && mirror) {
                 Spacer(Modifier.width(16.dp))
                 thumbnail()
             }
+        }
+        if (onOpenSettings != null) {
+            TopButtons(
+                prefs, mirror, onOpenSettings,
+                Modifier
+                    .align(if (mirror) Alignment.TopStart else Alignment.TopEnd)
+                    .padding(top = with(density) { gearTop.toDp() }),
+            )
+        }
+    }
+}
+
+/** Voiture + roue dentée, la roue côté bord de l'écran. */
+@Composable
+private fun TopButtons(prefs: Prefs, mirror: Boolean, onOpenSettings: () -> Unit, modifier: Modifier) {
+    Row(modifier) {
+        if (mirror) {
+            SettingsButton(Modifier, onOpenSettings)
+            CarButton(prefs)
         } else {
-            gear()
+            CarButton(prefs)
+            SettingsButton(Modifier, onOpenSettings)
         }
     }
 }
@@ -772,7 +807,7 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val enabled = np.controller != null
-        CarButton(prefs)
+        LikeButton(np)
         CtrlButton(Icons.Rounded.SkipPrevious, str.previous, 48.dp, enabled) { tc?.skipToPrevious() }
         CtrlButton(
             if (np.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
@@ -781,27 +816,21 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
             enabled,
         ) { togglePlay() }
         CtrlButton(Icons.Rounded.SkipNext, str.next, 48.dp, enabled) { tc?.skipToNext() }
-        // Bouton paroles, ou vide pour l'équilibre visuel avec le bouton voiture
+        // Bouton paroles, ou vide pour l'équilibre visuel avec le ♥
         if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
-    // En bas : le ♥ s'il existe (Deezer oui, KDE Connect non), puis le volume
-    if (np.likeAction != null || prefs.showVolume) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (np.likeAction != null) LikeButton(np)
-            if (prefs.showVolume) VolumeRow(Modifier.weight(1f))
-        }
-    }
+    if (prefs.showVolume) VolumeRow()
 }
 
 @Composable
 private fun CarButton(prefs: Prefs) {
     val pal = LocalPalette.current
     Box(
-        Modifier.shared("car").size(56.dp).clip(CircleShape).clickable { prefs.carMode = !prefs.carMode },
+        Modifier.shared("car").size(48.dp).clip(CircleShape).clickable { prefs.carMode = !prefs.carMode },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            Icons.Rounded.DirectionsCar, LocalStrings.current.carMode, Modifier.size(28.dp),
+            Icons.Rounded.DirectionsCar, LocalStrings.current.carMode, Modifier.size(26.dp),
             tint = if (prefs.carMode) pal.fg else pal.faint,
         )
     }
@@ -812,7 +841,7 @@ private fun CarButton(prefs: Prefs) {
 private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: @Composable (Boolean) -> Unit) {
     if (landscape) {
         // Pochette à gauche (ou à droite si inversée) ; à côté, une colonne : heure, titre, et une seule
-        // rangée voiture · ◀ · ▶ · ▶▶ · ♥ pour tenir dans la hauteur
+        // rangée ◀ · ▶ · ▶▶ (· ♥) pour tenir dans la hauteur
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             val art: @Composable () -> Unit = {
                 Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
@@ -828,10 +857,9 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
                     CarTitle(np, prefs, titleSp = 30f, artistSp = 20f, maxLines = 1)
                     if (prefs.showProgress) Progress(np)
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    CarButton(prefs)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     CarButtons(np, Modifier.weight(1f), side = 60.dp, main = 88.dp)
-                    LikeButton(np)
+                    if (np.likeAction != null) LikeButton(np)
                 }
             }
             if (prefs.showArt && swap) {
@@ -847,15 +875,17 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
                     Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
                 }
             }
-            CarTitle(np, prefs, titleSp = 40f, artistSp = 26f, maxLines = 2)
+            // Les gros boutons tout en bas, sous le pouce ; le ♥ (s'il existe) à côté du titre
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { CarTitle(np, prefs, titleSp = 40f, artistSp = 26f, maxLines = 2) }
+                if (np.likeAction != null) LikeButton(np)
+            }
             if (prefs.showProgress) {
                 Spacer(Modifier.height(8.dp))
                 Progress(np)
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
             CarButtons(np, Modifier.fillMaxWidth(), side = 80.dp, main = 120.dp)
-            Spacer(Modifier.height(8.dp))
-            CarFooter(np, prefs)
         }
     }
 }
@@ -897,15 +927,6 @@ private fun CarButtons(np: NowPlaying, modifier: Modifier, side: Dp, main: Dp) {
             enabled,
         ) { if (np.isPlaying) tc?.pause() else tc?.play() }
         CtrlButton(Icons.Rounded.SkipNext, str.next, side, enabled) { tc?.skipToNext() }
-    }
-}
-
-@Composable
-private fun CarFooter(np: NowPlaying, prefs: Prefs) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        CarButton(prefs)
-        Spacer(Modifier.weight(1f))
-        LikeButton(np)
     }
 }
 
