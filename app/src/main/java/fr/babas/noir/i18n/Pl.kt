@@ -126,7 +126,7 @@ object Pl : Strings {
     override val preferredAppSub = "Ma pierwszeństwo, gdy tylko ma sesję, nawet wstrzymaną"
     override val automaticPlaying = "Automatycznie (to, co gra)"
 
-    override val lyricsSub = "Przesuń w górę lub przycisk w prawym dolnym rogu · źródła: LRCLIB, NetEase"
+    override val lyricsSub = "Przesuń w górę lub użyj przycisku w prawym dolnym rogu · źródło: LRCLIB"
     override val onMobile = "Na danych komórkowych"
     override val onMobileSub = "W przeciwnym razie poza Wi-Fi widać tylko już pobrane teksty"
     override val lyricsSize = "Rozmiar tekstu piosenki"
@@ -154,8 +154,7 @@ object Pl : Strings {
     override val gestureTapClockAction = "Wyłącznik czasowy"
     override val gestureTapApp = "Dotknij nazwy aplikacji"
     override val gestureTapAppAction = "Zmień źródło"
-    override val tutoLyrics = "Przesuń w górę, aby je wyświetlić, zsynchronizowane z muzyką. Pochodzą z internetu " +
-        "(LRCLIB, awaryjnie NetEase) i po pobraniu zostają na telefonie."
+    override val tutoLyrics = "Przesuń w górę, aby je zobaczyć, zsynchronizowane z muzyką. Pochodzą z LRCLIB, wolnej bazy tworzonej przez społeczność, i zostają w telefonie po pobraniu."
     override val downloadOnMobile = "Pobieraj na danych komórkowych"
     override val tutoCarTitle = "W samochodzie"
     override val tutoCar1 = "Przycisk auta u góry, obok zębatki, włącza tryb samochodowy: ogromny zegar, duże przyciski na dole i bez tekstów, żeby nie odrywać wzroku od drogi."
@@ -170,7 +169,7 @@ object Pl : Strings {
     override val sideLeft = "Lewo"
     override val sideRight = "Prawo"
     override val clockSideSub = "Auto: obok otworu aparatu, po stronie, gdzie jest miejsce"
-    override val lyricsDisclaimer = "Teksty pochodzą z baz tworzonych przez społeczność: mogą być przesunięte lub niepasujące. Dotknij źródła pod tekstem, aby spróbować drugiego."
+    override val lyricsDisclaimer = "Teksty pochodzą z baz tworzonych przez społeczność: mogą być przesunięte lub niepasujące. Gdy źródło zapasowe jest włączone, dotknij źródła pod tekstem, aby spróbować drugiego."
     override val lyricsNothingOther = "Nie znaleziono innej wersji"
     override val camera = "Otwór aparatu"
     override val center = "Środek"
@@ -188,4 +187,6 @@ object Pl : Strings {
     override val keepForever = "Zawsze"
     override fun lyricsCacheInfo(count: Int, size: String) = "Zapisane utwory: ${count} · ${size}"
     override val clearLyrics = "Usuń zapisane teksty"
+    override val lyricsFallback = "Źródło zapasowe (NetEase)"
+    override val lyricsFallbackSub = "Szuka też w NetEase, gdy LRCLIB nic nie znajdzie. Więcej utworów, ale to niewolna usługa."
 }

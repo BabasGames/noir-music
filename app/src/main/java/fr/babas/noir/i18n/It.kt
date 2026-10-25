@@ -126,7 +126,7 @@ object It : Strings {
     override val preferredAppSub = "Ha la priorità appena ha una sessione, anche in pausa"
     override val automaticPlaying = "Automatica (quella che suona)"
 
-    override val lyricsSub = "Scorri verso l'alto o usa il pulsante in basso a destra · fonti: LRCLIB, NetEase"
+    override val lyricsSub = "Scorri verso l'alto o usa il pulsante in basso a destra · fonte: LRCLIB"
     override val onMobile = "Con i dati mobili"
     override val onMobileSub = "Altrimenti, senza Wi-Fi si vedono solo i testi già scaricati"
     override val lyricsSize = "Dimensione dei testi"
@@ -154,8 +154,7 @@ object It : Strings {
     override val gestureTapClockAction = "Timer di spegnimento"
     override val gestureTapApp = "Tocca il nome dell'app"
     override val gestureTapAppAction = "Cambia sorgente"
-    override val tutoLyrics = "Scorri verso l'alto per vederli, sincronizzati con la musica. Arrivano da internet " +
-        "(LRCLIB, con NetEase come riserva) e restano sul telefono una volta scaricati."
+    override val tutoLyrics = "Scorri verso l'alto per vederli, sincronizzati con la musica. Vengono da LRCLIB, un database libero e della community, e restano sul telefono una volta scaricati."
     override val downloadOnMobile = "Scarica con i dati mobili"
     override val tutoCarTitle = "In auto"
     override val tutoCar1 = "Il pulsante auto, in alto accanto all'ingranaggio, attiva la modalità auto: ora gigante, pulsanti grandi in basso e niente testi, per non distogliere lo sguardo dalla strada."
@@ -170,7 +169,7 @@ object It : Strings {
     override val sideLeft = "Sinistra"
     override val sideRight = "Destra"
     override val clockSideSub = "Auto: accanto al foro della fotocamera, dal lato con più spazio"
-    override val lyricsDisclaimer = "I testi provengono da database della community: possono essere sfasati o non corrispondere. Tocca la fonte sotto il testo per provare l'altra."
+    override val lyricsDisclaimer = "I testi provengono da database della community: possono essere sfasati o non corrispondere. Con la fonte di riserva attiva, tocca la fonte sotto il testo per provare l'altra."
     override val lyricsNothingOther = "Nessun'altra versione trovata"
     override val camera = "Foro della fotocamera"
     override val center = "Centro"
@@ -188,4 +187,6 @@ object It : Strings {
     override val keepForever = "Sempre"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} brani salvati · ${size}"
     override val clearLyrics = "Elimina i testi salvati"
+    override val lyricsFallback = "Fonte di riserva (NetEase)"
+    override val lyricsFallbackSub = "Cerca anche su NetEase quando LRCLIB non trova nulla. Più brani, ma è un servizio non libero."
 }

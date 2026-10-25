@@ -68,6 +68,8 @@ class Prefs(context: Context) {
     // Lyrics
     var lyrics by bool("lyrics", true)
     var lyricsOnMobile by bool("lyrics_mobile", false)
+    /** NetEase as a fallback source: off by default, it's a non-free service */
+    var lyricsFallback by bool("lyrics_fallback", false)
     var lyricsScale by float("lyrics_scale", 1f)
     /** Index into LYRICS_KEEP_DAYS: lyrics deleted if the track isn't played again within that time */
     var lyricsKeep by int("lyrics_keep", 2)

@@ -20,10 +20,11 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 ## Lyrics
 
 - Synced lyrics that scroll with the music, with the current line highlighted, upcoming lines slightly brighter than past ones, and faded top and bottom edges.
-- Two sources: [LRCLIB](https://lrclib.net) first, NetEase as a fallback.
+- Lyrics from [LRCLIB](https://lrclib.net), a free and open community database.
+- Optional fallback source, NetEase, for songs LRCLIB doesn't have. It's off by default because it's a non-free service; it can be enabled in the settings or during the tutorial.
 - Picks the version whose duration matches the track (within 4 seconds), so the timing fits the version you are listening to.
 - Retries without "(feat. …)", "- Remastered" and similar suffixes, and with only the first artist, when the exact title finds nothing.
-- Tap the source name under the lyrics to try the other source when lyrics are out of sync or wrong; the choice is remembered for that track.
+- With the fallback enabled, tap the source name under the lyrics to try the other source when lyrics are out of sync or wrong; the choice is remembered for that track.
 - Plain (unsynced) lyrics scroll on their own along with the song, and can also be scrolled by hand (automatic scrolling resumes 8 seconds later).
 - Instrumental tracks are recognized as such.
 - Lyrics are saved on the phone once downloaded, so they work offline afterwards.
@@ -101,5 +102,5 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 ## Privacy
 
 - No account, no analytics, no ads.
-- The only network requests are lyrics lookups (title, artist and duration of the current track) sent to LRCLIB and NetEase.
+- The only network requests are lyrics lookups (title, artist and duration of the current track) sent to LRCLIB, and to NetEase only if you enable the fallback source.
 - Notification access is only used to reach the media sessions; notifications themselves are never read.

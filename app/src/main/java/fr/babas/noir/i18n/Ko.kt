@@ -126,7 +126,7 @@ object Ko : Strings {
     override val preferredAppSub = "세션이 있으면 일시정지 중에도 우선 표시"
     override val automaticPlaying = "자동(재생 중인 앱)"
 
-    override val lyricsSub = "위로 스와이프하거나 오른쪽 하단 버튼 · 출처: LRCLIB, NetEase"
+    override val lyricsSub = "위로 밀거나 오른쪽 아래 버튼을 눌러요 · 출처: LRCLIB"
     override val onMobile = "모바일 데이터 사용 시"
     override val onMobileSub = "끄면 Wi-Fi가 아닐 때는 이미 다운로드한 가사만 표시돼요"
     override val lyricsSize = "가사 크기"
@@ -154,8 +154,7 @@ object Ko : Strings {
     override val gestureTapClockAction = "취침 타이머"
     override val gestureTapApp = "앱 이름 탭"
     override val gestureTapAppAction = "재생 소스 변경"
-    override val tutoLyrics = "위로 스와이프하면 음악에 맞춰 싱크된 가사가 표시돼요. 가사는 인터넷" +
-        "(LRCLIB, 없으면 NetEase)에서 가져오며 한 번 다운로드하면 휴대전화에 저장돼요."
+    override val tutoLyrics = "위로 밀면 음악에 맞춰 가사가 표시돼요. 가사는 커뮤니티가 운영하는 자유 데이터베이스 LRCLIB에서 가져오고, 한 번 받으면 휴대폰에 저장돼요."
     override val downloadOnMobile = "모바일 데이터로 다운로드"
     override val tutoCarTitle = "운전 중"
     override val tutoCar1 = "위쪽 톱니바퀴 옆의 자동차 버튼을 누르면 운전 모드로 바뀌어요. 시계는 크게, 버튼은 아래에 크게 표시되고, 도로에서 눈을 떼지 않도록 가사는 표시하지 않아요."
@@ -170,7 +169,7 @@ object Ko : Strings {
     override val sideLeft = "왼쪽"
     override val sideRight = "오른쪽"
     override val clockSideSub = "자동: 카메라 구멍 옆, 공간이 있는 쪽에 배치"
-    override val lyricsDisclaimer = "가사는 커뮤니티 데이터베이스에서 가져와요. 싱크가 맞지 않거나 곡과 다를 수 있어요. 가사 아래의 출처를 탭하면 다른 쪽을 시도해요."
+    override val lyricsDisclaimer = "가사는 커뮤니티 데이터베이스에서 가져와요. 싱크가 맞지 않거나 곡과 다를 수 있어요. 보조 소스를 켜면 가사 아래의 출처를 탭해 다른 쪽을 시도할 수 있어요."
     override val lyricsNothingOther = "다른 버전을 찾지 못했어요"
     override val camera = "카메라 구멍"
     override val center = "가운데"
@@ -188,4 +187,6 @@ object Ko : Strings {
     override val keepForever = "영구"
     override fun lyricsCacheInfo(count: Int, size: String) = "저장된 곡 ${count}개 · ${size}"
     override val clearLyrics = "저장된 가사 삭제"
+    override val lyricsFallback = "보조 소스 (NetEase)"
+    override val lyricsFallbackSub = "LRCLIB에서 찾지 못하면 NetEase에서도 검색해요. 곡은 더 많지만 자유 소프트웨어가 아닌 서비스예요."
 }

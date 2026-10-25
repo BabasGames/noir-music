@@ -126,7 +126,7 @@ object Fr : Strings {
     override val preferredAppSub = "Suivie en priorité dès qu'elle a une session, même en pause"
     override val automaticPlaying = "Automatique (ce qui joue)"
 
-    override val lyricsSub = "Glisser vers le haut ou bouton en bas à droite · sources : LRCLIB, NetEase"
+    override val lyricsSub = "Glisser vers le haut ou bouton en bas à droite · source : LRCLIB"
     override val onMobile = "Sur données mobiles"
     override val onMobileSub = "Sinon, seules les paroles déjà téléchargées s'affichent hors Wi-Fi"
     override val lyricsSize = "Taille des paroles"
@@ -154,8 +154,7 @@ object Fr : Strings {
     override val gestureTapClockAction = "Minuteur de sommeil"
     override val gestureTapApp = "Toucher le nom de l'appli"
     override val gestureTapAppAction = "Changer de source"
-    override val tutoLyrics = "Glisse vers le haut pour les afficher, synchronisées avec la musique. Elles viennent d'internet " +
-        "(LRCLIB, puis NetEase en secours) et restent sur le tel une fois téléchargées."
+    override val tutoLyrics = "Glisse vers le haut pour les afficher, synchronisées avec la musique. Elles viennent de LRCLIB, une base libre et communautaire, et restent sur le tel une fois téléchargées."
     override val downloadOnMobile = "Télécharger sur données mobiles"
     override val tutoCarTitle = "En voiture"
     override val tutoCar1 = "Le bouton voiture, en haut à côté de la roue dentée, passe en mode voiture : heure géante, gros boutons en bas, et pas de paroles pour ne pas détourner le regard de la route."
@@ -170,7 +169,7 @@ object Fr : Strings {
     override val sideLeft = "Gauche"
     override val sideRight = "Droite"
     override val clockSideSub = "Auto : à côté du trou de la caméra, du côté où il y a la place"
-    override val lyricsDisclaimer = "Les paroles viennent de bases communautaires : elles peuvent être décalées ou ne pas correspondre. Touche la source sous les paroles pour essayer l'autre."
+    override val lyricsDisclaimer = "Les paroles viennent de bases communautaires : elles peuvent être décalées ou ne pas correspondre. Avec la source de secours, touche la source sous les paroles pour essayer l'autre."
     override val lyricsNothingOther = "Pas d'autre version trouvée"
     override val camera = "Trou de la caméra"
     override val center = "Centre"
@@ -188,4 +187,6 @@ object Fr : Strings {
     override val keepForever = "Toujours"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} morceaux en mémoire · ${size}"
     override val clearLyrics = "Effacer les paroles enregistrées"
+    override val lyricsFallback = "Source de secours (NetEase)"
+    override val lyricsFallbackSub = "Cherche aussi sur NetEase quand LRCLIB ne trouve rien. Plus de titres, mais c'est un service non libre."
 }

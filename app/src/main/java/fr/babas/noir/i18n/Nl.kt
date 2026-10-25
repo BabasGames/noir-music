@@ -126,7 +126,7 @@ object Nl : Strings {
     override val preferredAppSub = "Krijgt voorrang zodra hij een sessie heeft, ook gepauzeerd"
     override val automaticPlaying = "Automatisch (wat er speelt)"
 
-    override val lyricsSub = "Veeg omhoog of knop rechtsonder · bronnen: LRCLIB, NetEase"
+    override val lyricsSub = "Veeg omhoog of gebruik de knop rechtsonder · bron: LRCLIB"
     override val onMobile = "Op mobiele data"
     override val onMobileSub = "Anders worden buiten Wi-Fi alleen al gedownloade songteksten getoond"
     override val lyricsSize = "Grootte songtekst"
@@ -154,8 +154,7 @@ object Nl : Strings {
     override val gestureTapClockAction = "Slaaptimer"
     override val gestureTapApp = "Tik op de appnaam"
     override val gestureTapAppAction = "Bron wisselen"
-    override val tutoLyrics = "Veeg omhoog om ze te tonen, synchroon met de muziek. Ze komen van internet " +
-        "(LRCLIB, met NetEase als reserve) en blijven na het downloaden op je telefoon staan."
+    override val tutoLyrics = "Veeg omhoog om ze te tonen, synchroon met de muziek. Ze komen van LRCLIB, een vrije community-database, en blijven op je telefoon na het downloaden."
     override val downloadOnMobile = "Downloaden via mobiele data"
     override val tutoCarTitle = "In de auto"
     override val tutoCar1 = "De autoknop bovenaan naast het tandwiel zet de automodus aan: een grote klok, grote knoppen onderaan en geen songteksten, zodat je ogen op de weg blijven."
@@ -170,7 +169,7 @@ object Nl : Strings {
     override val sideLeft = "Links"
     override val sideRight = "Rechts"
     override val clockSideSub = "Auto: naast het cameragaatje, aan de kant met ruimte"
-    override val lyricsDisclaimer = "Songteksten komen uit community-databases: ze kunnen verschoven zijn of niet kloppen. Tik op de bron onder de tekst om de andere te proberen."
+    override val lyricsDisclaimer = "Songteksten komen uit community-databases: ze kunnen verschoven zijn of niet kloppen. Met de reservebron aan tik je op de bron onder de tekst om de andere te proberen."
     override val lyricsNothingOther = "Geen andere versie gevonden"
     override val camera = "Cameragaatje"
     override val center = "Midden"
@@ -188,4 +187,6 @@ object Nl : Strings {
     override val keepForever = "Altijd"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} nummers opgeslagen · ${size}"
     override val clearLyrics = "Opgeslagen songteksten wissen"
+    override val lyricsFallback = "Reservebron (NetEase)"
+    override val lyricsFallbackSub = "Zoekt ook op NetEase als LRCLIB niets vindt. Meer nummers, maar het is een niet-vrije dienst."
 }

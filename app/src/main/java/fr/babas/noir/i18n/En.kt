@@ -126,7 +126,7 @@ object En : Strings {
     override val preferredAppSub = "Followed first as soon as it has a session, even when paused"
     override val automaticPlaying = "Automatic (whatever's playing)"
 
-    override val lyricsSub = "Swipe up or use the button at the bottom right · sources: LRCLIB, NetEase"
+    override val lyricsSub = "Swipe up or use the button at the bottom right · source: LRCLIB"
     override val onMobile = "On mobile data"
     override val onMobileSub = "Otherwise, only lyrics already downloaded are shown when off Wi-Fi"
     override val lyricsSize = "Lyrics size"
@@ -154,8 +154,7 @@ object En : Strings {
     override val gestureTapClockAction = "Sleep timer"
     override val gestureTapApp = "Tap the app name"
     override val gestureTapAppAction = "Switch source"
-    override val tutoLyrics = "Swipe up to show them, synced with the music. They come from the internet " +
-        "(LRCLIB, with NetEase as a fallback) and stay on your phone once downloaded."
+    override val tutoLyrics = "Swipe up to show them, synced with the music. They come from LRCLIB, a free community database, and stay on your phone once downloaded."
     override val downloadOnMobile = "Download on mobile data"
     override val tutoCarTitle = "In the car"
     override val tutoCar1 = "The car button, at the top next to the gear, switches to car mode: a huge clock, big buttons at the bottom, and no lyrics so your eyes stay on the road."
@@ -170,7 +169,7 @@ object En : Strings {
     override val sideLeft = "Left"
     override val sideRight = "Right"
     override val clockSideSub = "Auto: next to the camera hole, on whichever side has room"
-    override val lyricsDisclaimer = "Lyrics come from community databases: they may be out of sync or not match. Tap the source under the lyrics to try the other one."
+    override val lyricsDisclaimer = "Lyrics come from community databases: they may be out of sync or not match. With the fallback source on, tap the source under the lyrics to try the other one."
     override val lyricsNothingOther = "No other version found"
     override val camera = "Camera hole"
     override val center = "Center"
@@ -188,4 +187,6 @@ object En : Strings {
     override val keepForever = "Forever"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} tracks stored · ${size}"
     override val clearLyrics = "Delete saved lyrics"
+    override val lyricsFallback = "Fallback source (NetEase)"
+    override val lyricsFallbackSub = "Also searches NetEase when LRCLIB finds nothing. More songs, but it's a non-free service."
 }

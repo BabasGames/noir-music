@@ -213,6 +213,9 @@ fun SettingsScreen(
                 Toggle(s.lyrics, s.lyricsSub, prefs.lyrics) { prefs.lyrics = it }
                 Text(s.lyricsDisclaimer, fontSize = 13.sp, color = Gray)
                 Toggle(s.onMobile, s.onMobileSub, prefs.lyricsOnMobile, enabled = prefs.lyrics) { prefs.lyricsOnMobile = it }
+                Toggle(s.lyricsFallback, s.lyricsFallbackSub, prefs.lyricsFallback, enabled = prefs.lyrics) {
+                    prefs.lyricsFallback = it
+                }
                 LyricsStorage(prefs, lyricsRepo)
                 Choice(
                     s.lyricsSize,

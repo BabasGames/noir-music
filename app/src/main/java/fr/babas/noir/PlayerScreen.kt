@@ -349,7 +349,7 @@ private fun Player(
         showLyrics -> Mode.LYRICS
         else -> Mode.NORMAL
     }
-    val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile)
+    val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile, prefs.lyricsFallback)
 
     CompositionLocalProvider(LocalPalette provides if (night) NightPalette else DayPalette) {
         Box(
@@ -945,21 +945,33 @@ private fun LyricsButton(lyr: LyricsUi) {
 }
 
 /** Lyrics of the current track, and a way to try the other source when they're wrong or out of sync. */
-private class LyricsCtl(val value: Lyrics, val busy: Boolean, val nothingOther: Boolean, val switch: () -> Unit)
+private class LyricsCtl(
+    val value: Lyrics,
+    val busy: Boolean,
+    val nothingOther: Boolean,
+    val fallback: Boolean,
+    val switch: () -> Unit,
+)
 
 @Composable
-private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boolean, allowMetered: Boolean): LyricsCtl {
+private fun rememberLyrics(
+    repo: LyricsRepository,
+    np: NowPlaying,
+    active: Boolean,
+    allowMetered: Boolean,
+    fallback: Boolean,
+): LyricsCtl {
     val latest by rememberUpdatedState(np)
     var value by remember { mutableStateOf<Lyrics>(Lyrics.Loading) }
     var busy by remember { mutableStateOf(false) }
     var nothingOther by remember { mutableStateOf(false) }
-    LaunchedEffect(repo, np.title, np.artist, active, allowMetered) {
+    LaunchedEffect(repo, np.title, np.artist, active, allowMetered, fallback) {
         value = Lyrics.Loading
         nothingOther = false
         if (!active || np.title.isEmpty()) return@LaunchedEffect
         delay(300) // tracks skipped in a row: a single request, for the one we stop on
         while (true) {
-            value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
+            value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered, fallback)
             if (value != Lyrics.Unavailable && value != Lyrics.Offline) break
             delay(30_000)
         }
@@ -970,7 +982,7 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
         if (source != null && !busy) scope.launch {
             busy = true
             val track = latest.title
-            val other = repo.loadOther(latest.title, latest.artist, latest.durationMs, source, allowMetered)
+            val other = repo.loadOther(latest.title, latest.artist, latest.durationMs, source, allowMetered, fallback)
             busy = false
             if (latest.title != track) return@launch // track changed in the meantime
             if (other != null) {
@@ -983,7 +995,7 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
         }
         Unit
     }
-    return LyricsCtl(value, busy, nothingOther, switch)
+    return LyricsCtl(value, busy, nothingOther, fallback, switch)
 }
 
 @Composable
@@ -1005,18 +1017,22 @@ private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: 
             // Discreet source label on its own line below the lyrics (placed on top, it hid some text);
             // tapping it tries the other one (lyrics out of sync or wrong)
             val source = (lyrics as? Lyrics.Synced)?.source ?: (lyrics as Lyrics.Plain).source
+            // Without the fallback, LRCLIB is the only source: nothing to switch to (unless these
+            // lyrics came from NetEase back when the fallback was on, then LRCLIB is the other one)
+            val canSwitch = ctl.fallback || source != LyricsRepository.LRCLIB
             Text(
                 when {
                     ctl.busy -> "…"
                     ctl.nothingOther -> str.lyricsNothingOther
-                    else -> "$source  ⇄"
+                    canSwitch -> "$source  ⇄"
+                    else -> source
                 },
                 fontSize = 12.sp,
                 color = pal.faint,
                 modifier = Modifier
                     .align(Alignment.End)
                     .clip(RoundedCornerShape(6.dp))
-                    .clickable(onClick = ctl.switch)
+                    .clickable(enabled = canSwitch, onClick = ctl.switch)
                     .padding(horizontal = 8.dp, vertical = 6.dp),
             )
         }

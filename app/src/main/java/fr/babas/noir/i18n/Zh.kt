@@ -126,7 +126,7 @@ object Zh : Strings {
     override val preferredAppSub = "只要有播放会话就优先跟随，即使已暂停"
     override val automaticPlaying = "自动（正在播放的应用）"
 
-    override val lyricsSub = "向上滑动或点按右下角按钮 · 来源：LRCLIB、网易云音乐"
+    override val lyricsSub = "向上滑动或点右下角按钮 · 来源：LRCLIB"
     override val onMobile = "使用移动数据时"
     override val onMobileSub = "关闭后，未连接 Wi-Fi 时仅显示已下载的歌词"
     override val lyricsSize = "歌词大小"
@@ -154,8 +154,7 @@ object Zh : Strings {
     override val gestureTapClockAction = "睡眠定时"
     override val gestureTapApp = "点按应用名称"
     override val gestureTapAppAction = "切换播放来源"
-    override val tutoLyrics = "向上滑动即可显示与音乐同步的歌词。歌词来自网络" +
-        "（LRCLIB，找不到时使用网易云音乐），下载后会保存在手机上。"
+    override val tutoLyrics = "向上滑动即可显示与音乐同步的歌词。歌词来自社区维护的自由数据库 LRCLIB，下载后会保存在手机上。"
     override val downloadOnMobile = "使用移动数据下载"
     override val tutoCarTitle = "在车上"
     override val tutoCar1 = "顶部齿轮旁的汽车按钮可切换到驾驶模式：超大时钟、底部大按钮，并且不显示歌词，让你专注路面。"
@@ -170,7 +169,7 @@ object Zh : Strings {
     override val sideLeft = "左"
     override val sideRight = "右"
     override val clockSideSub = "自动：放在摄像头开孔旁有空间的一侧"
-    override val lyricsDisclaimer = "歌词来自社区数据库，可能不同步或与歌曲不符。点按歌词下方的来源即可尝试另一个。"
+    override val lyricsDisclaimer = "歌词来自社区数据库，可能不同步或与歌曲不符。开启备用来源后，点按歌词下方的来源即可尝试另一个。"
     override val lyricsNothingOther = "未找到其他版本"
     override val camera = "摄像头开孔"
     override val center = "居中"
@@ -188,4 +187,6 @@ object Zh : Strings {
     override val keepForever = "永久"
     override fun lyricsCacheInfo(count: Int, size: String) = "已保存 ${count} 首 · ${size}"
     override val clearLyrics = "删除已保存的歌词"
+    override val lyricsFallback = "备用来源（NetEase）"
+    override val lyricsFallbackSub = "LRCLIB 找不到时也在 NetEase 搜索。歌曲更多，但它是非自由服务。"
 }

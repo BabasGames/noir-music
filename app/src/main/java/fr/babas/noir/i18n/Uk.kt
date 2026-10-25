@@ -126,7 +126,7 @@ object Uk : Strings {
     override val preferredAppSub = "Відстежується першим, щойно в нього є сеанс, навіть на паузі"
     override val automaticPlaying = "Автоматично (що грає)"
 
-    override val lyricsSub = "Свайп угору або кнопка внизу праворуч · джерела: LRCLIB, NetEase"
+    override val lyricsSub = "Проведи вгору або натисни кнопку праворуч унизу · джерело: LRCLIB"
     override val onMobile = "У мобільній мережі"
     override val onMobileSub = "Інакше поза Wi-Fi показуються лише вже завантажені тексти"
     override val lyricsSize = "Розмір тексту пісні"
@@ -154,8 +154,7 @@ object Uk : Strings {
     override val gestureTapClockAction = "Таймер сну"
     override val gestureTapApp = "Торкання назви застосунку"
     override val gestureTapAppAction = "Змінити джерело"
-    override val tutoLyrics = "Проведи вгору, щоб їх показати: вони йдуть синхронно з музикою. Тексти беруться з інтернету " +
-        "(LRCLIB, а якщо там немає, то NetEase) і залишаються на телефоні після завантаження."
+    override val tutoLyrics = "Проведи вгору, щоб їх показати: вони йдуть синхронно з музикою. Тексти беруться з LRCLIB, вільної бази, яку веде спільнота, і залишаються на телефоні після завантаження."
     override val downloadOnMobile = "Завантажувати в мобільній мережі"
     override val tutoCarTitle = "У машині"
     override val tutoCar1 = "Кнопка з авто вгорі, поруч із шестірнею, вмикає режим авто: величезний годинник, великі кнопки внизу і жодних текстів, щоб не відволікатися від дороги."
@@ -170,7 +169,7 @@ object Uk : Strings {
     override val sideLeft = "Ліворуч"
     override val sideRight = "Праворуч"
     override val clockSideSub = "Авто: поруч із вирізом камери, з того боку, де є місце"
-    override val lyricsDisclaimer = "Тексти беруться з баз, які веде спільнота: вони можуть відставати або не збігатися. Торкнися джерела під текстом, щоб спробувати інше."
+    override val lyricsDisclaimer = "Тексти беруться з баз, які веде спільнота: вони можуть відставати або не збігатися. Якщо запасне джерело ввімкнене, торкнися джерела під текстом, щоб спробувати інше."
     override val lyricsNothingOther = "Іншої версії не знайдено"
     override val camera = "Виріз камери"
     override val center = "Центр"
@@ -188,4 +187,6 @@ object Uk : Strings {
     override val keepForever = "Завжди"
     override fun lyricsCacheInfo(count: Int, size: String) = "Збережено пісень: ${count} · ${size}"
     override val clearLyrics = "Видалити збережені тексти"
+    override val lyricsFallback = "Запасне джерело (NetEase)"
+    override val lyricsFallbackSub = "Шукає також у NetEase, якщо LRCLIB нічого не знайшов. Більше пісень, але це невільний сервіс."
 }

@@ -126,7 +126,7 @@ object Ja : Strings {
     override val preferredAppSub = "セッションがあれば、一時停止中でも優先して表示します"
     override val automaticPlaying = "自動（再生中のアプリ）"
 
-    override val lyricsSub = "上にスワイプまたは右下のボタン · 提供元：LRCLIB、NetEase"
+    override val lyricsSub = "上にスワイプするか右下のボタンで表示 · ソース：LRCLIB"
     override val onMobile = "モバイルデータ通信時"
     override val onMobileSub = "オフの場合、Wi-Fi 以外ではダウンロード済みの歌詞のみ表示します"
     override val lyricsSize = "歌詞のサイズ"
@@ -154,8 +154,7 @@ object Ja : Strings {
     override val gestureTapClockAction = "スリープタイマー"
     override val gestureTapApp = "アプリ名をタップ"
     override val gestureTapAppAction = "再生元を切り替え"
-    override val tutoLyrics = "上にスワイプすると、音楽に同期した歌詞が表示されます。歌詞はインターネット" +
-        "（LRCLIB、見つからなければ NetEase）から取得し、一度ダウンロードすると端末に保存されます。"
+    override val tutoLyrics = "上にスワイプすると、曲に合わせて歌詞が表示されます。歌詞はコミュニティによる自由なデータベース LRCLIB から取得し、一度ダウンロードすると端末に保存されます。"
     override val downloadOnMobile = "モバイルデータ通信でもダウンロード"
     override val tutoCarTitle = "車で使う"
     override val tutoCar1 = "上部の歯車の横にある車ボタンでドライブモードに切り替わります。時計を大きく、ボタンは下に大きく表示し、運転中に目をそらさないよう歌詞は表示しません。"
@@ -170,7 +169,7 @@ object Ja : Strings {
     override val sideLeft = "左"
     override val sideRight = "右"
     override val clockSideSub = "自動：カメラ穴の横、空いている側に配置"
-    override val lyricsDisclaimer = "歌詞はコミュニティのデータベースから取得しています。ずれていたり、曲と合わないことがあります。歌詞の下のソースをタップすると、もう一方を試せます。"
+    override val lyricsDisclaimer = "歌詞はコミュニティのデータベースから取得しています。ずれていたり、曲と合わないことがあります。予備ソースが有効なら、歌詞の下のソースをタップしてもう一方を試せます。"
     override val lyricsNothingOther = "ほかのバージョンは見つかりません"
     override val camera = "カメラ穴"
     override val center = "中央"
@@ -188,4 +187,6 @@ object Ja : Strings {
     override val keepForever = "無期限"
     override fun lyricsCacheInfo(count: Int, size: String) = "保存済み ${count} 曲 · ${size}"
     override val clearLyrics = "保存した歌詞を削除"
+    override val lyricsFallback = "予備ソース（NetEase）"
+    override val lyricsFallbackSub = "LRCLIB で見つからないときに NetEase でも検索します。曲は増えますが、フリーではないサービスです。"
 }

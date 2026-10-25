@@ -236,4 +236,8 @@ interface Strings {
     val keepForever: String
     fun lyricsCacheInfo(count: Int, size: String): String
     val clearLyrics: String
+
+    // ── Lyrics fallback source ──
+    val lyricsFallback: String
+    val lyricsFallbackSub: String
 }

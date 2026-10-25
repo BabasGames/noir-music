@@ -43,7 +43,10 @@ class LyricsRepository(context: Context) {
 
     private val sources = listOf(LRCLIB to ::fromLrclib, NETEASE_NAME to ::fromNetease)
 
-    suspend fun load(title: String, artist: String, durationMs: Long, allowMetered: Boolean): Lyrics =
+    /** Sources in use: LRCLIB, plus NetEase only when the fallback is enabled. */
+    private fun sources(fallback: Boolean) = if (fallback) sources else sources.filter { it.first == LRCLIB }
+
+    suspend fun load(title: String, artist: String, durationMs: Long, allowMetered: Boolean, fallback: Boolean): Lyrics =
         withContext(Dispatchers.IO) {
             val key = key(title, artist)
             val file = File(dir, "$key.json")
@@ -56,13 +59,15 @@ class LyricsRepository(context: Context) {
                     file.delete()
                 }
             }
-            if (key in missing) return@withContext Lyrics.NotFound
+            // "Not found" depends on the sources in use: enabling the fallback allows a new lookup
+            val missKey = "$key|$fallback"
+            if (missKey in missing) return@withContext Lyrics.NotFound
             if (!networkAllowed(allowMetered)) {
                 return@withContext if (cm.activeNetwork == null) Lyrics.Offline else Lyrics.MobileData
             }
 
             var failed = false
-            for ((name, source) in sources) {
+            for ((name, source) in sources(fallback)) {
                 val found = try {
                     source(title, artist, durationMs)
                 } catch (e: Exception) {
@@ -76,7 +81,7 @@ class LyricsRepository(context: Context) {
             }
             // A source that's down may have the lyrics: don't remember the failure, we'll retry
             if (failed) return@withContext Lyrics.Unavailable
-            missing += key
+            missing += missKey
             Lyrics.NotFound
         }
 
@@ -102,10 +107,17 @@ class LyricsRepository(context: Context) {
      * Lyrics out of sync or wrong: tries the other sources for this track. What's found replaces
      * the cache, so the choice sticks. null if no other source has anything better.
      */
-    suspend fun loadOther(title: String, artist: String, durationMs: Long, current: String, allowMetered: Boolean): Lyrics? =
+    suspend fun loadOther(
+        title: String,
+        artist: String,
+        durationMs: Long,
+        current: String,
+        allowMetered: Boolean,
+        fallback: Boolean,
+    ): Lyrics? =
         withContext(Dispatchers.IO) {
             if (!networkAllowed(allowMetered)) return@withContext null
-            for ((name, source) in sources) {
+            for ((name, source) in sources(fallback)) {
                 if (name == current) continue
                 val found = try {
                     source(title, artist, durationMs)

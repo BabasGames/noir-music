@@ -126,7 +126,7 @@ object Es : Strings {
     override val preferredAppSub = "Tiene prioridad en cuanto tiene una sesión, aunque esté en pausa"
     override val automaticPlaying = "Automático (lo que suene)"
 
-    override val lyricsSub = "Desliza hacia arriba o usa el botón de abajo a la derecha · fuentes: LRCLIB, NetEase"
+    override val lyricsSub = "Desliza hacia arriba o usa el botón de abajo a la derecha · fuente: LRCLIB"
     override val onMobile = "Con datos móviles"
     override val onMobileSub = "Si no, sin Wi-Fi solo se muestran las letras ya descargadas"
     override val lyricsSize = "Tamaño de la letra"
@@ -154,8 +154,7 @@ object Es : Strings {
     override val gestureTapClockAction = "Temporizador de apagado"
     override val gestureTapApp = "Tocar el nombre de la app"
     override val gestureTapAppAction = "Cambiar de fuente"
-    override val tutoLyrics = "Desliza hacia arriba para verlas, sincronizadas con la música. Vienen de internet " +
-        "(LRCLIB, y NetEase como respaldo) y se quedan en el móvil una vez descargadas."
+    override val tutoLyrics = "Desliza hacia arriba para verlas, sincronizadas con la música. Vienen de LRCLIB, una base de datos libre y comunitaria, y se quedan en el móvil una vez descargadas."
     override val downloadOnMobile = "Descargar con datos móviles"
     override val tutoCarTitle = "En el coche"
     override val tutoCar1 = "El botón del coche, arriba junto al engranaje, activa el modo coche: reloj enorme, botones grandes abajo y sin letra para no apartar la vista de la carretera."
@@ -170,7 +169,7 @@ object Es : Strings {
     override val sideLeft = "Izquierda"
     override val sideRight = "Derecha"
     override val clockSideSub = "Auto: junto al orificio de la cámara, en el lado con espacio"
-    override val lyricsDisclaimer = "La letra viene de bases de datos comunitarias: puede estar desfasada o no coincidir. Toca la fuente bajo la letra para probar la otra."
+    override val lyricsDisclaimer = "La letra viene de bases de datos comunitarias: puede estar desfasada o no coincidir. Con la fuente de respaldo activada, toca la fuente bajo la letra para probar la otra."
     override val lyricsNothingOther = "No hay otra versión"
     override val camera = "Orificio de la cámara"
     override val center = "Centro"
@@ -188,4 +187,6 @@ object Es : Strings {
     override val keepForever = "Siempre"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} canciones guardadas · ${size}"
     override val clearLyrics = "Borrar letras guardadas"
+    override val lyricsFallback = "Fuente de respaldo (NetEase)"
+    override val lyricsFallbackSub = "Busca también en NetEase cuando LRCLIB no encuentra nada. Más canciones, pero es un servicio no libre."
 }

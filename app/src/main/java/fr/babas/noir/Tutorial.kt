@@ -170,6 +170,7 @@ private fun LyricsPage(prefs: Prefs) {
         Body(s.tutoLyrics)
         Body(s.lyricsDisclaimer)
         Toggle(s.downloadOnMobile, s.onMobileSub, prefs.lyricsOnMobile) { prefs.lyricsOnMobile = it }
+        Toggle(s.lyricsFallback, s.lyricsFallbackSub, prefs.lyricsFallback) { prefs.lyricsFallback = it }
     }
 }
 

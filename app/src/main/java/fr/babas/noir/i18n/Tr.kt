@@ -126,7 +126,7 @@ object Tr : Strings {
     override val preferredAppSub = "Oturumu olduğu anda, duraklatılmış olsa bile öncelikle takip edilir"
     override val automaticPlaying = "Otomatik (ne çalıyorsa)"
 
-    override val lyricsSub = "Yukarı kaydır veya sağ alttaki düğmeye dokun · kaynaklar: LRCLIB, NetEase"
+    override val lyricsSub = "Yukarı kaydır ya da sağ alttaki düğmeyi kullan · kaynak: LRCLIB"
     override val onMobile = "Mobil veride"
     override val onMobileSub = "Kapalıysa Wi-Fi dışında yalnızca önceden indirilmiş sözler gösterilir"
     override val lyricsSize = "Şarkı sözü boyutu"
@@ -154,8 +154,7 @@ object Tr : Strings {
     override val gestureTapClockAction = "Uyku zamanlayıcısı"
     override val gestureTapApp = "Uygulama adına dokun"
     override val gestureTapAppAction = "Kaynağı değiştir"
-    override val tutoLyrics = "Göstermek için yukarı kaydır; sözler müzikle senkronize akar. İnternetten gelir " +
-        "(LRCLIB, yedek olarak NetEase) ve bir kez indirildikten sonra telefonda kalır."
+    override val tutoLyrics = "Görmek için yukarı kaydır, müzikle senkronize akar. Sözler topluluğun yürüttüğü özgür bir veritabanı olan LRCLIB'den gelir ve indirildikten sonra telefonda kalır."
     override val downloadOnMobile = "Mobil veride indir"
     override val tutoCarTitle = "Arabada"
     override val tutoCar1 = "Üstte dişlinin yanındaki araba düğmesi araba modunu açar: dev saat, altta büyük düğmeler ve gözün yolda kalsın diye şarkı sözü yok."
@@ -170,7 +169,7 @@ object Tr : Strings {
     override val sideLeft = "Sol"
     override val sideRight = "Sağ"
     override val clockSideSub = "Otomatik: kamera deliğinin yanında, yer olan tarafta"
-    override val lyricsDisclaimer = "Şarkı sözleri topluluk veritabanlarından gelir: kayık olabilir ya da uyuşmayabilir. Diğerini denemek için sözlerin altındaki kaynağa dokun."
+    override val lyricsDisclaimer = "Şarkı sözleri topluluk veritabanlarından gelir: kayık olabilir ya da uyuşmayabilir. Yedek kaynak açıksa, diğerini denemek için sözlerin altındaki kaynağa dokun."
     override val lyricsNothingOther = "Başka sürüm bulunamadı"
     override val camera = "Kamera deliği"
     override val center = "Orta"
@@ -188,4 +187,6 @@ object Tr : Strings {
     override val keepForever = "Süresiz"
     override fun lyricsCacheInfo(count: Int, size: String) = "${count} şarkı kayıtlı · ${size}"
     override val clearLyrics = "Kayıtlı sözleri sil"
+    override val lyricsFallback = "Yedek kaynak (NetEase)"
+    override val lyricsFallbackSub = "LRCLIB bir şey bulamazsa NetEase'te de arar. Daha çok şarkı, ama özgür olmayan bir hizmet."
 }
