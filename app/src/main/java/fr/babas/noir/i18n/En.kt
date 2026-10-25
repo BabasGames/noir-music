@@ -49,7 +49,7 @@ object En : Strings {
     override val orientAuto = "Auto"
     override val orientPortrait = "Portrait"
     override val orientLandscape = "Landscape"
-    override val carModeSub = "Everything big, no lyrics · also with the car button at the bottom left"
+    override val carModeSub = "Everything big, no lyrics · also with the car button at the top"
 
     override val sectionDisplay = "Display"
     override val clock = "Clock"
@@ -138,7 +138,7 @@ object En : Strings {
     override val letsGo = "Let's go"
     override val tutoLanguageTitle = "Language"
     override val welcome1 = "A black-and-white control screen for your music, made to stay on, on your desk or in the car."
-    override val welcome2 = "It controls music from other apps (Deezer, Spotify, KDE Connect…). For that, Android requires " +
+    override val welcome2 = "It controls music from other apps (Deezer, Spotify, YouTube Music…). For that, Android requires " +
         "notification access: Noir Music doesn't read your notifications, it's just the way in to the players."
     override val accessGranted = "Access granted"
     override val allowAccess = "Allow access"
@@ -158,8 +158,7 @@ object En : Strings {
         "(LRCLIB, with NetEase as a fallback) and stay on your phone once downloaded."
     override val downloadOnMobile = "Download on mobile data"
     override val tutoCarTitle = "In the car"
-    override val tutoCar1 = "The car button, at the bottom left, switches to car mode: big buttons, large text, " +
-        "and no lyrics, so your eyes stay on the road."
+    override val tutoCar1 = "The car button, at the top next to the gear, switches to car mode: a huge clock, big buttons at the bottom, and no lyrics so your eyes stay on the road."
     override val tutoCar2 = "Tap it again to go back to the normal view."
     override val tutoScreenTitle = "Screen"
     override val tutoScreen1 = "While music is playing, the screen stays on and refreshes less often to save battery."
@@ -176,4 +175,8 @@ object En : Strings {
     override val camera = "Camera hole"
     override val center = "Center"
     override val cameraSub = "Auto: position reported by Android, sometimes wrong. The clock and the gear go on either side."
+    override val tutoOpenTitle = "Open source"
+    override val tutoOpen1 = "Noir Music is open source and still in development, so some bugs may be lurking."
+    override val tutoOpen2 = "Found a bug or have a feature idea? Open an issue on GitHub, every bit of feedback helps."
+    override val openGithub = "View on GitHub"
 }

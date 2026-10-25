@@ -49,7 +49,7 @@ object Ko : Strings {
     override val orientAuto = "자동"
     override val orientPortrait = "세로"
     override val orientLandscape = "가로"
-    override val carModeSub = "모든 요소를 크게, 가사 없음 · 왼쪽 하단 차량 버튼으로도 전환"
+    override val carModeSub = "모두 크게, 가사 없음 · 위쪽 자동차 버튼으로도 전환"
 
     override val sectionDisplay = "디스플레이"
     override val clock = "시계"
@@ -138,7 +138,7 @@ object Ko : Strings {
     override val letsGo = "시작하기"
     override val tutoLanguageTitle = "언어"
     override val welcome1 = "책상 위나 차 안에서 켜 두고 쓰는 흑백 음악 컨트롤 화면이에요."
-    override val welcome2 = "다른 앱(Deezer, Spotify, KDE Connect 등)의 음악을 제어해요. 이를 위해 Android에서 " +
+    override val welcome2 = "다른 앱(Deezer, Spotify, YouTube Music 등)의 음악을 제어해요. 이를 위해 Android에서 " +
         "알림 접근 권한을 허용해야 해요. Noir Music은 알림을 읽지 않으며, 플레이어에 연결하기 위한 통로일 뿐이에요."
     override val accessGranted = "권한 허용됨"
     override val allowAccess = "권한 허용"
@@ -158,8 +158,7 @@ object Ko : Strings {
         "(LRCLIB, 없으면 NetEase)에서 가져오며 한 번 다운로드하면 휴대전화에 저장돼요."
     override val downloadOnMobile = "모바일 데이터로 다운로드"
     override val tutoCarTitle = "운전 중"
-    override val tutoCar1 = "왼쪽 하단의 차량 버튼을 누르면 운전 모드로 바뀌어요. 버튼과 글자가 커지고, " +
-        "도로에서 시선을 빼앗지 않도록 가사는 표시되지 않아요."
+    override val tutoCar1 = "위쪽 톱니바퀴 옆의 자동차 버튼을 누르면 운전 모드로 바뀌어요. 시계는 크게, 버튼은 아래에 크게 표시되고, 도로에서 눈을 떼지 않도록 가사는 표시하지 않아요."
     override val tutoCar2 = "다시 누르면 일반 화면으로 돌아가요."
     override val tutoScreenTitle = "화면"
     override val tutoScreen1 = "재생 중에는 화면이 계속 켜져 있고, 배터리를 아끼기 위해 주사율을 낮춰요."
@@ -176,4 +175,8 @@ object Ko : Strings {
     override val camera = "카메라 구멍"
     override val center = "가운데"
     override val cameraSub = "자동: Android가 알려 주는 위치로, 가끔 틀려요. 시계와 톱니바퀴를 양옆에 배치해요."
+    override val tutoOpenTitle = "오픈 소스"
+    override val tutoOpen1 = "Noir Music은 오픈 소스이고 아직 개발 중이라 버그가 있을 수 있어요."
+    override val tutoOpen2 = "버그를 찾았거나 기능 아이디어가 있나요? GitHub에 이슈를 남겨 주세요. 모든 의견이 도움이 돼요."
+    override val openGithub = "GitHub에서 보기"
 }

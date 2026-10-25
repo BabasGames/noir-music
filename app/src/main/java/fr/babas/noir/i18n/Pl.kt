@@ -49,7 +49,7 @@ object Pl : Strings {
     override val orientAuto = "Auto"
     override val orientPortrait = "Pionowo"
     override val orientLandscape = "Poziomo"
-    override val carModeSub = "Wszystko duże, bez tekstów · także przyciskiem auta w lewym dolnym rogu"
+    override val carModeSub = "Wszystko duże, bez tekstów · także przyciskiem auta u góry"
 
     override val sectionDisplay = "Wyświetlanie"
     override val clock = "Zegar"
@@ -138,7 +138,7 @@ object Pl : Strings {
     override val letsGo = "Zaczynamy"
     override val tutoLanguageTitle = "Język"
     override val welcome1 = "Czarno-biały ekran do sterowania muzyką, stworzony, by stale świecić na biurku lub w samochodzie."
-    override val welcome2 = "Steruje muzyką z innych aplikacji (Deezer, Spotify, KDE Connect…). Do tego Android wymaga " +
+    override val welcome2 = "Steruje muzyką z innych aplikacji (Deezer, Spotify, YouTube Music…). Do tego Android wymaga " +
         "zgody na dostęp do powiadomień: Noir Music ich nie czyta, to tylko furtka do odtwarzaczy."
     override val accessGranted = "Dostęp przyznany"
     override val allowAccess = "Zezwól na dostęp"
@@ -158,8 +158,7 @@ object Pl : Strings {
         "(LRCLIB, awaryjnie NetEase) i po pobraniu zostają na telefonie."
     override val downloadOnMobile = "Pobieraj na danych komórkowych"
     override val tutoCarTitle = "W samochodzie"
-    override val tutoCar1 = "Przycisk auta w lewym dolnym rogu włącza tryb samochodowy: duże przyciski, duży tekst " +
-        "i żadnych tekstów piosenek, żeby nie odrywać wzroku od drogi."
+    override val tutoCar1 = "Przycisk auta u góry, obok zębatki, włącza tryb samochodowy: ogromny zegar, duże przyciski na dole i bez tekstów, żeby nie odrywać wzroku od drogi."
     override val tutoCar2 = "Dotknij go ponownie, aby wrócić do zwykłego widoku."
     override val tutoScreenTitle = "Ekran"
     override val tutoScreen1 = "Podczas odtwarzania ekran pozostaje włączony i odświeża się rzadziej, by oszczędzać baterię."
@@ -176,4 +175,8 @@ object Pl : Strings {
     override val camera = "Otwór aparatu"
     override val center = "Środek"
     override val cameraSub = "Auto: położenie podane przez Androida, czasem błędne. Zegar i zębatka trafiają po obu stronach."
+    override val tutoOpenTitle = "Open source"
+    override val tutoOpen1 = "Noir Music ma otwarty kod i wciąż jest rozwijany, więc mogą zdarzać się błędy."
+    override val tutoOpen2 = "Znalazłeś błąd albo masz pomysł? Zgłoś issue na GitHubie, każda uwaga pomaga."
+    override val openGithub = "Zobacz na GitHubie"
 }

@@ -49,7 +49,7 @@ object Ru : Strings {
     override val orientAuto = "Авто"
     override val orientPortrait = "Книжная"
     override val orientLandscape = "Альбомная"
-    override val carModeSub = "Всё крупно, без текста · также кнопкой с машиной внизу слева"
+    override val carModeSub = "Всё крупно, без текстов · также кнопкой с машиной вверху"
 
     override val sectionDisplay = "Отображение"
     override val clock = "Часы"
@@ -138,7 +138,7 @@ object Ru : Strings {
     override val letsGo = "Поехали"
     override val tutoLanguageTitle = "Язык"
     override val welcome1 = "Чёрно-белый экран управления музыкой, который можно держать включённым на столе или в машине."
-    override val welcome2 = "Он управляет музыкой других приложений (Deezer, Spotify, KDE Connect…). Для этого Android просит " +
+    override val welcome2 = "Он управляет музыкой других приложений (Deezer, Spotify, YouTube Music…). Для этого Android просит " +
         "разрешить доступ к уведомлениям: Noir Music их не читает, это просто вход к плеерам."
     override val accessGranted = "Доступ предоставлен"
     override val allowAccess = "Разрешить доступ"
@@ -154,12 +154,11 @@ object Ru : Strings {
     override val gestureTapClockAction = "Таймер сна"
     override val gestureTapApp = "Касание названия приложения"
     override val gestureTapAppAction = "Сменить источник"
-    override val tutoLyrics = "Проведи вверх, чтобы их показать, — они идут синхронно с музыкой. Тексты берутся из интернета " +
-        "(LRCLIB, запасной вариант — NetEase) и остаются на телефоне после загрузки."
+    override val tutoLyrics = "Проведи вверх, чтобы их показать: они идут синхронно с музыкой. Тексты берутся из интернета " +
+        "(LRCLIB, а если там нет, то NetEase) и остаются на телефоне после загрузки."
     override val downloadOnMobile = "Скачивать в мобильной сети"
     override val tutoCarTitle = "В машине"
-    override val tutoCar1 = "Кнопка с машиной внизу слева включает режим вождения: большие кнопки, крупный текст " +
-        "и никаких текстов песен, чтобы не отвлекаться от дороги."
+    override val tutoCar1 = "Кнопка с машиной вверху, рядом с шестерёнкой, включает режим авто: огромные часы, большие кнопки внизу и никаких текстов, чтобы не отвлекаться от дороги."
     override val tutoCar2 = "Нажми на неё ещё раз, чтобы вернуться к обычному виду."
     override val tutoScreenTitle = "Экран"
     override val tutoScreen1 = "Во время воспроизведения экран не гаснет и обновляется реже, чтобы экономить батарею."
@@ -176,4 +175,8 @@ object Ru : Strings {
     override val camera = "Вырез камеры"
     override val center = "Центр"
     override val cameraSub = "Авто: положение, которое сообщает Android, иногда неверное. Часы и шестерёнка встают по бокам."
+    override val tutoOpenTitle = "Открытый код"
+    override val tutoOpen1 = "Noir Music с открытым кодом и всё ещё в разработке, так что баги возможны."
+    override val tutoOpen2 = "Нашёл баг или есть идея? Создай issue на GitHub, любой отзыв помогает."
+    override val openGithub = "Открыть GitHub"
 }

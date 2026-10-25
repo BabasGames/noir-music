@@ -16,8 +16,8 @@ import java.io.File
 data class ClockStyle(val family: FontFamily, val weight: FontWeight, val typeface: Typeface)
 
 /**
- * Polices proposées pour l'horloge : génériques, celles du système qu'on reconnaît (les polices Nothing
- * sont lisibles par toutes les applis dans /system/fonts), et un fichier importé par l'utilisateur.
+ * Polices proposées pour l'horloge : génériques, polices de constructeur reconnues dans /system/fonts
+ * (lisibles par toutes les applis, par exemple sur les téléphones Nothing), et un fichier importé.
  */
 object ClockFonts {
     const val CUSTOM = "custom"

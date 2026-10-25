@@ -49,7 +49,7 @@ object Fr : Strings {
     override val orientAuto = "Auto"
     override val orientPortrait = "Portrait"
     override val orientLandscape = "Paysage"
-    override val carModeSub = "Tout en grand, sans paroles · aussi avec le bouton voiture en bas à gauche"
+    override val carModeSub = "Tout en grand, sans paroles · aussi avec le bouton voiture en haut"
 
     override val sectionDisplay = "Affichage"
     override val clock = "Horloge"
@@ -138,7 +138,7 @@ object Fr : Strings {
     override val letsGo = "C'est parti"
     override val tutoLanguageTitle = "Langue"
     override val welcome1 = "Un écran de contrôle pour la musique, en noir et blanc, fait pour rester allumé sur le bureau ou en voiture."
-    override val welcome2 = "Il pilote la musique des autres applis (Deezer, Spotify, KDE Connect…). Pour ça, Android demande " +
+    override val welcome2 = "Il pilote la musique des autres applis (Deezer, Spotify, YouTube Music…). Pour ça, Android demande " +
         "d'autoriser l'accès aux notifications : Noir Music ne les lit pas, c'est juste la porte d'entrée vers les lecteurs."
     override val accessGranted = "Accès accordé"
     override val allowAccess = "Autoriser l'accès"
@@ -158,8 +158,7 @@ object Fr : Strings {
         "(LRCLIB, puis NetEase en secours) et restent sur le tel une fois téléchargées."
     override val downloadOnMobile = "Télécharger sur données mobiles"
     override val tutoCarTitle = "En voiture"
-    override val tutoCar1 = "Le bouton voiture, en bas à gauche, passe en mode voiture : gros boutons, texte en grand, " +
-        "et pas de paroles pour ne pas détourner le regard de la route."
+    override val tutoCar1 = "Le bouton voiture, en haut à côté de la roue dentée, passe en mode voiture : heure géante, gros boutons en bas, et pas de paroles pour ne pas détourner le regard de la route."
     override val tutoCar2 = "Touche-le à nouveau pour revenir à l'affichage normal."
     override val tutoScreenTitle = "Écran"
     override val tutoScreen1 = "En lecture, l'écran reste allumé et se rafraîchit moins souvent pour économiser la batterie."
@@ -176,4 +175,8 @@ object Fr : Strings {
     override val camera = "Trou de la caméra"
     override val center = "Centre"
     override val cameraSub = "Auto : position donnée par Android, parfois fausse. L'heure et la roue se placent de chaque côté."
+    override val tutoOpenTitle = "Open source"
+    override val tutoOpen1 = "Noir Music est open source et encore en développement : des bugs peuvent traîner."
+    override val tutoOpen2 = "Un bug, une idée de fonction ? Ouvre une « issue » sur GitHub, chaque retour aide."
+    override val openGithub = "Voir sur GitHub"
 }

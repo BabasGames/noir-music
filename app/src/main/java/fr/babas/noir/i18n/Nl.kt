@@ -49,7 +49,7 @@ object Nl : Strings {
     override val orientAuto = "Auto"
     override val orientPortrait = "Staand"
     override val orientLandscape = "Liggend"
-    override val carModeSub = "Alles groot, zonder songtekst · ook via de autoknop linksonder"
+    override val carModeSub = "Alles groot, geen songteksten · ook via de autoknop bovenaan"
 
     override val sectionDisplay = "Weergave"
     override val clock = "Klok"
@@ -138,7 +138,7 @@ object Nl : Strings {
     override val letsGo = "Aan de slag"
     override val tutoLanguageTitle = "Taal"
     override val welcome1 = "Een bedieningsscherm voor muziek, in zwart-wit, gemaakt om aan te blijven op je bureau of in de auto."
-    override val welcome2 = "Het bedient de muziek van andere apps (Deezer, Spotify, KDE Connect…). Daarvoor vraagt Android " +
+    override val welcome2 = "Het bedient de muziek van andere apps (Deezer, Spotify, YouTube Music…). Daarvoor vraagt Android " +
         "om meldingstoegang: Noir Music leest ze niet, het is alleen de toegangspoort naar de spelers."
     override val accessGranted = "Toegang verleend"
     override val allowAccess = "Toegang geven"
@@ -158,8 +158,7 @@ object Nl : Strings {
         "(LRCLIB, met NetEase als reserve) en blijven na het downloaden op je telefoon staan."
     override val downloadOnMobile = "Downloaden via mobiele data"
     override val tutoCarTitle = "In de auto"
-    override val tutoCar1 = "De autoknop linksonder zet de automodus aan: grote knoppen, grote tekst " +
-        "en geen songtekst, zodat je je ogen op de weg houdt."
+    override val tutoCar1 = "De autoknop bovenaan naast het tandwiel zet de automodus aan: een grote klok, grote knoppen onderaan en geen songteksten, zodat je ogen op de weg blijven."
     override val tutoCar2 = "Tik er nog een keer op om terug te gaan naar de normale weergave."
     override val tutoScreenTitle = "Scherm"
     override val tutoScreen1 = "Tijdens het afspelen blijft het scherm aan en ververst het minder vaak om batterij te sparen."
@@ -176,4 +175,8 @@ object Nl : Strings {
     override val camera = "Cameragaatje"
     override val center = "Midden"
     override val cameraSub = "Auto: positie die Android doorgeeft, soms verkeerd. De klok en het tandwiel komen aan weerszijden."
+    override val tutoOpenTitle = "Open source"
+    override val tutoOpen1 = "Noir Music is open source en nog in ontwikkeling, dus er kunnen bugs in zitten."
+    override val tutoOpen2 = "Een bug gevonden of een idee? Open een issue op GitHub, elke reactie helpt."
+    override val openGithub = "Bekijk op GitHub"
 }

@@ -49,7 +49,7 @@ object Zh : Strings {
     override val orientAuto = "自动"
     override val orientPortrait = "竖屏"
     override val orientLandscape = "横屏"
-    override val carModeSub = "全部放大显示，不显示歌词 · 也可通过左下角的汽车按钮开启"
+    override val carModeSub = "全部放大，不显示歌词 · 也可点顶部的汽车按钮"
 
     override val sectionDisplay = "显示"
     override val clock = "时钟"
@@ -138,7 +138,7 @@ object Zh : Strings {
     override val letsGo = "开始使用"
     override val tutoLanguageTitle = "语言"
     override val welcome1 = "一款黑白风格的音乐控制屏，适合在桌上或车里保持常亮。"
-    override val welcome2 = "它可以控制其他应用（Deezer、Spotify、KDE Connect 等）中的音乐。为此，Android 要求" +
+    override val welcome2 = "它可以控制其他应用（Deezer、Spotify、YouTube Music 等）中的音乐。为此，Android 要求" +
         "授予通知使用权：Noir Music 不会读取你的通知，这只是连接播放器的入口。"
     override val accessGranted = "已授权"
     override val allowAccess = "授予权限"
@@ -158,8 +158,7 @@ object Zh : Strings {
         "（LRCLIB，找不到时使用网易云音乐），下载后会保存在手机上。"
     override val downloadOnMobile = "使用移动数据下载"
     override val tutoCarTitle = "在车上"
-    override val tutoCar1 = "点按左下角的汽车按钮即可进入驾驶模式：按钮更大、文字更大，" +
-        "且不显示歌词，以免分散对路面的注意力。"
+    override val tutoCar1 = "顶部齿轮旁的汽车按钮可切换到驾驶模式：超大时钟、底部大按钮，并且不显示歌词，让你专注路面。"
     override val tutoCar2 = "再次点按即可恢复正常显示。"
     override val tutoScreenTitle = "屏幕"
     override val tutoScreen1 = "播放时屏幕保持常亮，并降低刷新率以节省电量。"
@@ -176,4 +175,8 @@ object Zh : Strings {
     override val camera = "摄像头开孔"
     override val center = "居中"
     override val cameraSub = "自动：使用 Android 报告的位置，有时不准。时钟和齿轮放在两侧。"
+    override val tutoOpenTitle = "开源"
+    override val tutoOpen1 = "Noir Music 是开源应用，仍在开发中，可能会有 bug。"
+    override val tutoOpen2 = "发现 bug 或有功能想法？请在 GitHub 上提交 issue，每条反馈都有帮助。"
+    override val openGithub = "在 GitHub 上查看"
 }

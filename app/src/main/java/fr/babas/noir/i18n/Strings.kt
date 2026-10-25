@@ -221,4 +221,8 @@ interface Strings {
     val camera: String
     val center: String
     val cameraSub: String
+    val tutoOpenTitle: String
+    val tutoOpen1: String
+    val tutoOpen2: String
+    val openGithub: String
 }

@@ -205,7 +205,7 @@ fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftD
         val density = LocalDensity.current
         val size = 96.sp
         // La boîte d'un texte n'est pas son encre : place sous la ligne de base (pour « p », « g »…),
-        // approches des chiffres (le « 1 » de Nothing Dot est tracé décalé dans sa case). On compare la
+        // approches des chiffres (certaines polices tracent le « 1 » décalé dans sa case). On compare la
         // mise en page réelle au tracé exact des chiffres affichés, et on recentre l'encre.
         val text = rememberFormatted(pattern, LocalLang.current.locale)
         var layout by remember { mutableStateOf<TextLayoutResult?>(null) }

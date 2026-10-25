@@ -21,7 +21,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // APK perso : signé avec la clé de debug, pas de store
+            // Signé avec la clé de debug : suffit pour installer soi-même, à remplacer pour une publication
             signingConfig = signingConfigs.getByName("debug")
         }
     }

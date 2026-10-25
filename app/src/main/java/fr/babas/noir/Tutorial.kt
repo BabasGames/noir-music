@@ -34,13 +34,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.launch
 
-private const val PAGES = 6
+private const val PAGES = 7
+
+const val GITHUB_URL = "https://github.com/BabasGames/noir-music"
 
 /** Premier lancement (ou « Revoir le tuto ») : langue d'abord, puis accès, gestes, paroles, voiture, écran. */
 @Composable
@@ -67,7 +70,8 @@ fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone
                         2 -> Gestures()
                         3 -> LyricsPage(prefs)
                         4 -> CarPage()
-                        else -> ScreenPage()
+                        5 -> ScreenPage()
+                        else -> OpenSourcePage()
                     }
                 }
             }
@@ -178,6 +182,20 @@ private fun CarPage() {
         Title(s.tutoCarTitle)
         Body(s.tutoCar1)
         Body(s.tutoCar2)
+    }
+}
+
+/** Dernière page : l'appli est en développement, bugs et idées vont sur GitHub. */
+@Composable
+private fun OpenSourcePage() {
+    val s = LocalStrings.current
+    val uri = LocalUriHandler.current
+    Column {
+        Title(s.tutoOpenTitle)
+        Body(s.tutoOpen1)
+        Body(s.tutoOpen2)
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(onClick = { uri.openUri("$GITHUB_URL/issues") }) { Text(s.openGithub, color = Color.White) }
     }
 }
 

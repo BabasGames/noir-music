@@ -49,7 +49,7 @@ object Pt : Strings {
     override val orientAuto = "Auto"
     override val orientPortrait = "Retrato"
     override val orientLandscape = "Paisagem"
-    override val carModeSub = "Tudo grande, sem letras · também pelo botão do carro no canto inferior esquerdo"
+    override val carModeSub = "Tudo grande, sem letras · também pelo botão do carro no topo"
 
     override val sectionDisplay = "Exibição"
     override val clock = "Relógio"
@@ -138,7 +138,7 @@ object Pt : Strings {
     override val letsGo = "Vamos lá"
     override val tutoLanguageTitle = "Idioma"
     override val welcome1 = "Uma tela de controle para a sua música, em preto e branco, feita para ficar ligada na mesa ou no carro."
-    override val welcome2 = "Ele controla a música de outros apps (Deezer, Spotify, KDE Connect…). Para isso, o Android pede " +
+    override val welcome2 = "Ele controla a música de outros apps (Deezer, Spotify, YouTube Music…). Para isso, o Android pede " +
         "que você permita o acesso às notificações: o Noir Music não as lê, é só a porta de entrada para os players."
     override val accessGranted = "Acesso concedido"
     override val allowAccess = "Permitir acesso"
@@ -158,8 +158,7 @@ object Pt : Strings {
         "(LRCLIB, com NetEase como reserva) e fica no aparelho depois de baixada."
     override val downloadOnMobile = "Baixar nos dados móveis"
     override val tutoCarTitle = "No carro"
-    override val tutoCar1 = "O botão do carro, no canto inferior esquerdo, ativa o modo carro: botões grandes, texto grande " +
-        "e sem letras, para você não tirar os olhos da estrada."
+    override val tutoCar1 = "O botão do carro, no topo ao lado da engrenagem, ativa o modo carro: relógio gigante, botões grandes embaixo e sem letras, para não tirar os olhos da estrada."
     override val tutoCar2 = "Toque nele de novo para voltar à exibição normal."
     override val tutoScreenTitle = "Tela"
     override val tutoScreen1 = "Durante a reprodução, a tela fica ligada e se atualiza com menos frequência para economizar bateria."
@@ -176,4 +175,8 @@ object Pt : Strings {
     override val camera = "Furo da câmera"
     override val center = "Centro"
     override val cameraSub = "Auto: posição informada pelo Android, às vezes errada. O relógio e a engrenagem ficam um de cada lado."
+    override val tutoOpenTitle = "Código aberto"
+    override val tutoOpen1 = "O Noir Music é de código aberto e ainda está em desenvolvimento, então pode haver bugs."
+    override val tutoOpen2 = "Achou um bug ou tem uma ideia? Abra uma issue no GitHub, todo retorno ajuda."
+    override val openGithub = "Ver no GitHub"
 }

@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -218,6 +219,8 @@ fun SettingsScreen(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = onOpenAccess) { Text(s.notificationAccess, color = Color.White) }
                     OutlinedButton(onClick = onTutorial) { Text(s.replayTutorial, color = Color.White) }
+                    val uri = LocalUriHandler.current
+                    OutlinedButton(onClick = { uri.openUri(GITHUB_URL) }) { Text(s.openGithub, color = Color.White) }
                 }
                 Spacer(Modifier.height(24.dp))
             }

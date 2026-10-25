@@ -164,7 +164,7 @@ class LyricsRepository(context: Context) {
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 8000
             conn.readTimeout = 8000
-            conn.setRequestProperty("User-Agent", "NoirMusic/1.0 (controleur musique Android perso)")
+            conn.setRequestProperty("User-Agent", "NoirMusic/1.0 (+https://github.com/BabasGames/noir-music)")
             headers.forEach(conn::setRequestProperty)
             try {
                 val code = conn.responseCode

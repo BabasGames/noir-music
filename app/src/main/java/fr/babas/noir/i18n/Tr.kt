@@ -49,7 +49,7 @@ object Tr : Strings {
     override val orientAuto = "Otomatik"
     override val orientPortrait = "Dikey"
     override val orientLandscape = "Yatay"
-    override val carModeSub = "Her şey büyük, şarkı sözü yok · sol alttaki araç düğmesiyle de açılır"
+    override val carModeSub = "Her şey büyük, şarkı sözü yok · üstteki araba düğmesiyle de açılır"
 
     override val sectionDisplay = "Görünüm"
     override val clock = "Saat"
@@ -138,7 +138,7 @@ object Tr : Strings {
     override val letsGo = "Başlayalım"
     override val tutoLanguageTitle = "Dil"
     override val welcome1 = "Masada ya da arabada açık kalmak için tasarlanmış, siyah beyaz bir müzik kontrol ekranı."
-    override val welcome2 = "Diğer uygulamaların müziğini kontrol eder (Deezer, Spotify, KDE Connect…). Bunun için Android " +
+    override val welcome2 = "Diğer uygulamaların müziğini kontrol eder (Deezer, Spotify, YouTube Music…). Bunun için Android " +
         "bildirim erişimi izni istiyor: Noir Music bildirimleri okumaz, bu sadece oynatıcılara açılan kapı."
     override val accessGranted = "Erişim verildi"
     override val allowAccess = "Erişime izin ver"
@@ -158,8 +158,7 @@ object Tr : Strings {
         "(LRCLIB, yedek olarak NetEase) ve bir kez indirildikten sonra telefonda kalır."
     override val downloadOnMobile = "Mobil veride indir"
     override val tutoCarTitle = "Arabada"
-    override val tutoCar1 = "Sol alttaki araç düğmesi araç moduna geçer: büyük düğmeler, büyük yazı " +
-        "ve gözünü yoldan ayırmaman için şarkı sözü yok."
+    override val tutoCar1 = "Üstte dişlinin yanındaki araba düğmesi araba modunu açar: dev saat, altta büyük düğmeler ve gözün yolda kalsın diye şarkı sözü yok."
     override val tutoCar2 = "Normal görünüme dönmek için ona tekrar dokun."
     override val tutoScreenTitle = "Ekran"
     override val tutoScreen1 = "Müzik çalarken ekran açık kalır ve pil tasarrufu için daha seyrek yenilenir."
@@ -176,4 +175,8 @@ object Tr : Strings {
     override val camera = "Kamera deliği"
     override val center = "Orta"
     override val cameraSub = "Otomatik: Android'in bildirdiği konum, bazen yanlış. Saat ve dişli iki yanına yerleşir."
+    override val tutoOpenTitle = "Açık kaynak"
+    override val tutoOpen1 = "Noir Music açık kaynaklı ve hâlâ geliştiriliyor, bu yüzden hatalar olabilir."
+    override val tutoOpen2 = "Bir hata mı buldun ya da bir fikrin mi var? GitHub'da bir issue aç, her geri bildirim işe yarar."
+    override val openGithub = "GitHub'da gör"
 }

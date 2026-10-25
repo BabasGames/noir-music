@@ -49,7 +49,7 @@ object Ja : Strings {
     override val orientAuto = "自動"
     override val orientPortrait = "縦"
     override val orientLandscape = "横"
-    override val carModeSub = "すべてを大きく表示、歌詞なし · 左下の車ボタンからも切り替え可能"
+    override val carModeSub = "すべて大きく表示、歌詞なし · 上部の車ボタンでも切り替え"
 
     override val sectionDisplay = "表示"
     override val clock = "時計"
@@ -138,7 +138,7 @@ object Ja : Strings {
     override val letsGo = "はじめる"
     override val tutoLanguageTitle = "言語"
     override val welcome1 = "デスクや車でつけたままにしておける、白黒の音楽コントロール画面です。"
-    override val welcome2 = "他のアプリ（Deezer、Spotify、KDE Connect など）の音楽を操作します。そのため Android では " +
+    override val welcome2 = "他のアプリ（Deezer、Spotify、YouTube Music など）の音楽を操作します。そのため Android では " +
         "通知へのアクセスの許可が必要です。Noir Music が通知を読むことはなく、プレーヤーにつなぐための入口にすぎません。"
     override val accessGranted = "アクセス許可済み"
     override val allowAccess = "アクセスを許可"
@@ -158,8 +158,7 @@ object Ja : Strings {
         "（LRCLIB、見つからなければ NetEase）から取得し、一度ダウンロードすると端末に保存されます。"
     override val downloadOnMobile = "モバイルデータ通信でもダウンロード"
     override val tutoCarTitle = "車で使う"
-    override val tutoCar1 = "左下の車ボタンでドライブモードに切り替わります。ボタンと文字が大きくなり、" +
-        "運転中に気を取られないよう歌詞は表示されません。"
+    override val tutoCar1 = "上部の歯車の横にある車ボタンでドライブモードに切り替わります。時計を大きく、ボタンは下に大きく表示し、運転中に目をそらさないよう歌詞は表示しません。"
     override val tutoCar2 = "もう一度タップすると通常の表示に戻ります。"
     override val tutoScreenTitle = "画面"
     override val tutoScreen1 = "再生中は画面がオンのままになり、バッテリーを節約するためリフレッシュレートを下げます。"
@@ -176,4 +175,8 @@ object Ja : Strings {
     override val camera = "カメラ穴"
     override val center = "中央"
     override val cameraSub = "自動：Android が報告する位置（ずれることがあります）。時計と歯車をその両側に配置します。"
+    override val tutoOpenTitle = "オープンソース"
+    override val tutoOpen1 = "Noir Music はオープンソースで、現在も開発中です。不具合があるかもしれません。"
+    override val tutoOpen2 = "不具合を見つけたり、機能のアイデアがあれば、GitHub で Issue を作成してください。どんなフィードバックも助かります。"
+    override val openGithub = "GitHub で見る"
 }
