@@ -1,0 +1,13 @@
+Nouveau :
+- Toucher une ligne de paroles pour y sauter
+- Le panneau de paroles se masque sur les morceaux sans paroles (icône barrée) et revient au suivant
+- Économiseur d'écran : Noir Music en charge ou sur un dock (option)
+- Affichage sur l'écran de verrouillage (option)
+
+Corrections :
+- Horloge à jour au réveil et au changement de fuseau
+- Plantage possible sous Android 10
+- Minuteur plus fiable
+- Plus de flash en mode nuit
+- Volume en Cast
+- Paroles conservées après « Vider le cache »

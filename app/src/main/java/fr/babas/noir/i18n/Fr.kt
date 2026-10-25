@@ -116,6 +116,10 @@ object Fr : Strings {
     override val standbyClock = "Horloge seule"
     override val standbyBlack = "Écran noir"
     override val after = "Après"
+    override val showLocked = "Afficher sur l'écran de verrouillage"
+    override val showLockedSub = "Les commandes marchent sans déverrouiller"
+    override val screensaver = "Économiseur d'écran"
+    override val screensaverSub = "Affiche Noir Music pendant la charge ou sur un dock. À choisir dans les réglages d'économiseur d'écran d'Android"
     override val customBrightness = "Luminosité personnalisée"
     override val customBrightnessSub = "Ignore la luminosité système dans l'appli"
 

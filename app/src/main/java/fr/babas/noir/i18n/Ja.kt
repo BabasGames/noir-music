@@ -116,6 +116,10 @@ object Ja : Strings {
     override val standbyClock = "時計のみ"
     override val standbyBlack = "黒画面"
     override val after = "待機まで"
+    override val showLocked = "ロック画面に表示"
+    override val showLockedSub = "ロックを解除せずに操作できます"
+    override val screensaver = "スクリーンセーバー"
+    override val screensaverSub = "充電中やドック接続時に Noir Music を表示します。Android のスクリーンセーバー設定で選択してください"
     override val customBrightness = "明るさをカスタマイズ"
     override val customBrightnessSub = "アプリ内ではシステムの明るさを無視します"
 

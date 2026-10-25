@@ -38,6 +38,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.provider.Settings
 import android.text.format.Formatter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -188,6 +191,16 @@ fun SettingsScreen(
                 if (prefs.standbyMode != Prefs.STANDBY_OFF) {
                     Choice(s.after, Prefs.STANDBY_DELAYS.map(s::duration), prefs.standbyDelay) { prefs.standbyDelay = it }
                 }
+                Toggle(s.showLocked, s.showLockedSub, prefs.showWhenLocked) { prefs.showWhenLocked = it }
+                val ctx = LocalContext.current
+                LinkRow(s.screensaver, s.screensaverSub) {
+                    // Some manufacturers hide the screen saver page: fall back to the display settings
+                    try {
+                        ctx.startActivity(Intent(Settings.ACTION_DREAM_SETTINGS))
+                    } catch (e: ActivityNotFoundException) {
+                        ctx.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS))
+                    }
+                }
                 Toggle(s.customBrightness, s.customBrightnessSub, prefs.customBrightness) {
                     prefs.customBrightness = it
                 }
@@ -287,6 +300,22 @@ private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
 private fun textScaleLabels(): List<String> {
     val s = LocalStrings.current
     return listOf(s.sizeSmall, s.sizeNormal, s.sizeLarge, s.sizeHuge)
+}
+
+/** Row that opens something else (a system page): title, explanation, arrow. */
+@Composable
+private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 17.sp, color = Color.White)
+            Text(subtitle, fontSize = 13.sp, color = Gray)
+        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Gray)
+    }
 }
 
 /** First settings row: the current language, tap it to change. */

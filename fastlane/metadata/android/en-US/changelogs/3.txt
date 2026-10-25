@@ -1,0 +1,13 @@
+New:
+- Tap a lyrics line to jump there
+- The lyrics panel hides itself on tracks without lyrics (struck-through icon) and comes back on the next one
+- Screen saver: Noir Music while charging or docked (optional)
+- Optional display over the lock screen
+
+Fixes:
+- Clock right after waking the screen and on time zone changes
+- Possible crash on Android 10
+- More reliable sleep timer
+- No bright flash in night mode
+- Volume works when casting
+- Saved lyrics survive "Clear cache"

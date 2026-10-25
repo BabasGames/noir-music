@@ -47,6 +47,8 @@ class Prefs(context: Context) {
     /** Index into BURN_INTERVALS / BURN_AMPLITUDES */
     var burnInterval by int("burn_interval", 1)
     var burnAmplitude by int("burn_amplitude", 1)
+    /** Shown over the lock screen (controls without unlocking) */
+    var showWhenLocked by bool("show_when_locked", false)
     var customBrightness by bool("custom_brightness", false)
     var brightness by float("brightness", 0.3f)
 

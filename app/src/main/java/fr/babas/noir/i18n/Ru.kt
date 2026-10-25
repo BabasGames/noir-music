@@ -116,6 +116,10 @@ object Ru : Strings {
     override val standbyClock = "Только часы"
     override val standbyBlack = "Чёрный экран"
     override val after = "Через"
+    override val showLocked = "Показывать на экране блокировки"
+    override val showLockedSub = "Управление работает без разблокировки"
+    override val screensaver = "Заставка"
+    override val screensaverSub = "Показывает Noir Music во время зарядки или в доке. Выберите её в настройках заставки Android"
     override val customBrightness = "Своя яркость"
     override val customBrightnessSub = "Игнорирует системную яркость в приложении"
 

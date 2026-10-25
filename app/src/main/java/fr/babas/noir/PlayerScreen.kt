@@ -135,7 +135,9 @@ import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.LocalStrings
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -178,7 +180,8 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
 private enum class Mode { NORMAL, LYRICS, CAR }
 
 /** Lyrics as the layouts see them; null when the feature is turned off in the settings. */
-private class LyricsUi(val open: Boolean, val state: LyricsCtl, val toggle: () -> Unit)
+/** [barred]: lyrics are on, but this track has none (the panel is hidden until the next one). */
+private class LyricsUi(val open: Boolean, val state: LyricsCtl, val barred: Boolean, val toggle: () -> Unit)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 private class SharedScopes(val layout: SharedTransitionScope, val content: AnimatedVisibilityScope)
@@ -217,10 +220,12 @@ fun PlayerScreen(
     // Standby: X minutes with no music and no touch
     var lastTouch by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var standby by remember { mutableStateOf(false) }
+    // Screen saver: an empty player is pointless on a dock, so "off" becomes the clock
+    val standbyMode = if (LocalDream.current && prefs.standbyMode == Prefs.STANDBY_OFF) Prefs.STANDBY_CLOCK else prefs.standbyMode
     val standbyMs = Prefs.STANDBY_DELAYS.getOrElse(prefs.standbyDelay) { Prefs.STANDBY_DELAYS[1] } * 1000L
-    LaunchedEffect(np.isPlaying, lastTouch, prefs.standbyMode, standbyMs) {
+    LaunchedEffect(np.isPlaying, lastTouch, standbyMode, standbyMs) {
         standby = false
-        if (np.isPlaying || prefs.standbyMode == Prefs.STANDBY_OFF) return@LaunchedEffect
+        if (np.isPlaying || standbyMode == Prefs.STANDBY_OFF) return@LaunchedEffect
         delay(standbyMs)
         standby = true
     }
@@ -261,7 +266,7 @@ fun PlayerScreen(
         }
         AnimatedVisibility(standby, enter = fadeIn(tween(1500)), exit = fadeOut(tween(300))) {
             StandbyScreen(
-                prefs.standbyMode == Prefs.STANDBY_CLOCK,
+                standbyMode == Prefs.STANDBY_CLOCK,
                 clockPattern(prefs),
                 rememberClockStyle(prefs),
                 shiftDp = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] } else 0,
@@ -348,22 +353,45 @@ private fun Player(
         }
     }
     // Car: no lyrics, they draw the eye
-    val showLyrics = prefs.lyrics && prefs.lyricsOpen && !prefs.carMode
+    val wantLyrics = prefs.lyrics && prefs.lyricsOpen && !prefs.carMode
+    val lyrics = rememberLyrics(lyricsRepo, np, wantLyrics, prefs.lyricsOnMobile, prefs.lyricsFallback)
+    // A track without lyrics hides the panel without touching the setting, so it comes back on the next track
+    // that has some. Only a final answer counts (not loading, not a network error): no open/close flicker.
+    var noLyrics by remember { mutableStateOf(false) }
+    LaunchedEffect(lyrics.value) {
+        when (lyrics.value) {
+            Lyrics.Loading -> {}
+            Lyrics.NotFound, Lyrics.Instrumental -> noLyrics = true
+            else -> noLyrics = false
+        }
+    }
+    // Opened by hand on such a track (to see why, or to try the other source): stays open for that track
+    val track = np.artist + "\n" + np.title
+    var forcedFor by remember { mutableStateOf<String?>(null) }
+    val hidden = wantLyrics && noLyrics && forcedFor != track
+    val showLyrics = wantLyrics && !hidden
+    val setLyrics by rememberUpdatedState { open: Boolean ->
+        if (!open) {
+            prefs.lyricsOpen = false
+            forcedFor = null
+        } else if (prefs.lyricsOpen) forcedFor = track else prefs.lyricsOpen = true
+    }
+    val dream = LocalDream.current
     val mode = when {
         prefs.carMode -> Mode.CAR
         showLyrics -> Mode.LYRICS
         else -> Mode.NORMAL
     }
-    val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile, prefs.lyricsFallback)
 
     CompositionLocalProvider(LocalPalette provides if (night) NightPalette else DayPalette) {
         Box(
             Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .pointerInput(prefs.gestures) {
+                .pointerInput(prefs.gestures, dream) {
                     if (!prefs.gestures) return@pointerInput
-                    detectTapGestures(onDoubleTap = { like() }, onLongPress = { openSource() })
+                    // Screen saver: no opening another app from there
+                    detectTapGestures(onDoubleTap = { like() }, onLongPress = if (dream) null else { _ -> openSource() })
                 }
                 // Left/right = next/previous, up/down = lyrics (sliders consume their own gestures)
                 .pointerInput(Unit) {
@@ -374,7 +402,7 @@ private fun Player(
                                 val tc = current.controller?.transportControls
                                 if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
                             } else if (prefs.lyrics && !prefs.carMode) {
-                                if (dragY < -threshold) prefs.lyricsOpen = true else if (dragY > threshold) prefs.lyricsOpen = false
+                                if (dragY < -threshold) setLyrics(true) else if (dragY > threshold) setLyrics(false)
                             }
                             dragX = 0f
                             dragY = 0f
@@ -412,7 +440,7 @@ private fun Player(
                 ) { m ->
                     val open = m == Mode.LYRICS
                     CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
-                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics) { prefs.lyricsOpen = !prefs.lyricsOpen } else null
+                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics, barred = hidden) { setLyrics(!open) } else null
                         val header: @Composable (Boolean) -> Unit = { withGear ->
                             Header(
                                 np, prefs, landscape, sleep,
@@ -693,6 +721,8 @@ private fun Header(
 /** Car + gear, with the gear on the screen-edge side. */
 @Composable
 private fun TopButtons(prefs: Prefs, mirror: Boolean, onOpenSettings: () -> Unit, modifier: Modifier) {
+    // Screen saver: settings and car mode need the app itself
+    if (LocalDream.current) return
     Row(modifier) {
         if (mirror) {
             SettingsButton(Modifier, onOpenSettings)
@@ -947,7 +977,22 @@ private fun CarButtons(np: NowPlaying, modifier: Modifier, side: Dp, main: Dp) {
 private fun LyricsButton(lyr: LyricsUi) {
     val pal = LocalPalette.current
     Box(Modifier.size(56.dp).clip(CircleShape).clickable(onClick = lyr.toggle), contentAlignment = Alignment.Center) {
-        Icon(Icons.Rounded.Lyrics, LocalStrings.current.lyrics, Modifier.size(28.dp), tint = if (lyr.open) pal.fg else pal.faint)
+        // Gray = closed, white = open, white and struck through = on, but nothing for this track
+        val tint = if (lyr.open || lyr.barred) pal.fg else pal.faint
+        Icon(
+            Icons.Rounded.Lyrics, LocalStrings.current.lyrics,
+            Modifier.size(28.dp).drawWithContent {
+                drawContent()
+                if (lyr.barred) {
+                    val a = Offset(size.width * 0.1f, size.height * 0.1f)
+                    val b = Offset(size.width * 0.9f, size.height * 0.9f)
+                    // Black outline first, so the bar reads over the icon
+                    drawLine(Color.Black, a, b, 6.dp.toPx(), StrokeCap.Round)
+                    drawLine(tint, a, b, 2.dp.toPx(), StrokeCap.Round)
+                }
+            },
+            tint = tint,
+        )
     }
 }
 
@@ -1010,13 +1055,18 @@ private fun rememberLyrics(
 @Composable
 private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: Modifier) {
     val str = LocalStrings.current
+    // Takes the taps that no line used: double tap (♥) stays for the rest of the screen
+    @Suppress("NAME_SHADOWING")
+    val modifier = modifier.pointerInput(Unit) { detectTapGestures { } }
     val pal = LocalPalette.current
     when (val lyrics = ctl.value) {
         is Lyrics.Synced, is Lyrics.Plain -> Column(modifier) {
             val area = Modifier.weight(1f).fillMaxWidth()
             if (lyrics is Lyrics.Synced) {
                 val texts = remember(lyrics) { lyrics.lines.map { it.text } }
-                LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, prefs.lyricsScale, area)
+                LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, prefs.lyricsScale, area) { i ->
+                    np.controller?.transportControls?.seekTo(lyrics.lines[i].timeMs)
+                }
             } else if (lyrics is Lyrics.Plain) {
                 // No timestamps: scrolling estimated in proportion to the duration, and free to scroll by finger
                 LyricLines(
@@ -1061,7 +1111,15 @@ private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: 
 }
 
 @Composable
-private fun LyricLines(lines: List<String>, current: Int, synced: Boolean, scale: Float, modifier: Modifier) {
+private fun LyricLines(
+    lines: List<String>,
+    current: Int,
+    synced: Boolean,
+    scale: Float,
+    modifier: Modifier,
+    /** Tap on a line: jump there (synced lyrics only, plain ones have no real timing) */
+    onSeek: ((Int) -> Unit)? = null,
+) {
     val pal = LocalPalette.current
     val highlight = synced
     val list = rememberLazyListState()
@@ -1105,7 +1163,10 @@ private fun LyricLines(lines: List<String>, current: Int, synced: Boolean, scale
                     lineHeight = (29f * scale).sp,
                     fontWeight = FontWeight.Light,
                     color = color,
-                    modifier = Modifier.padding(vertical = 7.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (onSeek != null) Modifier.clickable(interactionSource = null, indication = null) { onSeek(i) } else Modifier)
+                        .padding(vertical = 7.dp),
                 )
             }
         }

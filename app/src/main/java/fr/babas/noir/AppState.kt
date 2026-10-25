@@ -13,3 +13,6 @@ val LocalVisible = compositionLocalOf { true }
  * delay() stops counting while the phone is in deep sleep, so it can't be trusted for wall-clock time.
  */
 val LocalTimeTick = compositionLocalOf { 0 }
+
+/** True inside the screen saver (DreamService): no settings, car button or opening other apps there. */
+val LocalDream = compositionLocalOf { false }

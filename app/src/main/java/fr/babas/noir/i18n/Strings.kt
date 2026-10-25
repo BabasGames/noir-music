@@ -161,6 +161,10 @@ interface Strings {
     val standbyClock: String
     val standbyBlack: String
     val after: String
+    val showLocked: String
+    val showLockedSub: String
+    val screensaver: String
+    val screensaverSub: String
     val customBrightness: String
     val customBrightnessSub: String
 

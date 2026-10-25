@@ -116,6 +116,10 @@ object Pl : Strings {
     override val standbyClock = "Tylko zegar"
     override val standbyBlack = "Czarny ekran"
     override val after = "Po"
+    override val showLocked = "Pokazuj na ekranie blokady"
+    override val showLockedSub = "Sterowanie działa bez odblokowania"
+    override val screensaver = "Wygaszacz ekranu"
+    override val screensaverSub = "Pokazuje Noir Music podczas ładowania lub w stacji dokującej. Wybierz go w ustawieniach wygaszacza Androida"
     override val customBrightness = "Własna jasność"
     override val customBrightnessSub = "Ignoruje jasność systemową w aplikacji"
 

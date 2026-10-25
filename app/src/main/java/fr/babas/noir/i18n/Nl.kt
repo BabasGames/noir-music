@@ -116,6 +116,10 @@ object Nl : Strings {
     override val standbyClock = "Alleen klok"
     override val standbyBlack = "Zwart scherm"
     override val after = "Na"
+    override val showLocked = "Tonen op vergrendelscherm"
+    override val showLockedSub = "Bediening werkt zonder ontgrendelen"
+    override val screensaver = "Screensaver"
+    override val screensaverSub = "Toont Noir Music tijdens het opladen of in een dock. Kies het in de screensaverinstellingen van Android"
     override val customBrightness = "Eigen helderheid"
     override val customBrightnessSub = "Negeert de systeemhelderheid in de app"
 

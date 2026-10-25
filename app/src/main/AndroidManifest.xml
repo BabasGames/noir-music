@@ -38,5 +38,17 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- Screen saver: chosen by the user in the system display settings, never turned on by the app -->
+        <service
+            android:name=".NoirDream"
+            android:exported="true"
+            android:label="Noir Music"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

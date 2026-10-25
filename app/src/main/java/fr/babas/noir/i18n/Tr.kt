@@ -116,6 +116,10 @@ object Tr : Strings {
     override val standbyClock = "Sadece saat"
     override val standbyBlack = "Siyah ekran"
     override val after = "Gecikme"
+    override val showLocked = "Kilit ekranında göster"
+    override val showLockedSub = "Kontroller kilidi açmadan çalışır"
+    override val screensaver = "Ekran koruyucu"
+    override val screensaverSub = "Şarj olurken veya yuvadayken Noir Music'i gösterir. Android'in ekran koruyucu ayarlarından seçin"
     override val customBrightness = "Özel parlaklık"
     override val customBrightnessSub = "Uygulamada sistem parlaklığını yok sayar"
 

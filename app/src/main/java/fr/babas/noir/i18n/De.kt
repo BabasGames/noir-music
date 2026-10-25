@@ -116,6 +116,10 @@ object De : Strings {
     override val standbyClock = "Nur Uhr"
     override val standbyBlack = "Schwarz"
     override val after = "Nach"
+    override val showLocked = "Auf dem Sperrbildschirm anzeigen"
+    override val showLockedSub = "Steuerung funktioniert ohne Entsperren"
+    override val screensaver = "Bildschirmschoner"
+    override val screensaverSub = "Zeigt Noir Music beim Laden oder im Dock. In den Bildschirmschoner-Einstellungen von Android auswählen"
     override val customBrightness = "Eigene Helligkeit"
     override val customBrightnessSub = "Ignoriert in der App die Systemhelligkeit"
 

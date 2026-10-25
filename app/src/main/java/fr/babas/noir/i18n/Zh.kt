@@ -116,6 +116,10 @@ object Zh : Strings {
     override val standbyClock = "仅显示时钟"
     override val standbyBlack = "黑屏"
     override val after = "等待时长"
+    override val showLocked = "在锁屏上显示"
+    override val showLockedSub = "无需解锁即可控制"
+    override val screensaver = "屏幕保护程序"
+    override val screensaverSub = "充电或放在底座上时显示 Noir Music。请在 Android 的屏幕保护程序设置中选择它"
     override val customBrightness = "自定义亮度"
     override val customBrightnessSub = "在应用内忽略系统亮度"
 

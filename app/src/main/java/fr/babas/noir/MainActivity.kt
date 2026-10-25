@@ -1,5 +1,6 @@
 package fr.babas.noir
 
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -114,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 LaunchedEffect(prefs.preferredApp) { media.refresh() }
+                LaunchedEffect(prefs.showWhenLocked) { setShowWhenLocked(prefs.showWhenLocked) }
                 LaunchedEffect(prefs.lyricsKeep) {
                     // Also daily: the app can stay open for days
                     while (true) {
@@ -151,8 +153,8 @@ class MainActivity : ComponentActivity() {
                         np, prefs, lyrics, night, sleep,
                         sessions = media.sessions.collectAsState().value,
                         onPickSession = media::choose,
-                        onOpenSettings = { showSettings = true },
-                        onOpenSource = { np.controller?.packageName?.let(::openApp) },
+                        onOpenSettings = { whenUnlocked { showSettings = true } },
+                        onOpenSource = { np.controller?.packageName?.let { pkg -> whenUnlocked { openApp(pkg) } } },
                     )
                 }
             }
@@ -160,9 +162,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private companion object {
-        /** Process-wide: survives the activity being recreated (system language change…). */
+    companion object {
+        /** Process-wide: survives the activity being recreated (system language change…), shared with the screen saver. */
         val sleep = SleepTimer()
+    }
+
+    /** Over the lock screen, settings and other apps first ask to unlock. */
+    private fun whenUnlocked(action: () -> Unit) {
+        val km = getSystemService(KeyguardManager::class.java)
+        if (!km.isKeyguardLocked) return action()
+        km.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
+            override fun onDismissSucceeded() = action()
+        })
     }
 
     private fun openApp(pkg: String) {

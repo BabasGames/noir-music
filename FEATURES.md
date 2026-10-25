@@ -10,7 +10,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Previous / next with the buttons or by swiping left / right (the screen follows your finger while you swipe).
 - Seek by dragging the progress bar.
 - Volume slider with − / + buttons, kept in sync with the phone's hardware volume keys.
-- ♥ / like button when the playing app exposes one, using the app's own icon so it shows the real state (liked or not). Also on double tap.
+- ♥ / like button when the playing app exposes one, using the app's own icon so it shows the real state (liked or not). Also on double tap (anywhere but the lyrics).
 - The position keeps moving smoothly between the updates sent by the playing app.
 - **Source picker**: tap the app name to see every app with a media session (playing or paused) and switch between them, or open the playing app.
 - **Preferred app**: pin one app so it stays on screen even when paused, instead of jumping to whatever plays next.
@@ -20,6 +20,8 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 ## Lyrics
 
 - Synced lyrics that scroll with the music, with the current line highlighted, upcoming lines slightly brighter than past ones, and faded top and bottom edges.
+- Tap a line of synced lyrics to jump to that moment of the song.
+- On a track without lyrics, the panel hides itself and the lyrics button shows a struck-through icon; it comes back on its own with the next track that has lyrics. Swipe up to open it anyway (to see why, or try the other source).
 - Lyrics from [LRCLIB](https://lrclib.net), a free and open community database.
 - Optional fallback source, NetEase, for songs LRCLIB doesn't have. It's off by default because it's a non-free service; it can be enabled in the settings or during the tutorial.
 - Picks the version whose duration matches the track (within 4 seconds), so the timing fits the version you are listening to.
@@ -78,6 +80,8 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Custom brightness, also previewed live.
 - Standby when nothing plays, after 1, 5 or 15 minutes: a clock alone, exactly centered and shifting slightly over time, or a fully black screen. A touch or the music starting again wakes it up.
 - Black & white album art option.
+- **Screen saver** (optional): choose Noir Music in Android's screen saver settings (there's a shortcut in the app's settings) and the player shows up on its own while the phone charges or sits on a dock. Controls work; back leaves it. When nothing plays, it shows the standby clock.
+- Optional display over the lock screen: the controls work without unlocking, while the settings and the playing app ask to unlock first.
 
 ## Layout
 

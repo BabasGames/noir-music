@@ -116,6 +116,10 @@ object En : Strings {
     override val standbyClock = "Clock only"
     override val standbyBlack = "Black screen"
     override val after = "After"
+    override val showLocked = "Show on lock screen"
+    override val showLockedSub = "Controls work without unlocking"
+    override val screensaver = "Screen saver"
+    override val screensaverSub = "Shows Noir Music while charging or docked. Choose it in Android's screen saver settings"
     override val customBrightness = "Custom brightness"
     override val customBrightnessSub = "Overrides the system brightness inside the app"
 

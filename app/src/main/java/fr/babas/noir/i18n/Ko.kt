@@ -116,6 +116,10 @@ object Ko : Strings {
     override val standbyClock = "시계만"
     override val standbyBlack = "검은 화면"
     override val after = "대기 시간"
+    override val showLocked = "잠금 화면에 표시"
+    override val showLockedSub = "잠금 해제 없이 조작할 수 있습니다"
+    override val screensaver = "화면 보호기"
+    override val screensaverSub = "충전 중이거나 거치대에 있을 때 Noir Music을 표시합니다. Android 화면 보호기 설정에서 선택하세요"
     override val customBrightness = "사용자 지정 밝기"
     override val customBrightnessSub = "앱에서 시스템 밝기 설정 무시"
 

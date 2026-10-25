@@ -26,9 +26,9 @@ Noir Music doesn't play music itself: it shows and controls whatever is playing 
 ## Features
 
 - **Controls**: play/pause, previous/next, seek, volume, and the app's own ♥ button when it exposes one. Swipe left/right to change track.
-- **Synced lyrics**: swipe up to show lyrics that follow the music, from [LRCLIB](https://lrclib.net), with NetEase as an optional fallback (off by default). Downloaded lyrics are kept for offline use.
+- **Synced lyrics**: swipe up to show lyrics that follow the music (tap a line to jump there), from [LRCLIB](https://lrclib.net), with NetEase as an optional fallback (off by default). Downloaded lyrics are kept for offline use.
 - **Car mode**: huge clock, big buttons at the bottom, no lyrics to keep your eyes on the road.
-- **Made to stay on**: keeps the screen awake while music plays, reduced refresh rate on the player, periodic pixel shifting against burn-in, night mode (always, on a schedule or in the dark), standby screen when nothing plays, sleep timer.
+- **Made to stay on**: keeps the screen awake while music plays, reduced refresh rate on the player, periodic pixel shifting against burn-in, night mode (always, on a schedule or in the dark), standby screen when nothing plays, sleep timer, optional screen saver for charging docks and display over the lock screen.
 - **Clock**: system fonts or your own font file, 12/24 h, localized date, and it fits next to the camera hole (detected automatically or set by hand).
 - **Source picker**: switch between the apps that have a media session, or pin a preferred one.
 - **14 languages**: English, French, Spanish, German, Italian, Portuguese, Dutch, Polish, Turkish, Russian, Ukrainian, Japanese, Chinese, Korean.
@@ -42,7 +42,8 @@ See **[FEATURES.md](FEATURES.md)** for the full list.
 | Swipe left / right | Next / previous track |
 | Swipe up / down | Show / hide lyrics |
 | Tap the title | Play / pause |
-| Double tap | ♥ (when the playing app supports it) |
+| Double tap | ♥ (when the playing app supports it, outside the lyrics) |
+| Tap a lyrics line | Jump to that moment |
 | Long press | Open the playing app |
 | Tap the clock | Sleep timer |
 | Tap the app name | Switch source |
