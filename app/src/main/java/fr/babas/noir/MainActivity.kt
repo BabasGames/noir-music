@@ -1,6 +1,9 @@
 package fr.babas.noir
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
@@ -30,11 +33,16 @@ import fr.babas.noir.i18n.LocalStrings
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.core.view.WindowInsetsCompat
@@ -44,8 +52,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var prefs: Prefs
     private lateinit var media: MediaRepository
     private lateinit var lyrics: LyricsRepository
-    private val sleep = SleepTimer()
     private var hasAccess by mutableStateOf(false)
+    private var onScreen by mutableStateOf(false)
+    private var timeTick by mutableIntStateOf(0)
+    private val timeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) {
+            timeTick++
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,9 +68,21 @@ class MainActivity : ComponentActivity() {
         media = MediaRepository(this) { prefs.preferredApp }
         lyrics = LyricsRepository(this)
 
+        // The media sessions stay followed in the background while the sleep timer runs; let go once it's done
+        lifecycleScope.launch {
+            snapshotFlow { sleep.active }.collect { active ->
+                if (!active && !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) media.stop()
+            }
+        }
+
         setContent {
             val lang = Lang.resolve(prefs.language)
-            CompositionLocalProvider(LocalLang provides lang, LocalStrings provides lang.strings) {
+            CompositionLocalProvider(
+                LocalLang provides lang,
+                LocalStrings provides lang.strings,
+                LocalVisible provides onScreen,
+                LocalTimeTick provides timeTick,
+            ) {
             MaterialTheme(colorScheme = NoirColors) {
                 val np by media.state.collectAsState()
                 var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -88,7 +114,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 LaunchedEffect(prefs.preferredApp) { media.refresh() }
-                LaunchedEffect(prefs.lyricsKeep) { lyrics.purge(Prefs.LYRICS_KEEP_DAYS.getOrNull(prefs.lyricsKeep)) }
+                LaunchedEffect(prefs.lyricsKeep) {
+                    // Also daily: the app can stay open for days
+                    while (true) {
+                        lyrics.purge(Prefs.LYRICS_KEEP_DAYS.getOrNull(prefs.lyricsKeep))
+                        delay(24 * 3600_000L)
+                    }
+                }
                 SleepTimerEffect(sleep, np)
 
                 when {
@@ -128,8 +160,36 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private companion object {
+        /** Process-wide: survives the activity being recreated (system language change…). */
+        val sleep = SleepTimer()
+    }
+
     private fun openApp(pkg: String) {
         packageManager.getLaunchIntentForPackage(pkg)?.let(::startActivity)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        onScreen = true
+        // The screen may have been off for a while: catch up with the time right away
+        timeTick++
+        ContextCompat.registerReceiver(
+            this,
+            timeReceiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_TIME_TICK)
+                addAction(Intent.ACTION_TIME_CHANGED)
+                addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        onScreen = false
+        unregisterReceiver(timeReceiver)
     }
 
     override fun onResume() {
@@ -149,7 +209,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        media.stop()
+        // "End of track" must keep seeing track changes while another app is in front
+        if (!sleep.active) media.stop()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -192,8 +253,10 @@ class MainActivity : ComponentActivity() {
         if (view is ViewGroup) for (i in 0 until view.childCount) setFrameRateVote(view.getChildAt(i), rate)
     }
 
+    // Activity.getDisplay() only exists from Android 11 (API 30); calling it on Android 10 crashes
     @Suppress("DEPRECATION")
-    private fun currentDisplay(): Display = display ?: windowManager.defaultDisplay
+    private fun currentDisplay(): Display =
+        if (Build.VERSION.SDK_INT >= 30) display ?: windowManager.defaultDisplay else windowManager.defaultDisplay
 
     /** Slowest mode at the current resolution (changing resolution would make the screen flicker). */
     private fun lowestMode(): Display.Mode? {

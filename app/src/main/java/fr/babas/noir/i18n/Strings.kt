@@ -54,7 +54,6 @@ interface Strings {
     val carMode: String
     val charging: String
     val sleepTimer: String
-    val like: String
 
     // ── Lyrics (messages) ───
     val lyricsOffline: String
@@ -66,6 +65,7 @@ interface Strings {
     // ── Timer and source ────
     val sleepTimerTitle: String
     fun minutes(n: Int): String
+    fun seconds(n: Int): String
     val oneHour: String
     val endOfTrack: String
     val stopTimer: String
@@ -241,3 +241,6 @@ interface Strings {
     val lyricsFallback: String
     val lyricsFallbackSub: String
 }
+
+/** "30 s", "5 min"… for a duration given in seconds. */
+fun Strings.duration(seconds: Int): String = if (seconds < 60) seconds(seconds) else minutes(seconds / 60)

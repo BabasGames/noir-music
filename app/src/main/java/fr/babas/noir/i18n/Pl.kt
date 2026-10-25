@@ -15,7 +15,6 @@ object Pl : Strings {
     override val carMode = "Tryb samochodowy"
     override val charging = "Ładowanie"
     override val sleepTimer = "Minutnik"
-    override val like = "Lubię to"
 
     override val lyricsOffline = "Brak sieci\n(ponowna próba co 30 s)"
     override val lyricsUnavailable = "Źródła tekstów nie odpowiadają\n(ponowna próba co 30 s)"
@@ -25,6 +24,7 @@ object Pl : Strings {
 
     override val sleepTimerTitle = "Wyłącznik czasowy"
     override fun minutes(n: Int) = "$n min"
+    override fun seconds(n: Int) = "$n s"
     override val oneHour = "1 godz."
     override val endOfTrack = "Koniec utworu"
     override val stopTimer = "Zatrzymaj minutnik"

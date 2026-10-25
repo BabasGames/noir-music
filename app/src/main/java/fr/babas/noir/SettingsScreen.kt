@@ -37,9 +37,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
 import android.text.format.Formatter
-import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import fr.babas.noir.i18n.Lang
 import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.LocalStrings
+import fr.babas.noir.i18n.duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -175,10 +175,10 @@ fun SettingsScreen(
                 ) { prefs.lowRefresh = it }
                 Toggle(s.burnShift, s.burnShiftSub, prefs.antiBurn) { prefs.antiBurn = it }
                 if (prefs.antiBurn) {
-                    Choice(s.frequency, Prefs.BURN_INTERVALS.map { it.second }, prefs.burnInterval) { prefs.burnInterval = it }
+                    Choice(s.frequency, Prefs.BURN_INTERVALS.map(s::duration), prefs.burnInterval) { prefs.burnInterval = it }
                     Choice(
                         s.amplitude,
-                        listOf(s.ampLow, s.ampMid, s.ampHigh).zip(Prefs.BURN_AMPLITUDES) { label, (dp, _) -> "$label (±$dp)" },
+                        listOf(s.ampLow, s.ampMid, s.ampHigh).zip(Prefs.BURN_AMPLITUDES) { label, dp -> "$label (±$dp)" },
                         prefs.burnAmplitude,
                     ) { prefs.burnAmplitude = it }
                 }
@@ -186,7 +186,7 @@ fun SettingsScreen(
                     prefs.standbyMode = it
                 }
                 if (prefs.standbyMode != Prefs.STANDBY_OFF) {
-                    Choice(s.after, Prefs.STANDBY_DELAYS.map { it.second }, prefs.standbyDelay) { prefs.standbyDelay = it }
+                    Choice(s.after, Prefs.STANDBY_DELAYS.map(s::duration), prefs.standbyDelay) { prefs.standbyDelay = it }
                 }
                 Toggle(s.customBrightness, s.customBrightnessSub, prefs.customBrightness) {
                     prefs.customBrightness = it
@@ -254,10 +254,11 @@ private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var refresh by remember { mutableStateOf(0) }
-    val stats by produceState(0 to 0L, prefs.lyricsKeep, refresh) {
-        // The purge for the new setting runs in parallel: let it finish before counting
-        delay(300)
-        value = repo.stats()
+    var stats by remember { mutableStateOf(0 to 0L) }
+    LaunchedEffect(prefs.lyricsKeep, refresh) {
+        // Purge for the new setting first, so the count already reflects it
+        repo.purge(Prefs.LYRICS_KEEP_DAYS.getOrNull(prefs.lyricsKeep))
+        stats = repo.stats()
     }
     Choice(
         s.lyricsKeep,
@@ -335,12 +336,13 @@ private fun ClockFontPicker(prefs: Prefs) {
             val ok = withContext(Dispatchers.IO) { ClockFonts.import(context, uri) }
             error = !ok
             if (ok) {
-                prefs.clockFontName = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "?"
+                prefs.clockFontName = ClockFonts.displayName(context, uri)
+                prefs.clockFontVersion++
                 prefs.clockFont = ClockFonts.CUSTOM
             }
         }
     }
-    val ids = remember(prefs.clockFontName) { ClockFonts.ids(context) }
+    val ids = remember(prefs.clockFontVersion) { ClockFonts.ids(context) }
 
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Text(s.clockFont, fontSize = 17.sp, color = Color.White)
@@ -355,7 +357,7 @@ private fun ClockFontPicker(prefs: Prefs) {
             modifier = Modifier.padding(vertical = 8.dp),
         )
         ids.forEach { id ->
-            val st = remember(id, prefs.clockFontName) { ClockFonts.style(context, id, prefs.clockFontName) }
+            val st = remember(id, prefs.clockFontVersion) { ClockFonts.style(context, id, prefs.clockFontVersion.toString()) }
             Radio(
                 ClockFonts.label(id, s, prefs.clockFontName),
                 selected = prefs.clockFont == id,

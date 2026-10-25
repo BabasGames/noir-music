@@ -3,6 +3,7 @@ package fr.babas.noir
 import android.content.Context
 import android.graphics.Typeface
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -70,6 +71,15 @@ object ClockFonts {
         }
     }
 
+    /** Name of the picked file ("MyFont.ttf"); the URI itself often ends with a bare number. */
+    fun displayName(context: Context, uri: Uri): String = try {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        }
+    } catch (e: Exception) {
+        null
+    } ?: uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "?"
+
     /** Copies the chosen font into the app; false if it isn't a readable font. */
     fun import(context: Context, uri: Uri): Boolean {
         val tmp = File(context.cacheDir, "font_import")
@@ -90,8 +100,8 @@ object ClockFonts {
 @Composable
 fun rememberClockStyle(prefs: Prefs): ClockStyle {
     val context = LocalContext.current
-    return remember(prefs.clockFont, prefs.clockFontName) {
-        ClockFonts.style(context, prefs.clockFont, prefs.clockFontName)
+    return remember(prefs.clockFont, prefs.clockFontVersion) {
+        ClockFonts.style(context, prefs.clockFont, prefs.clockFontVersion.toString())
     }
 }
 

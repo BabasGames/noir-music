@@ -15,7 +15,6 @@ object Tr : Strings {
     override val carMode = "Araç modu"
     override val charging = "Şarj oluyor"
     override val sleepTimer = "Zamanlayıcı"
-    override val like = "Beğen"
 
     override val lyricsOffline = "Ağ yok\n(30 sn'de bir yeniden denenir)"
     override val lyricsUnavailable = "Şarkı sözü kaynakları yanıt vermiyor\n(30 sn'de bir yeniden denenir)"
@@ -25,6 +24,7 @@ object Tr : Strings {
 
     override val sleepTimerTitle = "Uyku zamanlayıcısı"
     override fun minutes(n: Int) = "$n dk"
+    override fun seconds(n: Int) = "$n sn"
     override val oneHour = "1 sa"
     override val endOfTrack = "Parça sonu"
     override val stopTimer = "Zamanlayıcıyı durdur"

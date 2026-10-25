@@ -1,0 +1,11 @@
+Bug fixes:
+- Clock updates right after waking the screen and follows time zone changes
+- Possible crash on Android 10
+- Sleep timer is more reliable
+- No bright flash at launch in night mode
+- Saved lyrics survive "Clear cache"
+- Better lyrics version matching
+- Volume controls the speaker when casting
+- Smoother track changes with large album art
+- Sensors pause in the background
+- Translated durations

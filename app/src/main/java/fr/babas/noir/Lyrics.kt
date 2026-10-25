@@ -14,6 +14,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 data class LyricLine(val timeMs: Long, val text: String)
@@ -37,9 +38,17 @@ sealed interface Lyrics {
  */
 class LyricsRepository(context: Context) {
     private val cm = context.getSystemService(ConnectivityManager::class.java)
-    private val dir = File(context.cacheDir, "lyrics")
-    /** Not found during this session: don't query again every time the lyrics are opened */
-    private val missing = mutableSetOf<String>()
+    /**
+     * Not cacheDir: Android empties it when storage runs low, and "Clear cache" wipes it,
+     * which would break the retention setting and offline use. Not backed up either: it can be downloaded again.
+     */
+    private val dir = File(context.noBackupFilesDir, "lyrics").also { dir ->
+        // Up to 1.0.0 the lyrics were in the cache: move them over (same partition, instant)
+        val old = File(context.cacheDir, "lyrics")
+        if (old.isDirectory && !dir.exists()) old.renameTo(dir)
+    }
+    /** Not found during this session: don't query again every time the lyrics are opened. Filled from IO threads. */
+    private val missing: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     private val sources = listOf(LRCLIB to ::fromLrclib, NETEASE_NAME to ::fromNetease)
 
@@ -157,7 +166,8 @@ class LyricsRepository(context: Context) {
             .filter { it.optBoolean("instrumental") || it.hasText("syncedLyrics") || it.hasText("plainLyrics") }
             .minByOrNull {
                 val synced = if (it.hasText("syncedLyrics")) 0 else 1000
-                synced + abs(it.optDouble("duration", 0.0) - target)
+                // Unknown duration: keep the search's own order rather than favoring the shortest version
+                synced + if (durationMs > 0) abs(it.optDouble("duration", 0.0) - target) else 0.0
             }
     }
 
@@ -176,7 +186,10 @@ class LyricsRepository(context: Context) {
                     .any { a -> a.optString("name").lowercase().let { it.isNotEmpty() && (it in artists || artists in it) } }
             }
             // The exact title before "(Album Version)", "(Remix)"…
-            .minByOrNull { (if (it.optString("name").lowercase() == wanted) 0 else 5_000) + abs(it.optLong("duration") - durationMs) }
+            .minByOrNull {
+                (if (it.optString("name").lowercase() == wanted) 0 else 5_000) +
+                    if (durationMs > 0) abs(it.optLong("duration") - durationMs) else 0
+            }
             ?: return null
 
         val lrc = JSONObject(httpGet("https://music.163.com/api/song/lyric?id=${song.getLong("id")}&lv=1", NETEASE))
@@ -190,7 +203,10 @@ class LyricsRepository(context: Context) {
 
     // ── Common ──────────────────────────────────────────────────────────────
 
-    /** A server error (LRCLIB sometimes returns 503 when overloaded) gets a second try. */
+    /**
+     * A server or network error (LRCLIB sometimes returns 503 when overloaded) gets a second try.
+     * A client error (4xx) fails right away: asking again won't change the answer.
+     */
     private suspend fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String {
         repeat(2) { attempt ->
             val conn = URL(url).openConnection() as HttpURLConnection
@@ -198,15 +214,15 @@ class LyricsRepository(context: Context) {
             conn.readTimeout = 8000
             conn.setRequestProperty("User-Agent", "NoirMusic/1.0 (+https://github.com/BabasGames/noir-music)")
             headers.forEach(conn::setRequestProperty)
-            try {
-                val code = conn.responseCode
-                if (code == 200) return conn.inputStream.bufferedReader().readText()
-                if (code < 500 || attempt == 1) throw IOException("HTTP $code")
+            val code = try {
+                conn.responseCode.also { if (it == 200) return conn.inputStream.bufferedReader().readText() }
             } catch (e: IOException) {
                 if (attempt == 1) throw e
+                null
             } finally {
                 conn.disconnect()
             }
+            if (code != null && (code < 500 || attempt == 1)) throw IOException("HTTP $code")
             delay(1500)
         }
         error("unreachable")

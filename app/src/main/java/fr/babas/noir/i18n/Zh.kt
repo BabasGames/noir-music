@@ -15,7 +15,6 @@ object Zh : Strings {
     override val carMode = "驾驶模式"
     override val charging = "正在充电"
     override val sleepTimer = "睡眠定时"
-    override val like = "喜欢"
 
     override val lyricsOffline = "无网络连接\n（每 30 秒重试一次）"
     override val lyricsUnavailable = "歌词来源无响应\n（每 30 秒重试一次）"
@@ -25,6 +24,7 @@ object Zh : Strings {
 
     override val sleepTimerTitle = "睡眠定时器"
     override fun minutes(n: Int) = "${n} 分钟"
+    override fun seconds(n: Int) = "${n} 秒"
     override val oneHour = "1 小时"
     override val endOfTrack = "本曲结束时"
     override val stopTimer = "停止定时"

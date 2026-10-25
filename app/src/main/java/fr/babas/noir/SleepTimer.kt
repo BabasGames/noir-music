@@ -49,14 +49,21 @@ class SleepTimer {
 @Composable
 fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
     LaunchedEffect(timer.endAt, timer.endOfTrack, np) {
-        val tc = np.controller?.transportControls ?: return@LaunchedEffect
+        val tc = np.controller?.transportControls
         val end = timer.endAt
-        // Safety net: the app moved on before our pause (crossfade, misreported
-        // position…); we cut right away at the start of the next track rather than never
-        if (timer.endOfTrack && timer.trackChanged(np)) {
-            tc.pause()
-            timer.cancel()
-            return@LaunchedEffect
+        if (timer.endOfTrack) {
+            // The playing app is gone: there is no end of track left to wait for
+            if (tc == null) {
+                timer.cancel()
+                return@LaunchedEffect
+            }
+            // Safety net: the app moved on before our pause (crossfade, misreported
+            // position…); we cut right away at the start of the next track rather than never
+            if (timer.trackChanged(np)) {
+                tc.pause()
+                timer.cancel()
+                return@LaunchedEffect
+            }
         }
         val wait = when {
             end != null -> end - SystemClock.elapsedRealtime()
@@ -66,7 +73,9 @@ fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
             else -> return@LaunchedEffect
         }
         delay(wait.coerceAtLeast(0))
-        tc.pause()
+        // Without a session the time still runs out: the timer ends instead of pausing
+        // whatever plays next, possibly hours later
+        tc?.pause()
         timer.cancel()
     }
 }
@@ -77,7 +86,8 @@ fun rememberSleepLabel(timer: SleepTimer): String? {
     val str = LocalStrings.current
     val end = timer.endAt
     var label by remember(end) { mutableStateOf("") }
-    LaunchedEffect(end, str) {
+    // Re-read on each tick: delay() doesn't count while the phone sleeps
+    LaunchedEffect(end, str, LocalTimeTick.current) {
         while (end != null) {
             val left = end - SystemClock.elapsedRealtime()
             if (left <= 0) break

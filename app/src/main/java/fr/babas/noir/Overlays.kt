@@ -173,11 +173,18 @@ fun SourceSheet(
 
 /**
  * Standby: all black, optionally a grey clock at the exact center of the screen, which shifts by
- * a few dp every minute like the rest of the app ("Pixel shift" setting).
+ * a few dp like the rest of the app ("Pixel shift" setting: amplitude and interval).
  * The first tap only wakes the screen, it doesn't trigger anything underneath.
  */
 @Composable
-fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftDp: Int, onWake: () -> Unit) {
+fun StandbyScreen(
+    withClock: Boolean,
+    pattern: String,
+    style: ClockStyle,
+    shiftDp: Int,
+    shiftEveryMs: Long,
+    onWake: () -> Unit,
+) {
     // Full screen, without reserving the camera strip: otherwise the "center" drops by half that strip
     Box(
         Modifier
@@ -189,12 +196,12 @@ fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftD
         if (!withClock) return@Box
         var tx by remember { mutableFloatStateOf(0f) }
         var ty by remember { mutableFloatStateOf(0f) }
-        LaunchedEffect(shiftDp) {
+        LaunchedEffect(shiftDp, shiftEveryMs) {
             tx = 0f
             ty = 0f
             while (shiftDp > 0) {
                 val now = SystemClock.elapsedRealtime()
-                delay(60_000 - now % 60_000)
+                delay(shiftEveryMs - now % shiftEveryMs)
                 tx = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
                 ty = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
             }

@@ -16,6 +16,7 @@ import android.os.Looper
 import android.os.SystemClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.concurrent.Executors
 
 data class NowPlaying(
     val controller: MediaController? = null,
@@ -48,6 +49,9 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
     private val msm = context.getSystemService(MediaSessionManager::class.java)
     private val component = ComponentName(context, MediaListenerService::class.java)
     private val handler = Handler(Looper.getMainLooper())
+    /** Artwork decoding, off the UI thread */
+    private val decoder = Executors.newSingleThreadExecutor()
+    private var listening = false
 
     private val _state = MutableStateFlow(NowPlaying())
     val state: StateFlow<NowPlaying> = _state
@@ -80,7 +84,11 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
 
     /** @return false if notification access isn't granted */
     fun start(): Boolean = try {
-        msm.addOnActiveSessionsChangedListener(sessionsListener, component, handler)
+        // Still listening if the sleep timer kept us connected in the background
+        if (!listening) {
+            msm.addOnActiveSessionsChangedListener(sessionsListener, component, handler)
+            listening = true
+        }
         setControllers(msm.getActiveSessions(component))
         true
     } catch (e: SecurityException) {
@@ -88,6 +96,8 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
     }
 
     fun stop() {
+        if (!listening) return
+        listening = false
         msm.removeOnActiveSessionsChangedListener(sessionsListener)
         controllers.forEach { it.unregisterCallback(callback) }
         controllers = emptyList()
@@ -172,10 +182,15 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
     }
 
     private fun isLikeAction(a: PlaybackState.CustomAction): Boolean {
-        val s = "${a.action} ${a.name}".lowercase()
-        if (listOf("dislike", "thumb_down", "thumbs_down", "ban").any { it in s }) return false
-        return listOf("like", "favorite", "favourite", "love", "heart", "favori", "coeur", "cœur", "j'aime")
-            .any { it in s }
+        // Whole words ("ACTION_LIKE", "toggleFavorite", "Thumbs up"): "ban" mustn't match "banner"
+        val words = "${a.action} ${a.name}"
+            .replace(CAMEL_CASE, " ")
+            .lowercase()
+            .split(NOT_LETTER)
+            .filter { it.isNotEmpty() }
+        if (words.any { it in DISLIKE }) return false
+        if ("thumb" in words || "thumbs" in words) return "up" in words
+        return words.any { w -> LIKE.any { w.startsWith(it) } }
     }
 
     private fun appLabel(pkg: String): String = labels.getOrPut(pkg) {
@@ -198,12 +213,30 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
             ?: return null
         if (uri == artKey) return artCache
         artKey = uri
-        artCache = try {
-            context.contentResolver.openInputStream(Uri.parse(uri))?.use(BitmapFactory::decodeStream)
-        } catch (e: Exception) {
-            null // URI often unreadable from another app
+        artCache = null
+        decoder.execute {
+            val bmp = decodeScaled(Uri.parse(uri))
+            handler.post {
+                // Still the same track: show it
+                if (artKey == uri) {
+                    artCache = bmp
+                    refresh()
+                }
+            }
         }
-        return artCache
+        return null
+    }
+
+    /** Scaled down to at most ART_MAX_PX: a 4000 px cover would take 64 MB for a 400 dp square. */
+    private fun decodeScaled(uri: Uri): Bitmap? = try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= ART_MAX_PX) sample *= 2
+        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    } catch (e: Exception) {
+        null // URI often unreadable from another app
     }
 
     private fun loadIcon(pkg: String, res: Int): Drawable? {
@@ -216,5 +249,14 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
             null
         }
         return iconCache
+    }
+
+    private companion object {
+        const val ART_MAX_PX = 1024
+        val CAMEL_CASE = Regex("(?<=\\p{Ll})(?=\\p{Lu})")
+        val NOT_LETTER = Regex("[^\\p{L}']+")
+        val DISLIKE = setOf("dislike", "disliked", "ban", "banned", "down")
+        /** Prefixes: "liked", "favorites", "loved"… */
+        val LIKE = listOf("like", "favorit", "favourit", "love", "heart", "favori", "coeur", "cœur", "j'aime")
     }
 }

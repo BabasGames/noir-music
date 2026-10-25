@@ -15,7 +15,6 @@ object Ko : Strings {
     override val carMode = "운전 모드"
     override val charging = "충전 중"
     override val sleepTimer = "취침 타이머"
-    override val like = "좋아요"
 
     override val lyricsOffline = "네트워크에 연결되지 않음\n(30초마다 다시 시도)"
     override val lyricsUnavailable = "가사 제공처가 응답하지 않음\n(30초마다 다시 시도)"
@@ -25,6 +24,7 @@ object Ko : Strings {
 
     override val sleepTimerTitle = "취침 타이머"
     override fun minutes(n: Int) = "${n}분"
+    override fun seconds(n: Int) = "${n}초"
     override val oneHour = "1시간"
     override val endOfTrack = "곡이 끝날 때"
     override val stopTimer = "타이머 중지"

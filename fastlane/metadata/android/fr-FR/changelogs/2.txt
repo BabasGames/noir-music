@@ -1,0 +1,11 @@
+Corrections :
+- L'horloge se met à jour dès le réveil de l'écran et suit le fuseau horaire
+- Plantage possible sous Android 10
+- Minuteur de sommeil plus fiable
+- Plus de flash lumineux au lancement en mode nuit
+- Les paroles enregistrées résistent à « Vider le cache »
+- Meilleur choix de la version des paroles
+- Le volume pilote l'enceinte pendant un Cast
+- Changements de morceau plus fluides avec les grandes pochettes
+- Capteurs en pause en arrière-plan
+- Durées traduites

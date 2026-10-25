@@ -15,7 +15,6 @@ object Ja : Strings {
     override val carMode = "ドライブモード"
     override val charging = "充電中"
     override val sleepTimer = "スリープタイマー"
-    override val like = "いいね"
 
     override val lyricsOffline = "ネットワークに接続されていません\n（30 秒ごとに再試行）"
     override val lyricsUnavailable = "歌詞の提供元が応答しません\n（30 秒ごとに再試行）"
@@ -25,6 +24,7 @@ object Ja : Strings {
 
     override val sleepTimerTitle = "スリープタイマー"
     override fun minutes(n: Int) = "${n}分"
+    override fun seconds(n: Int) = "${n}秒"
     override val oneHour = "1時間"
     override val endOfTrack = "曲の終わりまで"
     override val stopTimer = "タイマーを停止"

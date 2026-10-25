@@ -15,7 +15,6 @@ object Uk : Strings {
     override val carMode = "Режим водіння"
     override val charging = "Заряджання"
     override val sleepTimer = "Таймер"
-    override val like = "Подобається"
 
     override val lyricsOffline = "Немає мережі\n(повтор кожні 30 с)"
     override val lyricsUnavailable = "Джерела текстів не відповідають\n(повтор кожні 30 с)"
@@ -25,6 +24,7 @@ object Uk : Strings {
 
     override val sleepTimerTitle = "Таймер сну"
     override fun minutes(n: Int) = "$n хв"
+    override fun seconds(n: Int) = "$n с"
     override val oneHour = "1 год"
     override val endOfTrack = "Кінець треку"
     override val stopTimer = "Зупинити таймер"

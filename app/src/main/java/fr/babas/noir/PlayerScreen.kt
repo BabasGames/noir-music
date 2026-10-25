@@ -1,5 +1,8 @@
 package fr.babas.noir
 
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -21,6 +24,7 @@ import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Bitmap
 import android.media.AudioManager
+import android.media.session.MediaController
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -213,7 +217,7 @@ fun PlayerScreen(
     // Standby: X minutes with no music and no touch
     var lastTouch by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var standby by remember { mutableStateOf(false) }
-    val standbyMs = Prefs.STANDBY_DELAYS.getOrElse(prefs.standbyDelay) { Prefs.STANDBY_DELAYS[1] }.first * 1000L
+    val standbyMs = Prefs.STANDBY_DELAYS.getOrElse(prefs.standbyDelay) { Prefs.STANDBY_DELAYS[1] } * 1000L
     LaunchedEffect(np.isPlaying, lastTouch, prefs.standbyMode, standbyMs) {
         standby = false
         if (np.isPlaying || prefs.standbyMode == Prefs.STANDBY_OFF) return@LaunchedEffect
@@ -260,7 +264,8 @@ fun PlayerScreen(
                 prefs.standbyMode == Prefs.STANDBY_CLOCK,
                 clockPattern(prefs),
                 rememberClockStyle(prefs),
-                shiftDp = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first else 0,
+                shiftDp = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] } else 0,
+                shiftEveryMs = Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] } * 1000L,
             ) { lastTouch = SystemClock.elapsedRealtime() }
         }
     }
@@ -302,8 +307,8 @@ private fun Player(
     val openSource by rememberUpdatedState(onOpenSource)
     val burnTarget = rememberBurnInShift(
         prefs.antiBurn,
-        Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] }.first * 1000L,
-        Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first,
+        Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] } * 1000L,
+        Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] },
     )
     // Slides to the new position instead of jumping; read inside offset {}: no recomposition per frame
     val shift by animateValueAsState(burnTarget, DpOffset.VectorConverter, tween(1800, easing = FastOutSlowInEasing), label = "shift")
@@ -334,7 +339,7 @@ private fun Player(
         with(density) {
             val left = frame.left + 24.dp.toPx()
             val top = frame.top + 14.dp.toPx()
-            val shiftMargin = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first.dp.toPx() else 0f
+            val shiftMargin = if (prefs.antiBurn) Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.dp.toPx() else 0f
             Hole(
                 Rect(c.left - left, c.top - top, c.right - left, c.bottom - top),
                 width = frame.width - 48.dp.toPx(),
@@ -728,7 +733,9 @@ private fun InfoLine(prefs: Prefs, sleep: SleepTimer, onClick: () -> Unit) {
 private fun rememberBattery(): Pair<Int, Boolean> {
     val context = LocalContext.current
     var state by remember { mutableStateOf(-1 to false) }
-    DisposableEffect(Unit) {
+    val visible = LocalVisible.current
+    DisposableEffect(visible) {
+        if (!visible) return@DisposableEffect onDispose {}
         fun read(i: Intent) {
             val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
@@ -824,7 +831,7 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
         // Lyrics button, or empty space to visually balance the ♥
         if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
-    if (prefs.showVolume) VolumeRow()
+    if (prefs.showVolume) VolumeRow(np.controller)
 }
 
 @Composable
@@ -970,6 +977,8 @@ private fun rememberLyrics(
         nothingOther = false
         if (!active || np.title.isEmpty()) return@LaunchedEffect
         delay(300) // tracks skipped in a row: a single request, for the one we stop on
+        // Some apps send the duration after the title: without it, the version can't be matched
+        if (latest.durationMs <= 0) withTimeoutOrNull(3000) { snapshotFlow { latest.durationMs }.first { it > 0 } }
         while (true) {
             value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered, fallback)
             if (value != Lyrics.Unavailable && value != Lyrics.Offline) break
@@ -1183,10 +1192,11 @@ private fun Progress(np: NowPlaying) {
     var pos by remember { mutableLongStateOf(np.currentPosition()) }
     var drag by remember { mutableStateOf<Float?>(null) }
 
-    LaunchedEffect(np) {
+    val visible = LocalVisible.current
+    LaunchedEffect(np, visible) {
         while (true) {
             pos = np.currentPosition()
-            if (!np.isPlaying) break
+            if (!np.isPlaying || !visible) break
             delay(1000 - pos % 1000 + 5) // line up with the next second
         }
     }
@@ -1215,27 +1225,49 @@ private fun Progress(np: NowPlaying) {
     }
 }
 
+/**
+ * Phone volume, or the session's own volume when it plays on another device (Chromecast,
+ * connected speaker…): moving the phone's media volume would do nothing there.
+ */
 @Composable
-private fun VolumeRow(modifier: Modifier = Modifier) {
+private fun VolumeRow(controller: MediaController?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val visible = LocalVisible.current
     val audio = remember { context.getSystemService(AudioManager::class.java) }
-    val max = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
-    var vol by remember { mutableIntStateOf(audio.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    val info = controller?.playbackInfo
+    val remote = info?.playbackType == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE
+    val localMax = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
+    val max = if (remote) info!!.maxVolume else localMax
+    fun read() = if (remote) controller!!.playbackInfo?.currentVolume ?: 0 else audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+    var vol by remember(controller, remote) { mutableIntStateOf(read()) }
 
-    // Also follows the physical volume keys (the volume is persisted in Settings.System)
-    DisposableEffect(Unit) {
-        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                vol = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+    DisposableEffect(controller, remote, visible) {
+        if (!visible) return@DisposableEffect onDispose {}
+        vol = read()
+        if (remote) {
+            val callback = object : MediaController.Callback() {
+                override fun onAudioInfoChanged(i: MediaController.PlaybackInfo) {
+                    vol = i.currentVolume
+                }
             }
+            controller!!.registerCallback(callback, Handler(Looper.getMainLooper()))
+            onDispose { controller.unregisterCallback(callback) }
+        } else {
+            // Also follows the physical volume keys (the volume is persisted in Settings.System)
+            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    vol = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+                }
+            }
+            context.contentResolver.registerContentObserver(Settings.System.CONTENT_URI, true, observer)
+            onDispose { context.contentResolver.unregisterContentObserver(observer) }
         }
-        context.contentResolver.registerContentObserver(Settings.System.CONTENT_URI, true, observer)
-        onDispose { context.contentResolver.unregisterContentObserver(observer) }
     }
 
     fun set(v: Int) {
         vol = v.coerceIn(0, max)
-        audio.setStreamVolume(AudioManager.STREAM_MUSIC, vol, 0)
+        if (remote) controller!!.setVolumeTo(vol, 0)
+        else audio.setStreamVolume(AudioManager.STREAM_MUSIC, vol, 0)
     }
 
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -1284,20 +1316,13 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
     }
 }
 
-/** Formatted time or date, updated right on each minute change. */
+/**
+ * Formatted time or date, updated on each minute tick (see LocalTimeTick).
+ * A new SimpleDateFormat each time: it freezes the time zone it was created with.
+ */
 @Composable
-fun rememberFormatted(pattern: String, locale: Locale): String {
-    var text by remember { mutableStateOf("") }
-    LaunchedEffect(pattern, locale) {
-        val fmt = SimpleDateFormat(pattern, locale)
-        while (true) {
-            val now = System.currentTimeMillis()
-            text = fmt.format(Date(now))
-            delay(60_000 - now % 60_000) // wake up right on the minute change
-        }
-    }
-    return text
-}
+fun rememberFormatted(pattern: String, locale: Locale): String =
+    remember(pattern, locale, LocalTimeTick.current) { SimpleDateFormat(pattern, locale).format(Date()) }
 
 /** Random offset of ±amplitude dp every intervalMs to avoid AMOLED burn-in. */
 @Composable

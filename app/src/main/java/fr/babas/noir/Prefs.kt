@@ -25,8 +25,10 @@ class Prefs(context: Context) {
     var clockSize by int("clock_size", CLOCK_BIG)
     /** "", "serif", "mono", "sys:<file>" or "custom" (see ClockFonts) */
     var clockFont by string("clock_font", "")
-    /** Display name of the imported file; changes on every import, which reloads the font */
+    /** Display name of the imported file */
     var clockFontName by string("clock_font_name", "")
+    /** Bumped on every import, which reloads the font even when the new file has the same name */
+    var clockFontVersion by int("clock_font_version", 0)
     var clockFormat by int("clock_format", FORMAT_AUTO)
     var dateFormat by int("date_format", DATE_SHORT)
     var clockSide by int("clock_side", SIDE_AUTO)
@@ -137,13 +139,14 @@ class Prefs(context: Context) {
         const val STANDBY_OFF = 0
         const val STANDBY_CLOCK = 1
         const val STANDBY_BLACK = 2
-        val STANDBY_DELAYS = listOf(60 to "1 min", 300 to "5 min", 900 to "15 min")
+        /** Seconds */
+        val STANDBY_DELAYS = listOf(60, 300, 900)
 
         /** Lyrics retention periods, in days (null = forever) */
         val LYRICS_KEEP_DAYS = listOf(7, 30, 182, 365, null)
 
         /** Anti-burn-in shift: period in seconds, amplitude in dp */
-        val BURN_INTERVALS = listOf(30 to "30 s", 60 to "1 min", 300 to "5 min")
-        val BURN_AMPLITUDES = listOf(5 to "Faible", 10 to "Moyen", 20 to "Fort")
+        val BURN_INTERVALS = listOf(30, 60, 300)
+        val BURN_AMPLITUDES = listOf(5, 10, 20)
     }
 }
