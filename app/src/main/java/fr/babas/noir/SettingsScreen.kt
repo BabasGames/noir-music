@@ -37,6 +37,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.runtime.produceState
+import android.text.format.Formatter
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +69,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsScreen(
     prefs: Prefs,
+    lyricsRepo: LyricsRepository,
     displayInfo: Pair<Int, String>,
     candidateApps: List<Pair<String, String>>,
     onOpenAccess: () -> Unit,
@@ -209,6 +213,7 @@ fun SettingsScreen(
                 Toggle(s.lyrics, s.lyricsSub, prefs.lyrics) { prefs.lyrics = it }
                 Text(s.lyricsDisclaimer, fontSize = 13.sp, color = Gray)
                 Toggle(s.onMobile, s.onMobileSub, prefs.lyricsOnMobile, enabled = prefs.lyrics) { prefs.lyricsOnMobile = it }
+                LyricsStorage(prefs, lyricsRepo)
                 Choice(
                     s.lyricsSize,
                     textScaleLabels(),
@@ -234,6 +239,41 @@ fun SettingsScreen(
 }
 
 val TEXT_SCALES = listOf(0.85f, 1f, 1.25f, 1.5f)
+
+/** Durée de conservation des paroles, place occupée, et effacement de tout ce qui est enregistré. */
+@Composable
+private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
+    val s = LocalStrings.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var refresh by remember { mutableStateOf(0) }
+    val stats by produceState(0 to 0L, prefs.lyricsKeep, refresh) {
+        // La purge du nouveau réglage tourne en parallèle : on la laisse passer avant de compter
+        delay(300)
+        value = repo.stats()
+    }
+    Choice(
+        s.lyricsKeep,
+        listOf(s.keepWeek, s.keepMonth, s.keepHalfYear, s.keepYear, s.keepForever),
+        prefs.lyricsKeep,
+    ) { prefs.lyricsKeep = it }
+    Text(s.lyricsKeepSub, fontSize = 13.sp, color = Gray)
+    Text(
+        s.lyricsCacheInfo(stats.first, Formatter.formatShortFileSize(context, stats.second)),
+        fontSize = 13.sp,
+        color = Gray,
+        modifier = Modifier.padding(top = 8.dp),
+    )
+    OutlinedButton(
+        onClick = {
+            scope.launch {
+                repo.clear()
+                refresh++
+            }
+        },
+        modifier = Modifier.padding(top = 4.dp),
+    ) { Text(s.clearLyrics, color = Color.White) }
+}
 
 @Composable
 private fun textScaleLabels(): List<String> {

@@ -49,6 +49,8 @@ class LyricsRepository(context: Context) {
             val file = File(dir, "$key.json")
             if (file.exists()) {
                 try {
+                    // Réécouté : la durée de conservation repart de maintenant
+                    file.setLastModified(System.currentTimeMillis())
                     return@withContext parse(JSONObject(file.readText()))
                 } catch (e: Exception) {
                     file.delete()
@@ -77,6 +79,24 @@ class LyricsRepository(context: Context) {
             missing += key
             Lyrics.NotFound
         }
+
+    /** Efface les paroles des morceaux pas réécoutés depuis [maxAgeDays] jours (null = rien). */
+    suspend fun purge(maxAgeDays: Int?) = withContext(Dispatchers.IO) {
+        if (maxAgeDays == null) return@withContext
+        val limit = System.currentTimeMillis() - maxAgeDays * 86_400_000L
+        dir.listFiles()?.filter { it.lastModified() < limit }?.forEach { it.delete() }
+    }
+
+    /** Nombre de morceaux enregistrés et place occupée (octets). */
+    suspend fun stats(): Pair<Int, Long> = withContext(Dispatchers.IO) {
+        val files = dir.listFiles().orEmpty()
+        files.size to files.sumOf { it.length() }
+    }
+
+    suspend fun clear() = withContext(Dispatchers.IO) {
+        dir.listFiles()?.forEach { it.delete() }
+        missing.clear()
+    }
 
     /**
      * Paroles décalées ou fausses : essaie les autres sources pour ce morceau. La trouvaille remplace

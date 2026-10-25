@@ -179,4 +179,13 @@ object Ko : Strings {
     override val tutoOpen1 = "Noir Music은 오픈 소스이고 아직 개발 중이라 버그가 있을 수 있어요."
     override val tutoOpen2 = "버그를 찾았거나 기능 아이디어가 있나요? GitHub에 이슈를 남겨 주세요. 모든 의견이 도움이 돼요."
     override val openGithub = "GitHub에서 보기"
+    override val lyricsKeep = "가사 보관 기간"
+    override val lyricsKeepSub = "이 기간 동안 다시 재생하지 않은 곡의 가사는 삭제돼요"
+    override val keepWeek = "1주"
+    override val keepMonth = "1개월"
+    override val keepHalfYear = "6개월"
+    override val keepYear = "1년"
+    override val keepForever = "영구"
+    override fun lyricsCacheInfo(count: Int, size: String) = "저장된 곡 ${count}개 · ${size}"
+    override val clearLyrics = "저장된 가사 삭제"
 }

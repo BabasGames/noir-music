@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 LaunchedEffect(prefs.preferredApp) { media.refresh() }
+                LaunchedEffect(prefs.lyricsKeep) { lyrics.purge(Prefs.LYRICS_KEEP_DAYS.getOrNull(prefs.lyricsKeep)) }
                 SleepTimerEffect(sleep, np)
 
                 when {
@@ -99,6 +100,7 @@ class MainActivity : ComponentActivity() {
                         BackHandler { showSettings = false }
                         SettingsScreen(
                             prefs = prefs,
+                            lyricsRepo = lyrics,
                             // Ce que le lecteur utilisera (les réglages, eux, tournent toujours à pleine fréquence)
                             displayInfo = rememberDisplayInfo().let { (cur, rates) ->
                                 (if (prefs.lowRefresh) lowestMode()?.refreshRate?.let(Math::round) ?: cur else cur) to rates

@@ -179,4 +179,13 @@ object Zh : Strings {
     override val tutoOpen1 = "Noir Music 是开源应用，仍在开发中，可能会有 bug。"
     override val tutoOpen2 = "发现 bug 或有功能想法？请在 GitHub 上提交 issue，每条反馈都有帮助。"
     override val openGithub = "在 GitHub 上查看"
+    override val lyricsKeep = "歌词保留时间"
+    override val lyricsKeepSub = "歌曲在此期间内未再次播放，其歌词将被删除"
+    override val keepWeek = "1周"
+    override val keepMonth = "1个月"
+    override val keepHalfYear = "6个月"
+    override val keepYear = "1年"
+    override val keepForever = "永久"
+    override fun lyricsCacheInfo(count: Int, size: String) = "已保存 ${count} 首 · ${size}"
+    override val clearLyrics = "删除已保存的歌词"
 }

@@ -225,4 +225,15 @@ interface Strings {
     val tutoOpen1: String
     val tutoOpen2: String
     val openGithub: String
+
+    // ── Conservation des paroles ──
+    val lyricsKeep: String
+    val lyricsKeepSub: String
+    val keepWeek: String
+    val keepMonth: String
+    val keepHalfYear: String
+    val keepYear: String
+    val keepForever: String
+    fun lyricsCacheInfo(count: Int, size: String): String
+    val clearLyrics: String
 }

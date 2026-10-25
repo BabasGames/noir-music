@@ -179,4 +179,13 @@ object Es : Strings {
     override val tutoOpen1 = "Noir Music es de código abierto y sigue en desarrollo, así que puede haber errores."
     override val tutoOpen2 = "¿Un error o una idea? Abre una «issue» en GitHub, cada comentario ayuda."
     override val openGithub = "Ver en GitHub"
+    override val lyricsKeep = "Conservar letras"
+    override val lyricsKeepSub = "La letra de una canción se borra si no se vuelve a escuchar en este tiempo"
+    override val keepWeek = "1 sem."
+    override val keepMonth = "1 mes"
+    override val keepHalfYear = "6 meses"
+    override val keepYear = "1 año"
+    override val keepForever = "Siempre"
+    override fun lyricsCacheInfo(count: Int, size: String) = "${count} canciones guardadas · ${size}"
+    override val clearLyrics = "Borrar letras guardadas"
 }

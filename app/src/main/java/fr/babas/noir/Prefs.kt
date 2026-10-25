@@ -69,6 +69,8 @@ class Prefs(context: Context) {
     var lyrics by bool("lyrics", true)
     var lyricsOnMobile by bool("lyrics_mobile", false)
     var lyricsScale by float("lyrics_scale", 1f)
+    /** Index dans LYRICS_KEEP_DAYS : paroles effacées si le morceau n'est pas réécouté pendant ce temps */
+    var lyricsKeep by int("lyrics_keep", 2)
     /** Paroles ouvertes : retenu d'un morceau, d'un lancement à l'autre */
     var lyricsOpen by bool("lyrics_open", false)
 
@@ -134,6 +136,9 @@ class Prefs(context: Context) {
         const val STANDBY_CLOCK = 1
         const val STANDBY_BLACK = 2
         val STANDBY_DELAYS = listOf(60 to "1 min", 300 to "5 min", 900 to "15 min")
+
+        /** Durées de conservation des paroles, en jours (null = toujours) */
+        val LYRICS_KEEP_DAYS = listOf(7, 30, 182, 365, null)
 
         /** Décalage anti-marquage : période en secondes, amplitude en dp */
         val BURN_INTERVALS = listOf(30 to "30 s", 60 to "1 min", 300 to "5 min")

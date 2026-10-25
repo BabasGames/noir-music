@@ -27,6 +27,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Plain (unsynced) lyrics scroll on their own along with the song, and can also be scrolled by hand (automatic scrolling resumes 8 seconds later).
 - Instrumental tracks are recognized as such.
 - Lyrics are saved on the phone once downloaded, so they work offline afterwards.
+- Saved lyrics are deleted when a track hasn't been played again for a chosen time (1 week, 1 month, 6 months, 1 year, or never); every replay resets the countdown. The settings show how many tracks are stored and how much space they use (about 8 KB per track), with a button to delete them all.
 - Optional download on mobile data (off by default).
 - Clear messages when there is no network, when the sources don't answer (automatic retry every 30 seconds) or when nothing is found.
 - Separate lyrics text size.
