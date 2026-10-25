@@ -16,8 +16,8 @@ import java.io.File
 data class ClockStyle(val family: FontFamily, val weight: FontWeight, val typeface: Typeface)
 
 /**
- * Polices proposées pour l'horloge : génériques, polices de constructeur reconnues dans /system/fonts
- * (lisibles par toutes les applis, par exemple sur les téléphones Nothing), et un fichier importé.
+ * Fonts offered for the clock: generic ones, known vendor fonts found in /system/fonts
+ * (readable by every app, e.g. on Nothing phones), and an imported file.
  */
 object ClockFonts {
     const val CUSTOM = "custom"
@@ -35,7 +35,7 @@ object ClockFonts {
 
     private fun customFile(context: Context) = File(context.filesDir, "clock_font")
 
-    /** Identifiants disponibles sur ce téléphone, dans l'ordre d'affichage. */
+    /** IDs available on this phone, in display order. */
     fun ids(context: Context): List<String> =
         listOf("", "serif", "mono") +
             SYSTEM_FONTS.filter { File("/system/fonts", it.first).canRead() }.map { SYS + it.first } +
@@ -55,7 +55,7 @@ object ClockFonts {
         id == "mono" -> ClockStyle(FontFamily.Monospace, FontWeight.Light, Typeface.create(Typeface.MONOSPACE, 300, false))
         else -> {
             val file = if (id == CUSTOM) customFile(context) else File("/system/fonts", id.removePrefix(SYS))
-            // Les polices fichier n'ont souvent qu'une graisse : pas de Thin simulé
+            // File fonts often have a single weight: no faked Thin
             load(file, "$id|$version")?.let { ClockStyle(FontFamily(it), FontWeight.Normal, it) } ?: system
         }
     }
@@ -70,13 +70,13 @@ object ClockFonts {
         }
     }
 
-    /** Copie la police choisie dans l'appli ; false si ce n'est pas une police lisible. */
+    /** Copies the chosen font into the app; false if it isn't a readable font. */
     fun import(context: Context, uri: Uri): Boolean {
         val tmp = File(context.cacheDir, "font_import")
         return try {
             context.contentResolver.openInputStream(uri)?.use { input -> tmp.outputStream().use(input::copyTo) }
                 ?: return false
-            Typeface.createFromFile(tmp) // lève une exception si le fichier n'est pas une police
+            Typeface.createFromFile(tmp) // throws if the file isn't a font
             tmp.copyTo(customFile(context), overwrite = true)
             true
         } catch (e: Exception) {
@@ -102,7 +102,7 @@ fun clockPattern(prefs: Prefs): String = when (prefs.clockFormat) {
     else -> if (DateFormat.is24HourFormat(LocalContext.current)) "HH:mm" else "h:mm"
 }
 
-/** Ordre jour/mois et abréviations propres à la langue choisie (« dim. 25 oct. », « Sun, Oct 25 »…). */
+/** Day/month order and abbreviations for the chosen language ("dim. 25 oct.", "Sun, Oct 25"…). */
 @Composable
 fun datePattern(prefs: Prefs): String {
     val locale = LocalLang.current.locale

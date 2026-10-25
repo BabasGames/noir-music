@@ -2,11 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Nom de l'appli source et icônes de ses actions (♥) : il faut voir les autres paquets -->
+    <!-- Source app name and its action icons (♥): needs visibility of other packages -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-    <!-- Paroles : LRCLIB, et savoir si on est sur données mobiles -->
+    <!-- Lyrics: LRCLIB, and knowing whether we're on mobile data -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -28,7 +28,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Vide : sa seule présence, une fois autorisée, donne accès aux MediaSessions des autres applis -->
+        <!-- Empty: its mere presence, once granted, gives access to other apps' MediaSessions -->
         <service
             android:name=".MediaListenerService"
             android:exported="true"

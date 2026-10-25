@@ -10,14 +10,14 @@ import androidx.compose.runtime.setValue
 import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.delay
 
-/** Minuteur de sommeil : met la musique en pause à une heure donnée ou à la fin du morceau. */
+/** Sleep timer: pauses the music at a given time or at the end of the track. */
 class SleepTimer {
-    /** SystemClock.elapsedRealtime() de la mise en pause */
+    /** SystemClock.elapsedRealtime() of the pause */
     var endAt by mutableStateOf<Long?>(null)
         private set
     var endOfTrack by mutableStateOf(false)
         private set
-    /** Morceau en cours quand « fin du morceau » a été choisi */
+    /** Track playing when "end of track" was chosen */
     private var armedTrack: String? = null
 
     val active get() = endAt != null || endOfTrack
@@ -33,7 +33,7 @@ class SleepTimer {
         armedTrack = trackKey(np)
     }
 
-    /** Le morceau a changé depuis l'armement : la fin est passée sans qu'on ait pu mettre en pause. */
+    /** The track changed since arming: the end went by without us being able to pause. */
     fun trackChanged(np: NowPlaying) = armedTrack != null && trackKey(np) != armedTrack
 
     private fun trackKey(np: NowPlaying) = "${np.controller?.packageName}|${np.artist}|${np.title}"
@@ -45,14 +45,14 @@ class SleepTimer {
     }
 }
 
-/** À placer tout en haut de l'interface : tourne aussi pendant que les réglages sont ouverts. */
+/** Place at the very top of the UI: also runs while the settings are open. */
 @Composable
 fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
     LaunchedEffect(timer.endAt, timer.endOfTrack, np) {
         val tc = np.controller?.transportControls ?: return@LaunchedEffect
         val end = timer.endAt
-        // Filet de sécurité : l'appli a enchaîné avant notre pause (fondu enchaîné, position mal
-        // annoncée…) ; on coupe aussitôt au début du morceau suivant plutôt que jamais
+        // Safety net: the app moved on before our pause (crossfade, misreported
+        // position…); we cut right away at the start of the next track rather than never
         if (timer.endOfTrack && timer.trackChanged(np)) {
             tc.pause()
             timer.cancel()
@@ -60,7 +60,7 @@ fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
         }
         val wait = when {
             end != null -> end - SystemClock.elapsedRealtime()
-            // Un peu avant la toute fin, sinon le morceau suivant a le temps de démarrer
+            // A little before the very end, otherwise the next track has time to start
             timer.endOfTrack && np.isPlaying && np.durationMs > 0 ->
                 ((np.durationMs - np.currentPosition()) / np.speed).toLong() - 400
             else -> return@LaunchedEffect
@@ -71,7 +71,7 @@ fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
     }
 }
 
-/** « 23 min », « fin du morceau », ou null si le minuteur est arrêté ; mis à jour à chaque minute entamée. */
+/** "23 min", "end of track", or null if the timer is off; updated each time a new minute starts. */
 @Composable
 fun rememberSleepLabel(timer: SleepTimer): String? {
     val str = LocalStrings.current

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Compile Noir et l'installe sur le téléphone via ADB Wi-Fi.
-# Usage : ./install.sh [IP:PORT]   (le port change à chaque activation du débogage sans fil)
+# Builds Noir and installs it on the phone over ADB Wi-Fi.
+# Usage: ./install.sh [IP:PORT]   (the port changes every time wireless debugging is turned on)
 set -e
 cd "$(dirname "$0")"
 ./gradlew assembleRelease -q

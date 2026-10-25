@@ -82,7 +82,7 @@ fun SettingsScreen(
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            // En-tête fixe : « ← Paramètres » reste accessible sans remonter tout en haut
+            // Fixed header: "← Settings" stays reachable without scrolling all the way up
             Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, s.back, tint = Color.White)
@@ -162,7 +162,7 @@ fun SettingsScreen(
                     enabled = prefs.nightMode != Prefs.NIGHT_OFF,
                 ) { prefs.nightBrightnessOn = it }
                 if (prefs.nightBrightnessOn && prefs.nightMode != Prefs.NIGHT_OFF) {
-                    // Pendant le glissement, l'écran prend cette luminosité pour juger du rendu
+                    // While dragging, the screen takes this brightness so the result can be judged
                     BrightnessSlider(prefs.nightBrightness, 0.01f..0.5f, onPreviewBrightness) { prefs.nightBrightness = it }
                 }
 
@@ -204,7 +204,7 @@ fun SettingsScreen(
                 apps.forEach { (pkg, label) ->
                     Radio(label, selected = prefs.preferredApp == pkg) { prefs.preferredApp = pkg }
                 }
-                // Appli choisie auparavant mais plus détectée : la garder visible pour pouvoir la retirer
+                // App picked earlier but no longer detected: keep it visible so it can be removed
                 if (prefs.preferredApp.isNotEmpty() && apps.none { it.first == prefs.preferredApp }) {
                     Radio(prefs.preferredApp, selected = true) {}
                 }
@@ -240,7 +240,7 @@ fun SettingsScreen(
 
 val TEXT_SCALES = listOf(0.85f, 1f, 1.25f, 1.5f)
 
-/** Durée de conservation des paroles, place occupée, et effacement de tout ce qui est enregistré. */
+/** Lyrics retention period, space used, and deletion of everything saved. */
 @Composable
 private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
     val s = LocalStrings.current
@@ -248,7 +248,7 @@ private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
     val scope = rememberCoroutineScope()
     var refresh by remember { mutableStateOf(0) }
     val stats by produceState(0 to 0L, prefs.lyricsKeep, refresh) {
-        // La purge du nouveau réglage tourne en parallèle : on la laisse passer avant de compter
+        // The purge for the new setting runs in parallel: let it finish before counting
         delay(300)
         value = repo.stats()
     }
@@ -281,7 +281,7 @@ private fun textScaleLabels(): List<String> {
     return listOf(s.sizeSmall, s.sizeNormal, s.sizeLarge, s.sizeHuge)
 }
 
-/** Première ligne des réglages : la langue actuelle, touchée pour en changer. */
+/** First settings row: the current language, tap it to change. */
 @Composable
 private fun LanguageRow(prefs: Prefs, onClick: () -> Unit) {
     val s = LocalStrings.current
@@ -299,7 +299,7 @@ private fun LanguageRow(prefs: Prefs, onClick: () -> Unit) {
     }
 }
 
-/** Liste des langues, chacune écrite dans sa propre langue ; sert aux réglages et au tuto. */
+/** List of languages, each written in its own language; used by the settings and the tutorial. */
 @Composable
 fun LanguageItems(prefs: Prefs, onPicked: () -> Unit = {}) {
     val s = LocalStrings.current
@@ -315,7 +315,7 @@ fun LanguageItems(prefs: Prefs, onPicked: () -> Unit = {}) {
     }
 }
 
-/** Aperçu de l'heure dans la police choisie, puis la liste des polices, chacune écrite dans son style. */
+/** Preview of the time in the chosen font, then the list of fonts, each shown in its own style. */
 @Composable
 private fun ClockFontPicker(prefs: Prefs) {
     val s = LocalStrings.current
@@ -397,7 +397,7 @@ private fun Section(title: String) {
     Spacer(Modifier.height(4.dp))
 }
 
-/** Rangée de choix exclusifs, façon boutons segmentés. */
+/** Row of mutually exclusive choices, segmented-button style. */
 @Composable
 private fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
@@ -451,7 +451,7 @@ private fun Radio(label: String, selected: Boolean, fontFamily: FontFamily? = nu
     }
 }
 
-/** Heure de 0 à 23 réglée par − / +, qui boucle (23 h + 1 = 0 h). */
+/** Hour from 0 to 23 set with − / +, which wraps around (23 h + 1 = 0 h). */
 @Composable
 private fun HourStepper(label: String, hour: Int, onChange: (Int) -> Unit) {
     val s = LocalStrings.current

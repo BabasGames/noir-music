@@ -57,7 +57,7 @@ import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-/** Fenêtre centrée par-dessus le lecteur ; toucher à côté ou « retour » la ferme. */
+/** Dialog centered over the player; tapping outside or "back" closes it. */
 @Composable
 fun Sheet(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     BackHandler(onBack = onDismiss)
@@ -78,7 +78,7 @@ fun Sheet(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope
                 .clip(shape)
                 .background(Color(0xFF0C0C0C))
                 .border(1.dp, Color(0xFF242424), shape)
-                // Toucher dans la fenêtre ne doit pas la fermer
+                // Tapping inside the dialog must not close it
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 12.dp),
@@ -172,13 +172,13 @@ fun SourceSheet(
 }
 
 /**
- * Veille : tout noir, éventuellement une horloge grise au centre exact de l'écran, qui se décale de
- * quelques dp chaque minute comme le reste de l'appli (réglage « Décalage périodique »).
- * Le premier toucher ne fait que réveiller, il n'actionne rien en dessous.
+ * Standby: all black, optionally a grey clock at the exact center of the screen, which shifts by
+ * a few dp every minute like the rest of the app ("Pixel shift" setting).
+ * The first tap only wakes the screen, it doesn't trigger anything underneath.
  */
 @Composable
 fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftDp: Int, onWake: () -> Unit) {
-    // Plein écran, sans réserver la bande de la caméra : sinon le « centre » descend de la moitié de cette bande
+    // Full screen, without reserving the camera strip: otherwise the "center" drops by half that strip
     Box(
         Modifier
             .fillMaxSize()
@@ -199,14 +199,14 @@ fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, shiftD
                 ty = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
             }
         }
-        val dx by animateFloatAsState(tx, tween(2500), label = "veille x")
-        val dy by animateFloatAsState(ty, tween(2500), label = "veille y")
+        val dx by animateFloatAsState(tx, tween(2500), label = "standby x")
+        val dy by animateFloatAsState(ty, tween(2500), label = "standby y")
 
         val density = LocalDensity.current
         val size = 96.sp
-        // La boîte d'un texte n'est pas son encre : place sous la ligne de base (pour « p », « g »…),
-        // approches des chiffres (certaines polices tracent le « 1 » décalé dans sa case). On compare la
-        // mise en page réelle au tracé exact des chiffres affichés, et on recentre l'encre.
+        // A text's box isn't its ink: room below the baseline (for "p", "g"…),
+        // digit side bearings (some fonts draw the "1" off-center in its cell). We compare the
+        // actual layout with the exact outline of the displayed digits, and recenter the ink.
         val text = rememberFormatted(pattern, LocalLang.current.locale)
         var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
         val ink = remember(text, style, density) {

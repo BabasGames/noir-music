@@ -7,30 +7,30 @@ import androidx.compose.runtime.setValue
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-/** Réglages persistés dans SharedPreferences et observables par Compose. */
+/** Settings persisted in SharedPreferences and observable by Compose. */
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("noir", Context.MODE_PRIVATE)
 
-    /** Code de langue ("" = langue du téléphone) */
+    /** Language code ("" = phone language) */
     var language by string("language", "")
     var carMode by bool("car_mode", false)
 
-    // Disposition
+    // Layout
     var showArt by bool("show_art", false)
     var swapArt by bool("swap_art", false)
     var grayArt by bool("gray_art", false)
     var orientation by int("orientation", ORIENT_AUTO)
 
-    // Affichage
+    // Display
     var clockSize by int("clock_size", CLOCK_BIG)
-    /** "", "serif", "mono", "sys:<fichier>" ou "custom" (voir ClockFonts) */
+    /** "", "serif", "mono", "sys:<file>" or "custom" (see ClockFonts) */
     var clockFont by string("clock_font", "")
-    /** Nom affiché du fichier importé ; change à chaque import, ce qui recharge la police */
+    /** Display name of the imported file; changes on every import, which reloads the font */
     var clockFontName by string("clock_font_name", "")
     var clockFormat by int("clock_format", FORMAT_AUTO)
     var dateFormat by int("date_format", DATE_SHORT)
     var clockSide by int("clock_side", SIDE_AUTO)
-    /** Trou de la caméra : position donnée par Android, ou choisie à la main quand Android se trompe */
+    /** Camera hole: position reported by Android, or set by hand when Android gets it wrong */
     var cameraPos by int("camera_pos", CAM_AUTO)
     var textScale by float("text_scale", 1f)
     var showDate by bool("show_date", true)
@@ -38,40 +38,40 @@ class Prefs(context: Context) {
     var showProgress by bool("show_progress", true)
     var showVolume by bool("show_volume", true)
 
-    // Écran
+    // Screen
     var keepOnMode by int("keep_on_mode", KEEP_ON_PLAYING)
     var lowRefresh by bool("low_refresh", true)
     var antiBurn by bool("anti_burn", true)
-    /** Index dans BURN_INTERVALS / BURN_AMPLITUDES */
+    /** Index into BURN_INTERVALS / BURN_AMPLITUDES */
     var burnInterval by int("burn_interval", 1)
     var burnAmplitude by int("burn_amplitude", 1)
     var customBrightness by bool("custom_brightness", false)
     var brightness by float("brightness", 0.3f)
 
-    // Nuit (l'ancien interrupteur « texte atténué » devient « toujours »)
+    // Night (the old "dimmed text" switch becomes "always")
     var nightMode by int("night_mode", if (sp.getBoolean("dim_text", false)) NIGHT_ALWAYS else NIGHT_OFF)
     var nightStart by int("night_start", 22)
     var nightEnd by int("night_end", 7)
     var nightBrightnessOn by bool("night_brightness_on", false)
     var nightBrightness by float("night_brightness", 0.05f)
 
-    // Veille
+    // Standby
     var standbyMode by int("standby_mode", STANDBY_OFF)
-    /** Index dans STANDBY_DELAYS */
+    /** Index into STANDBY_DELAYS */
     var standbyDelay by int("standby_delay", 1)
 
-    // Musique
+    // Music
     var gestures by bool("gestures", true)
-    /** Paquet à suivre en priorité ("" = automatique) */
+    /** Package to follow first ("" = automatic) */
     var preferredApp by string("preferred_app", "")
 
-    // Paroles
+    // Lyrics
     var lyrics by bool("lyrics", true)
     var lyricsOnMobile by bool("lyrics_mobile", false)
     var lyricsScale by float("lyrics_scale", 1f)
-    /** Index dans LYRICS_KEEP_DAYS : paroles effacées si le morceau n'est pas réécouté pendant ce temps */
+    /** Index into LYRICS_KEEP_DAYS: lyrics deleted if the track isn't played again within that time */
     var lyricsKeep by int("lyrics_keep", 2)
-    /** Paroles ouvertes : retenu d'un morceau, d'un lancement à l'autre */
+    /** Lyrics open: remembered from one track to the next, and across launches */
     var lyricsOpen by bool("lyrics_open", false)
 
     var tutorialDone by bool("tutorial_done", false)
@@ -137,10 +137,10 @@ class Prefs(context: Context) {
         const val STANDBY_BLACK = 2
         val STANDBY_DELAYS = listOf(60 to "1 min", 300 to "5 min", 900 to "15 min")
 
-        /** Durées de conservation des paroles, en jours (null = toujours) */
+        /** Lyrics retention periods, in days (null = forever) */
         val LYRICS_KEEP_DAYS = listOf(7, 30, 182, 365, null)
 
-        /** Décalage anti-marquage : période en secondes, amplitude en dp */
+        /** Anti-burn-in shift: period in seconds, amplitude in dp */
         val BURN_INTERVALS = listOf(30 to "30 s", 60 to "1 min", 300 to "5 min")
         val BURN_AMPLITUDES = listOf(5 to "Faible", 10 to "Moyen", 20 to "Fort")
     }

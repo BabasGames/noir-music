@@ -25,12 +25,12 @@ data class NowPlaying(
     val art: Bitmap? = null,
     val durationMs: Long = 0,
     val positionMs: Long = 0,
-    /** SystemClock.elapsedRealtime() au moment où positionMs a été mesurée */
+    /** SystemClock.elapsedRealtime() at the moment positionMs was measured */
     val positionTime: Long = 0,
     val speed: Float = 1f,
     val isPlaying: Boolean = false,
     val likeAction: PlaybackState.CustomAction? = null,
-    /** Icône fournie par l'appli source : son dessin (cœur plein/vide) reflète l'état réel */
+    /** Icon supplied by the source app: its drawing (filled/empty heart) reflects the real state */
     val likeIcon: Drawable? = null,
 ) {
     fun currentPosition(): Long {
@@ -40,10 +40,10 @@ data class NowPlaying(
     }
 }
 
-/** Une appli qui a une session média (en lecture ou en pause), pour le sélecteur de source. */
+/** An app that has a media session (playing or paused), for the source picker. */
 data class SessionInfo(val pkg: String, val appName: String, val title: String, val isPlaying: Boolean)
 
-/** Suit les sessions média actives (Deezer, Spotify…) et expose celle à piloter. */
+/** Tracks the active media sessions (Deezer, Spotify…) and exposes the one to control. */
 class MediaRepository(private val context: Context, private val preferredApp: () -> String) {
     private val msm = context.getSystemService(MediaSessionManager::class.java)
     private val component = ComponentName(context, MediaListenerService::class.java)
@@ -55,14 +55,14 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
     private val _sessions = MutableStateFlow<List<SessionInfo>>(emptyList())
     val sessions: StateFlow<List<SessionInfo>> = _sessions
 
-    /** Choisie à la main dans le sélecteur : prime sur tout tant que sa session existe */
+    /** Picked by hand in the picker: overrides everything as long as its session exists */
     private var manualPkg: String? = null
     private val labels = mutableMapOf<String, String>()
 
     private var controllers: List<MediaController> = emptyList()
     private var current: MediaController? = null
 
-    // Caches : éviter de redécoder pochette / icône à chaque tick de PlaybackState
+    // Caches: avoid decoding the artwork / icon again on every PlaybackState tick
     private var artKey: Any? = null
     private var artCache: Bitmap? = null
     private var iconKey: Pair<String, Int>? = null
@@ -78,7 +78,7 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
         setControllers(list.orEmpty())
     }
 
-    /** @return false si l'accès aux notifications n'est pas accordé */
+    /** @return false if notification access isn't granted */
     fun start(): Boolean = try {
         msm.addOnActiveSessionsChangedListener(sessionsListener, component, handler)
         setControllers(msm.getActiveSessions(component))
@@ -101,23 +101,23 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
     }
 
     /**
-     * Choisit la session à afficher quand plusieurs applis en ont une.
-     * La liste d'Android est triée par priorité (la plus récemment active d'abord).
+     * Picks the session to show when several apps have one.
+     * Android's list is sorted by priority (most recently active first).
      */
     private fun pickSession(list: List<MediaController>, previous: MediaController?): MediaController? {
         manualPkg?.let { m ->
             list.firstOrNull { it.packageName == m }?.let { return it }
-            manualPkg = null // session disparue : retour au choix automatique
+            manualPkg = null // session gone: back to automatic choice
         }
         val pref = preferredApp()
         if (pref.isNotEmpty()) list.firstOrNull { it.packageName == pref }?.let { return it }
         list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }?.let { return it }
-        // Rien ne joue : rester sur la même appli plutôt que sauter vers une autre session en pause
+        // Nothing playing: stay on the same app rather than jumping to another paused session
         list.firstOrNull { it.sessionToken == previous?.sessionToken }?.let { return it }
         return list.firstOrNull()
     }
 
-    /** Applis proposées comme « appli préférée » : celles qui exposent un service média + sessions en cours. */
+    /** Apps offered as "preferred app": those exposing a media service + current sessions. */
     fun candidateApps(): List<Pair<String, String>> {
         val pm = context.packageManager
         val browsers = pm.queryIntentServices(Intent("android.media.browse.MediaBrowserService"), 0)
@@ -201,7 +201,7 @@ class MediaRepository(private val context: Context, private val preferredApp: ()
         artCache = try {
             context.contentResolver.openInputStream(Uri.parse(uri))?.use(BitmapFactory::decodeStream)
         } catch (e: Exception) {
-            null // URI souvent non lisible depuis une autre appli
+            null // URI often unreadable from another app
         }
         return artCache
     }

@@ -24,21 +24,21 @@ sealed interface Lyrics {
     data class Plain(val lines: List<String>, val source: String) : Lyrics
     data object Instrumental : Lyrics
     data object NotFound : Lyrics
-    /** Aucun réseau du tout */
+    /** No network at all */
     data object Offline : Lyrics
-    /** Réseau présent mais les sources ne répondent pas (surcharge, coupure…) */
+    /** Network available but the sources don't answer (overload, outage…) */
     data object Unavailable : Lyrics
     data object MobileData : Lyrics
 }
 
 /**
- * Paroles depuis LRCLIB puis NetEase (gratuits, sans compte), gardées sur disque pour rouler hors ligne.
- * Le cache garde le format LRCLIB (syncedLyrics / plainLyrics / instrumental) quelle que soit la source.
+ * Lyrics from LRCLIB then NetEase (free, no account), kept on disk so they still work offline on the road.
+ * The cache keeps the LRCLIB format (syncedLyrics / plainLyrics / instrumental) whatever the source.
  */
 class LyricsRepository(context: Context) {
     private val cm = context.getSystemService(ConnectivityManager::class.java)
     private val dir = File(context.cacheDir, "lyrics")
-    /** Introuvables pendant cette session : ne pas réinterroger à chaque ouverture */
+    /** Not found during this session: don't query again every time the lyrics are opened */
     private val missing = mutableSetOf<String>()
 
     private val sources = listOf(LRCLIB to ::fromLrclib, NETEASE_NAME to ::fromNetease)
@@ -49,7 +49,7 @@ class LyricsRepository(context: Context) {
             val file = File(dir, "$key.json")
             if (file.exists()) {
                 try {
-                    // Réécouté : la durée de conservation repart de maintenant
+                    // Played again: the retention period restarts from now
                     file.setLastModified(System.currentTimeMillis())
                     return@withContext parse(JSONObject(file.readText()))
                 } catch (e: Exception) {
@@ -66,7 +66,7 @@ class LyricsRepository(context: Context) {
                 val found = try {
                     source(title, artist, durationMs)
                 } catch (e: Exception) {
-                    Log.w(TAG, "$name : échec pour « $artist – $title »", e)
+                    Log.w(TAG, "$name: lookup failed for \"$artist - $title\"", e)
                     failed = true
                     null
                 } ?: continue
@@ -74,20 +74,20 @@ class LyricsRepository(context: Context) {
                 file.writeText(found.put("source", name).toString())
                 return@withContext parse(found)
             }
-            // Une source en panne a peut-être les paroles : ne pas mémoriser l'échec, on réessaiera
+            // A source that's down may have the lyrics: don't remember the failure, we'll retry
             if (failed) return@withContext Lyrics.Unavailable
             missing += key
             Lyrics.NotFound
         }
 
-    /** Efface les paroles des morceaux pas réécoutés depuis [maxAgeDays] jours (null = rien). */
+    /** Deletes lyrics of tracks not played again for [maxAgeDays] days (null = nothing). */
     suspend fun purge(maxAgeDays: Int?) = withContext(Dispatchers.IO) {
         if (maxAgeDays == null) return@withContext
         val limit = System.currentTimeMillis() - maxAgeDays * 86_400_000L
         dir.listFiles()?.filter { it.lastModified() < limit }?.forEach { it.delete() }
     }
 
-    /** Nombre de morceaux enregistrés et place occupée (octets). */
+    /** Number of saved tracks and space used (bytes). */
     suspend fun stats(): Pair<Int, Long> = withContext(Dispatchers.IO) {
         val files = dir.listFiles().orEmpty()
         files.size to files.sumOf { it.length() }
@@ -99,8 +99,8 @@ class LyricsRepository(context: Context) {
     }
 
     /**
-     * Paroles décalées ou fausses : essaie les autres sources pour ce morceau. La trouvaille remplace
-     * le cache, donc le choix est retenu. null si aucune autre source n'a mieux.
+     * Lyrics out of sync or wrong: tries the other sources for this track. What's found replaces
+     * the cache, so the choice sticks. null if no other source has anything better.
      */
     suspend fun loadOther(title: String, artist: String, durationMs: Long, current: String, allowMetered: Boolean): Lyrics? =
         withContext(Dispatchers.IO) {
@@ -110,7 +110,7 @@ class LyricsRepository(context: Context) {
                 val found = try {
                     source(title, artist, durationMs)
                 } catch (e: Exception) {
-                    Log.w(TAG, "$name : échec pour « $artist – $title »", e)
+                    Log.w(TAG, "$name: lookup failed for \"$artist - $title\"", e)
                     null
                 } ?: continue
                 dir.mkdirs()
@@ -127,7 +127,7 @@ class LyricsRepository(context: Context) {
 
     // ── LRCLIB ──────────────────────────────────────────────────────────────
 
-    /** Essaie le titre exact, puis sans « (feat. …) », « - Remastered »… et avec le seul premier artiste. */
+    /** Tries the exact title, then without "(feat. …)", "- Remastered"… and with only the first artist. */
     private suspend fun fromLrclib(title: String, artist: String, durationMs: Long): JSONObject? {
         val queries = listOf(title to artist, cleanTitle(title) to firstArtist(artist)).distinct()
         for ((t, a) in queries) {
@@ -140,7 +140,7 @@ class LyricsRepository(context: Context) {
     private fun pickLrclib(results: JSONArray, durationMs: Long): JSONObject? {
         val target = durationMs / 1000.0
         return results.objects()
-            // Plusieurs versions (album, radio edit, extrait…) : la durée départage, sinon décalage garanti
+            // Several versions (album, radio edit, excerpt…): the duration breaks the tie, otherwise it's sure to be out of sync
             .filter { durationMs <= 0 || abs(it.optDouble("duration", 0.0) - target) <= 4 }
             .filter { it.optBoolean("instrumental") || it.hasText("syncedLyrics") || it.hasText("plainLyrics") }
             .minByOrNull {
@@ -149,7 +149,7 @@ class LyricsRepository(context: Context) {
             }
     }
 
-    // ── NetEase (API non officielle, très fournie, y compris en français) ─────
+    // ── NetEase (unofficial API, very well stocked, French included) ──────────
 
     private suspend fun fromNetease(title: String, artist: String, durationMs: Long): JSONObject? {
         val q = enc("${cleanTitle(title)} ${firstArtist(artist)}")
@@ -163,7 +163,7 @@ class LyricsRepository(context: Context) {
                 s.optJSONArray("artists")?.objects().orEmpty()
                     .any { a -> a.optString("name").lowercase().let { it.isNotEmpty() && (it in artists || artists in it) } }
             }
-            // Le titre exact avant « (Album Version) », « (Remix) »…
+            // The exact title before "(Album Version)", "(Remix)"…
             .minByOrNull { (if (it.optString("name").lowercase() == wanted) 0 else 5_000) + abs(it.optLong("duration") - durationMs) }
             ?: return null
 
@@ -171,14 +171,14 @@ class LyricsRepository(context: Context) {
             .optJSONObject("lrc")?.optString("lyric").orEmpty()
             .replace(CREDITS, "")
         if (lrc.isBlank()) return null
-        if ("纯音乐" in lrc) return JSONObject().put("instrumental", true) // « musique pure, profitez-en »
+        if ("纯音乐" in lrc) return JSONObject().put("instrumental", true) // "pure music, enjoy"
         val synced = parseLrc(lrc).any { it.timeMs > 0 && it.text.isNotEmpty() }
         return JSONObject().put(if (synced) "syncedLyrics" else "plainLyrics", lrc)
     }
 
-    // ── Commun ──────────────────────────────────────────────────────────────
+    // ── Common ──────────────────────────────────────────────────────────────
 
-    /** Une erreur serveur (LRCLIB renvoie parfois 503 quand il sature) a droit à un second essai. */
+    /** A server error (LRCLIB sometimes returns 503 when overloaded) gets a second try. */
     private suspend fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String {
         repeat(2) { attempt ->
             val conn = URL(url).openConnection() as HttpURLConnection
@@ -197,14 +197,14 @@ class LyricsRepository(context: Context) {
             }
             delay(1500)
         }
-        error("inatteignable")
+        error("unreachable")
     }
 
     private fun parse(o: JSONObject): Lyrics {
-        // Anciennes entrées du cache : pas de champ « source », elles venaient toutes de LRCLIB
+        // Old cache entries: no "source" field, they all came from LRCLIB
         val source = when (o.optString("source")) {
             "", LRCLIB -> LRCLIB
-            else -> NETEASE_NAME // y compris l'ancien « netease » en minuscules
+            else -> NETEASE_NAME // including the old lowercase "netease"
         }
         return when {
             o.optBoolean("instrumental") -> Lyrics.Instrumental
@@ -228,16 +228,16 @@ class LyricsRepository(context: Context) {
         MessageDigest.getInstance("SHA-1").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
 
     companion object {
-        private const val TAG = "NoirParoles"
+        private const val TAG = "NoirLyrics"
         const val LRCLIB = "LRCLIB"
         const val NETEASE_NAME = "NetEase"
         private val NETEASE = mapOf("User-Agent" to "Mozilla/5.0", "Referer" to "https://music.163.com")
         private val STAMP = Regex("""^\[(\d+):(\d{1,2}(?:[.:]\d{1,3})?)]""")
         private val STAMPS = Regex("""^(\[[^]]*])+""")
-        /** Lignes de crédits NetEase : « [00:00.000] 作词 : … », « 作曲 », « 制作人 »… */
+        /** NetEase credit lines: "[00:00.000] 作词 : …", "作曲", "制作人"… */
         private val CREDITS = Regex("""(?m)^(\[[^]]*])*\s*\p{IsHan}+\s*[:：].*$\n?""")
 
-        /** « [01:02.34][02:10.00] texte » → une ligne par horodatage, triées. */
+        /** "[01:02.34][02:10.00] text" → one line per timestamp, sorted. */
         fun parseLrc(lrc: String): List<LyricLine> = lrc.lines().flatMap { raw ->
             var rest = raw.trim()
             val times = mutableListOf<Long>()

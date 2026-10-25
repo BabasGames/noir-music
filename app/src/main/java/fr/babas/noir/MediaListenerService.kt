@@ -3,7 +3,7 @@ package fr.babas.noir
 import android.service.notification.NotificationListenerService
 
 /**
- * Ne fait rien. Android n'autorise MediaSessionManager.getActiveSessions() qu'aux applis
- * dont un NotificationListenerService a reçu l'« accès aux notifications ».
+ * Does nothing. Android only allows MediaSessionManager.getActiveSessions() for apps
+ * whose NotificationListenerService has been granted "notification access".
  */
 class MediaListenerService : NotificationListenerService()

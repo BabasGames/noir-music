@@ -3,7 +3,7 @@ package fr.babas.noir.i18n
 import androidx.compose.runtime.staticCompositionLocalOf
 import java.util.Locale
 
-/** Langues de l'interface, dans l'ordre du sélecteur ; le nom est écrit dans la langue elle-même. */
+/** UI languages, in picker order; each name is written in the language itself. */
 enum class Lang(val code: String, val nativeName: String, val strings: Strings) {
     FR("fr", "Français", Fr),
     EN("en", "English", En),
@@ -23,7 +23,7 @@ enum class Lang(val code: String, val nativeName: String, val strings: Strings) 
     val locale: Locale get() = Locale.forLanguageTag(code)
 
     companion object {
-        /** "" = langue du téléphone si elle est traduite, sinon anglais. */
+        /** "" = phone language if it's translated, otherwise English. */
         fun resolve(pref: String): Lang {
             val code = pref.ifEmpty { Locale.getDefault().language }
             return entries.firstOrNull { it.code == code } ?: EN
@@ -35,11 +35,11 @@ val LocalStrings = staticCompositionLocalOf<Strings> { Fr }
 val LocalLang = staticCompositionLocalOf { Lang.FR }
 
 /**
- * Tous les textes visibles. Une langue = un objet qui implémente cette interface :
- * un texte oublié est une erreur de compilation, pas un trou dans l'interface.
+ * All visible texts. One language = one object implementing this interface:
+ * a missing text is a compile error, not a hole in the UI.
  */
 interface Strings {
-    // ── Lecteur ──
+    // ── Player ───
     val nothingPlaying: String
     val startMusicHint: String
     val settings: String
@@ -56,14 +56,14 @@ interface Strings {
     val sleepTimer: String
     val like: String
 
-    // ── Paroles (messages) ──
+    // ── Lyrics (messages) ───
     val lyricsOffline: String
     val lyricsUnavailable: String
     val lyricsMobileData: String
     val lyricsInstrumental: String
     val lyricsNotFound: String
 
-    // ── Minuteur et source ──
+    // ── Timer and source ────
     val sleepTimerTitle: String
     fun minutes(n: Int): String
     val oneHour: String
@@ -75,11 +75,11 @@ interface Strings {
     val paused: String
     fun openApp(name: String): String
 
-    // ── Écran d'accès ──
+    // ── Access screen ──
     val accessText: String
     val openSetting: String
 
-    // ── Paramètres : langue et disposition ──
+    // ── Settings: language and layout ───────
     val language: String
     val languageAuto: String
     val sectionLayout: String
@@ -93,7 +93,7 @@ interface Strings {
     val orientLandscape: String
     val carModeSub: String
 
-    // ── Paramètres : affichage ──
+    // ── Settings: display ───────
     val sectionDisplay: String
     val clock: String
     val clockHidden: String
@@ -126,7 +126,7 @@ interface Strings {
     val progressBar: String
     val volume: String
 
-    // ── Paramètres : nuit ──
+    // ── Settings: night ────
     val sectionNight: String
     val nightMode: String
     val off: String
@@ -144,7 +144,7 @@ interface Strings {
     val nightBrightness: String
     val nightBrightnessSub: String
 
-    // ── Paramètres : écran ──
+    // ── Settings: screen ────
     val sectionScreen: String
     val keepOn: String
     val keepOnPlaying: String
@@ -164,7 +164,7 @@ interface Strings {
     val customBrightness: String
     val customBrightnessSub: String
 
-    // ── Paramètres : musique ──
+    // ── Settings: music ───────
     val sectionMusic: String
     val gestures: String
     val gesturesSub: String
@@ -172,7 +172,7 @@ interface Strings {
     val preferredAppSub: String
     val automaticPlaying: String
 
-    // ── Paramètres : paroles ──
+    // ── Settings: lyrics ──────
     val lyricsSub: String
     val onMobile: String
     val onMobileSub: String
@@ -180,7 +180,7 @@ interface Strings {
     val notificationAccess: String
     val replayTutorial: String
 
-    // ── Tuto ──
+    // ── Tutorial ──
     val skip: String
     val nextPage: String
     val letsGo: String
@@ -211,7 +211,7 @@ interface Strings {
     val tutoScreen2: String
     val tutoScreen3: String
 
-    // ── Ajouts : position de l'heure, fiabilité des paroles ──
+    // ── Additions: time position, lyrics reliability ─────────
     val clockSide: String
     val sideLeft: String
     val sideRight: String
@@ -226,7 +226,7 @@ interface Strings {
     val tutoOpen2: String
     val openGithub: String
 
-    // ── Conservation des paroles ──
+    // ── Lyrics retention ──────────
     val lyricsKeep: String
     val lyricsKeepSub: String
     val keepWeek: String

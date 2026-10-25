@@ -152,11 +152,11 @@ import kotlin.random.Random
 val Gray = Color(0xFF9A9A9A)
 val Dim = Color(0xFF3A3A3A)
 
-/** Couleurs du lecteur ; la variante « nuit » atténue tout le blanc. */
+/** Player colors; the "night" variant dims all the white. */
 data class Palette(val fg: Color, val fg2: Color, val faint: Color, val track: Color, val artLevel: Float)
 
 private val DayPalette = Palette(Color.White, Gray, Dim, Color(0xFF2A2A2A), artLevel = 1f)
-// La pochette est assombrie dans la même proportion que le blanc du texte (0x8C ≈ 55 %)
+// The artwork is dimmed in the same proportion as the text white (0x8C ≈ 55 %)
 private val NightPalette = Palette(Color(0xFF8C8C8C), Color(0xFF555555), Color(0xFF2A2A2A), Color(0xFF1E1E1E), artLevel = 0.55f)
 
 val LocalPalette = staticCompositionLocalOf { DayPalette }
@@ -173,7 +173,7 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
 
 private enum class Mode { NORMAL, LYRICS, CAR }
 
-/** Paroles telles que les voient les dispositions ; null quand la fonction est coupée dans les réglages. */
+/** Lyrics as the layouts see them; null when the feature is turned off in the settings. */
 private class LyricsUi(val open: Boolean, val state: LyricsCtl, val toggle: () -> Unit)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -181,14 +181,14 @@ private class SharedScopes(val layout: SharedTransitionScope, val content: Anima
 
 private val LocalShared = staticCompositionLocalOf<SharedScopes?> { null }
 
-/** Élément qui « voyage » entre l'écran normal et l'écran paroles (pochette, horloge, appli). */
+/** Element that "travels" between the normal screen and the lyrics screen (artwork, clock, app). */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun Modifier.shared(key: String, scale: Boolean = false): Modifier {
     val s = LocalShared.current ?: return this
     return with(s.layout) {
         val state = rememberSharedContentState(key)
-        // Le texte ne se re-mesure pas en douceur d'une taille de police à l'autre : on le met à l'échelle
+        // Text doesn't re-measure smoothly from one font size to the next: so we scale it
         if (scale) this@shared.sharedBounds(state, s.content, resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds())
         else this@shared.sharedElement(state, s.content)
     }
@@ -210,7 +210,7 @@ fun PlayerScreen(
     var sheet by remember { mutableStateOf(SheetKind.NONE) }
     var likeFlash by remember { mutableIntStateOf(0) }
 
-    // Veille : X minutes sans musique ni toucher
+    // Standby: X minutes with no music and no touch
     var lastTouch by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var standby by remember { mutableStateOf(false) }
     val standbyMs = Prefs.STANDBY_DELAYS.getOrElse(prefs.standbyDelay) { Prefs.STANDBY_DELAYS[1] }.first * 1000L
@@ -224,7 +224,7 @@ fun PlayerScreen(
     Box(
         Modifier
             .fillMaxSize()
-            // Observe chaque toucher sans le consommer : les boutons en dessous le reçoivent quand même
+            // Watches every touch without consuming it: the buttons underneath still get it
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -268,7 +268,7 @@ fun PlayerScreen(
 
 enum class SheetKind { NONE, SLEEP, SOURCE }
 
-/** Grand cœur qui apparaît puis s'efface après un double-tap. */
+/** Big heart that appears then fades out after a double-tap. */
 @Composable
 private fun BoxScope.LikeFlash(trigger: Int) {
     val alpha = remember { Animatable(0f) }
@@ -305,20 +305,20 @@ private fun Player(
         Prefs.BURN_INTERVALS.getOrElse(prefs.burnInterval) { Prefs.BURN_INTERVALS[1] }.first * 1000L,
         Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] }.first,
     )
-    // Glisse vers la nouvelle position au lieu de sauter ; lu dans offset {} : pas de recomposition par image
-    val shift by animateValueAsState(burnTarget, DpOffset.VectorConverter, tween(1800, easing = FastOutSlowInEasing), label = "décalage")
+    // Slides to the new position instead of jumping; read inside offset {}: no recomposition per frame
+    val shift by animateValueAsState(burnTarget, DpOffset.VectorConverter, tween(1800, easing = FastOutSlowInEasing), label = "shift")
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
 
-    // Trou de la caméra : en portrait, le haut n'est plus réservé ; l'en-tête se place à côté du trou
+    // Camera hole: in portrait the top is no longer reserved; the header sits beside the hole
     val view = LocalView.current
     val density = LocalDensity.current
     var frame by remember { mutableStateOf(Rect.Zero) }
     var cutouts by remember { mutableStateOf(emptyList<android.graphics.Rect>()) }
     val pad = if (landscape) PaddingValues(16.dp) else PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 36.dp)
     val reported = cutouts.firstOrNull { it.top <= 0 && it.bottom > 0 }
-    // Position manuelle : même taille que ce qu'annonce Android (ou un trou typique), recentrée là où il est
+    // Manual position: same size as what Android reports (or a typical hole), recentered where it is
     val camera = if (prefs.cameraPos == Prefs.CAM_AUTO) reported else with(density) {
         val w = reported?.width() ?: 36.dp.roundToPx()
         val h = reported?.bottom ?: 40.dp.roundToPx()
@@ -342,7 +342,7 @@ private fun Player(
             )
         }
     }
-    // Voiture : pas de paroles, elles attirent le regard
+    // Car: no lyrics, they draw the eye
     val showLyrics = prefs.lyrics && prefs.lyricsOpen && !prefs.carMode
     val mode = when {
         prefs.carMode -> Mode.CAR
@@ -360,7 +360,7 @@ private fun Player(
                     if (!prefs.gestures) return@pointerInput
                     detectTapGestures(onDoubleTap = { like() }, onLongPress = { openSource() })
                 }
-                // Gauche/droite = suivant/précédent, haut/bas = paroles (les sliders consomment leurs propres gestes)
+                // Left/right = next/previous, up/down = lyrics (sliders consume their own gestures)
                 .pointerInput(Unit) {
                     val threshold = 96.dp.toPx()
                     detectDragGestures(
@@ -385,8 +385,8 @@ private fun Player(
                     if (landscape) WindowInsets.safeDrawing
                     else WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
                 )
-                // Cadre avant décalage anti-marquage (la marge du trou en tient compte) ; le trou se lit ici,
-                // une fois les encarts du système connus (ils changent avec la rotation)
+                // Frame before the anti-burn-in shift (the hole margin accounts for it); the hole is read here,
+                // once the system insets are known (they change with rotation)
                 .onGloballyPositioned { c ->
                     frame = Rect(c.positionInWindow(), c.size.toSize())
                     val rects = view.rootWindowInsets?.displayCutout?.boundingRects.orEmpty()
@@ -403,7 +403,7 @@ private fun Player(
                 AnimatedContent(
                     mode,
                     transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
-                    label = "disposition",
+                    label = "layout",
                 ) { m ->
                     val open = m == Mode.LYRICS
                     CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
@@ -442,7 +442,7 @@ private fun PortraitLayout(
 ) {
     val swap = prefs.showArt && prefs.swapArt
     if (lyr?.open == true) {
-        // Paroles : pochette et horloge réduites dans l'en-tête, les paroles prennent l'espace libéré
+        // Lyrics: artwork and clock shrink into the header, the lyrics take the freed space
         Column(Modifier.fillMaxSize()) {
             header(true)
             val panel: @Composable () -> Unit = {
@@ -460,7 +460,7 @@ private fun PortraitLayout(
         return
     }
     if (!prefs.showArt) {
-        // Sans pochette : horloge + contrôles forment un seul bloc centré, la roue reste dans le coin
+        // No artwork: clock + controls form a single centered block, the gear stays in the corner
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 header(false)
@@ -485,7 +485,7 @@ private fun PortraitLayout(
     Column(Modifier.fillMaxSize()) {
         header(true)
         val art: @Composable () -> Unit = {
-            // La boîte prend tout l'espace libre ; la pochette y tient en carré le plus grand possible
+            // The box takes all the free space; the artwork fits in it as the largest possible square
             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
                 Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
             }
@@ -506,7 +506,7 @@ private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header
     val open = lyr?.open == true
     val swap = prefs.showArt && prefs.swapArt
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-        // Les paroles prennent la place de la pochette (ou la moitié de l'écran s'il n'y en a pas)
+        // The lyrics take the artwork's place (or half the screen if there's none)
         val side: @Composable () -> Unit = {
             if (open) LyricsPanel(np, lyr!!.state, prefs, Modifier.weight(1f).fillMaxHeight())
             else Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
@@ -531,16 +531,16 @@ private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header
     }
 }
 
-/** Trou de la caméra en coordonnées du contenu (px), avec la largeur du contenu et une marge de sécurité. */
+/** Camera hole in content coordinates (px), with the content width and a safety margin. */
 class Hole(val rect: Rect, val width: Float, val margin: Float) {
-    /** Décalage vers le bas d'un élément posé en haut entre x0 et x1 : 0 s'il passe à côté du trou. */
+    /** Downward offset for an element placed at the top between x0 and x1: 0 if it clears the hole. */
     fun pushDown(x0: Float, x1: Float): Float =
         if (rect.bottom > 0f && x1 > rect.left - margin && x0 < rect.right + margin) rect.bottom + margin else 0f
 }
 
 val LocalHole = staticCompositionLocalOf<Hole?> { null }
 
-/** Heure à droite (roue à gauche) : réglage, ou en auto quand il y a plus de place à droite du trou. */
+/** Time on the right (gear on the left): from the setting, or in auto when there's more room right of the hole. */
 private fun mirrorClock(prefs: Prefs, hole: Hole?): Boolean = when (prefs.clockSide) {
     Prefs.SIDE_LEFT -> false
     Prefs.SIDE_RIGHT -> true
@@ -564,10 +564,10 @@ private fun Header(
     val density = LocalDensity.current
     val anyHole = LocalHole.current
     val mirror = mirrorClock(prefs, anyHole)
-    // Le trou ne gêne que l'en-tête du haut de l'écran
+    // The hole only gets in the way of the header at the top of the screen
     val hole = if (atTop) anyHole?.takeIf { it.rect.bottom > 0f } else null
     val baseSp = when (prefs.clockSize) {
-        // Voiture : la plus grande heure possible, ramenée ensuite à la largeur disponible
+        // Car: the largest possible time, then scaled down to the available width
         Prefs.CLOCK_BIG -> if (car) (if (landscape) 80f else 200f) else if (compact) 48f else if (landscape) 72f else 88f
         Prefs.CLOCK_MEDIUM -> if (car) (if (landscape) 56f else 120f) else if (compact) 34f else 44f
         else -> 0f
@@ -579,7 +579,7 @@ private fun Header(
     val measurer = rememberTextMeasurer()
 
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        // Boutons voiture + roue : toujours en haut, dans la bande du trou s'ils passent à côté
+        // Car + gear buttons: always at the top, inside the hole's strip if they clear it
         val buttons = onOpenSettings != null
         var clockSp = baseSp
         var mainTop = 0f
@@ -593,28 +593,28 @@ private fun Header(
                 gearTop = if (mirror) hole.pushDown(0f, groupW) else hole.pushDown(width - groupW, width)
             }
             val side = if (thumb) (thumbSize + 16.dp).toPx() else 0f
-            // Chiffres remplacés par des 0 : la taille ne saute pas d'une minute à l'autre
+            // Digits replaced by 0s: the size doesn't jump from one minute to the next
             val w = if (baseSp > 0f) measurer.measure(
                 time.replace(Regex("\\d"), "0"),
                 TextStyle(fontSize = baseSp.sp, fontFamily = style.family, fontWeight = style.weight),
             ).size.width.toFloat() else 0f
 
-            // A : l'heure dans la bande du trou, à côté de lui (rétrécie s'il le faut)
+            // A: the time in the hole's strip, beside it (shrunk if needed)
             val fitBeside = if (hole == null || w == 0f) 0f else {
                 val free = (if (mirror) width - hole.rect.right else hole.rect.left) - hole.margin - side
                 (free / w).coerceAtMost(1f)
             }
-            // En voiture l'heure doit rester grande : plutôt sous le trou que rétrécie à côté
+            // In the car the time must stay big: better below the hole than shrunk beside it
             val minBeside = if (car) 0.97f else 0.6f
             if (hole != null && baseSp > 0f && fitBeside >= minBeside) {
                 clockSp = baseSp * fitBeside
                 mainEndPad = groupW
             } else {
-                // B : sous le trou (ou tout en haut s'il n'y en a pas), sur toute la largeur libre
+                // B: below the hole (or at the very top if there's none), across the whole free width
                 mainTop = hole?.let { it.rect.bottom + it.margin } ?: 0f
                 if (buttons && mainTop < gearTop + groupH) {
-                    // En voiture portrait, l'heure passe sous les boutons pour prendre toute la largeur ;
-                    // sinon (et en paysage, où c'est la hauteur qui manque) elle reste à côté d'eux
+                    // In car portrait, the time goes below the buttons to use the full width;
+                    // otherwise (and in landscape, where height is what's short) it stays beside them
                     if (car && !landscape) mainTop = gearTop + groupH else mainEndPad = groupW + 8.dp.toPx()
                 }
                 if (w > 0f) clockSp = baseSp * ((width - side - mainEndPad) / w).coerceAtMost(1f)
@@ -635,7 +635,7 @@ private fun Header(
                 Artwork(np.art, prefs.grayArt, Modifier.shared("art").size(thumbSize))
             }
             if (thumb && !mirror) {
-                // Écran paroles : la pochette devient une vignette à côté de l'heure
+                // Lyrics screen: the artwork becomes a thumbnail next to the time
                 thumbnail()
                 Spacer(Modifier.width(16.dp))
             }
@@ -685,7 +685,7 @@ private fun Header(
     }
 }
 
-/** Voiture + roue dentée, la roue côté bord de l'écran. */
+/** Car + gear, with the gear on the screen-edge side. */
 @Composable
 private fun TopButtons(prefs: Prefs, mirror: Boolean, onOpenSettings: () -> Unit, modifier: Modifier) {
     Row(modifier) {
@@ -699,7 +699,7 @@ private fun TopButtons(prefs: Prefs, mirror: Boolean, onOpenSettings: () -> Unit
     }
 }
 
-/** « sam. 25 oct. · 82 % ⚡ · ☾ 23 min » : date et batterie (réglage), minuteur s'il tourne. */
+/** "Sat, Oct 25 · 82 % ⚡ · ☾ 23 min": date and battery (setting), timer if running. */
 @Composable
 private fun InfoLine(prefs: Prefs, sleep: SleepTimer, onClick: () -> Unit) {
     val sleepLabel = rememberSleepLabel(sleep)
@@ -723,7 +723,7 @@ private fun InfoLine(prefs: Prefs, sleep: SleepTimer, onClick: () -> Unit) {
     }
 }
 
-/** Niveau de batterie (en %, -1 si inconnu) et branchement, suivis en direct. */
+/** Battery level (in %, -1 if unknown) and charging state, tracked live. */
 @Composable
 private fun rememberBattery(): Pair<Int, Boolean> {
     val context = LocalContext.current
@@ -738,7 +738,7 @@ private fun rememberBattery(): Pair<Int, Boolean> {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(c: Context, i: Intent) = read(i)
         }
-        // Diffusion « collante » : l'enregistrement renvoie aussitôt le dernier état connu
+        // "Sticky" broadcast: registering immediately returns the last known state
         ContextCompat.registerReceiver(
             context, receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED,
         )?.let(::read)
@@ -757,10 +757,10 @@ private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
     }
 }
 
-/** Titre, progression, boutons, volume : le bloc « contrôles ». */
+/** Title, progress, buttons, volume: the "controls" block. */
 @Composable
 private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false, lyr: LyricsUi? = null) {
-    // Un seul bloc qui glisse entre l'écran normal et l'écran paroles, comme l'heure et la pochette
+    // A single block that slides between the normal screen and the lyrics screen, like the time and the artwork
     Column(Modifier.shared("controls")) { ControlsContent(np, prefs, compact, lyr) }
 }
 
@@ -821,7 +821,7 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
             enabled,
         ) { togglePlay() }
         CtrlButton(Icons.Rounded.SkipNext, str.next, 48.dp, enabled) { tc?.skipToNext() }
-        // Bouton paroles, ou vide pour l'équilibre visuel avec le ♥
+        // Lyrics button, or empty space to visually balance the ♥
         if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
     if (prefs.showVolume) VolumeRow()
@@ -841,12 +841,12 @@ private fun CarButton(prefs: Prefs) {
     }
 }
 
-/** Mode voiture : peu d'éléments, très gros, lisibles d'un coup d'œil ; pas de paroles. */
+/** Car mode: few elements, very large, readable at a glance; no lyrics. */
 @Composable
 private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: @Composable (Boolean) -> Unit) {
     if (landscape) {
-        // Pochette à gauche (ou à droite si inversée) ; à côté, une colonne : heure, titre, et une seule
-        // rangée ◀ · ▶ · ▶▶ (· ♥) pour tenir dans la hauteur
+        // Artwork on the left (or on the right if flipped); beside it, a column: time, title, and a single
+        // row ◀ · ▶ · ▶▶ (· ♥) to fit the height
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             val art: @Composable () -> Unit = {
                 Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
@@ -856,8 +856,8 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
                 art()
                 Spacer(Modifier.width(28.dp))
             }
-            // Les boutons ont leur taille fixe et passent en premier : c'est l'espace vide au-dessus
-            // du titre qui s'adapte (avant, posés en dernier, ils étaient écrasés par manque de hauteur)
+            // The buttons have a fixed size and are laid out first: it's the empty space above
+            // the title that adapts (before, laid out last, they got squashed for lack of height)
             Column(Modifier.weight(1f).fillMaxHeight()) {
                 header(true)
                 Spacer(Modifier.weight(1f))
@@ -881,7 +881,7 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
                     Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
                 }
             }
-            // Les gros boutons tout en bas, sous le pouce ; le ♥ (s'il existe) à côté du titre
+            // The big buttons at the very bottom, under the thumb; the ♥ (if any) next to the title
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { CarTitle(np, prefs, titleSp = 40f, artistSp = 26f, maxLines = 2) }
                 if (np.likeAction != null) LikeButton(np)
@@ -944,7 +944,7 @@ private fun LyricsButton(lyr: LyricsUi) {
     }
 }
 
-/** Paroles du morceau en cours, et de quoi essayer l'autre source quand elles sont fausses ou décalées. */
+/** Lyrics of the current track, and a way to try the other source when they're wrong or out of sync. */
 private class LyricsCtl(val value: Lyrics, val busy: Boolean, val nothingOther: Boolean, val switch: () -> Unit)
 
 @Composable
@@ -957,7 +957,7 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
         value = Lyrics.Loading
         nothingOther = false
         if (!active || np.title.isEmpty()) return@LaunchedEffect
-        delay(300) // morceaux passés à la chaîne : une seule requête, pour celui où l'on s'arrête
+        delay(300) // tracks skipped in a row: a single request, for the one we stop on
         while (true) {
             value = repo.load(latest.title, latest.artist, latest.durationMs, allowMetered)
             if (value != Lyrics.Unavailable && value != Lyrics.Offline) break
@@ -972,7 +972,7 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
             val track = latest.title
             val other = repo.loadOther(latest.title, latest.artist, latest.durationMs, source, allowMetered)
             busy = false
-            if (latest.title != track) return@launch // morceau changé entre-temps
+            if (latest.title != track) return@launch // track changed in the meantime
             if (other != null) {
                 value = other
             } else {
@@ -997,13 +997,13 @@ private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: 
                 val texts = remember(lyrics) { lyrics.lines.map { it.text } }
                 LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, prefs.lyricsScale, area)
             } else if (lyrics is Lyrics.Plain) {
-                // Sans horodatage : défilement estimé au prorata de la durée, et libre au doigt
+                // No timestamps: scrolling estimated in proportion to the duration, and free to scroll by finger
                 LyricLines(
                     lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), synced = false, prefs.lyricsScale, area,
                 )
             }
-            // Source discrète sur sa propre ligne sous les paroles (posée dessus, elle masquait du texte) ;
-            // la toucher essaie l'autre (paroles décalées ou fausses)
+            // Discreet source label on its own line below the lyrics (placed on top, it hid some text);
+            // tapping it tries the other one (lyrics out of sync or wrong)
             val source = (lyrics as? Lyrics.Synced)?.source ?: (lyrics as Lyrics.Plain).source
             Text(
                 when {
@@ -1040,19 +1040,19 @@ private fun LyricLines(lines: List<String>, current: Int, synced: Boolean, scale
     val pal = LocalPalette.current
     val highlight = synced
     val list = rememberLazyListState()
-    // Non synchronisées : on peut faire défiler au doigt ; le suivi automatique attend alors 8 s
+    // Unsynced: can be scrolled by finger; auto-follow then waits 8 s
     val dragged by list.interactionSource.collectIsDraggedAsState()
     var touchedAt by remember { mutableLongStateOf(0L) }
     LaunchedEffect(dragged) { if (dragged) touchedAt = SystemClock.elapsedRealtime() }
     BoxWithConstraints(modifier) {
-        // La ligne en cours se cale au tiers de la hauteur : on voit un peu de passé, surtout ce qui vient
+        // The current line sits at a third of the height: a bit of the past shows, mostly what's coming
         val top = maxHeight * 0.3f
         LaunchedEffect(current) {
             if (SystemClock.elapsedRealtime() - touchedAt > 8000) list.animateScrollToItem(current.coerceAtLeast(0))
         }
         LazyColumn(
             state = list,
-            // Synchronisées : verrouillées, le geste vertical sert à ouvrir/fermer les paroles
+            // Synced: locked, the vertical gesture opens/closes the lyrics
             userScrollEnabled = !synced,
             contentPadding = PaddingValues(top = top, bottom = maxHeight - top),
             modifier = Modifier
@@ -1072,7 +1072,7 @@ private fun LyricLines(lines: List<String>, current: Int, synced: Boolean, scale
                         else -> pal.faint
                     },
                     tween(300),
-                    label = "ligne",
+                    label = "line",
                 )
                 Text(
                     line.ifBlank { "♪" },
@@ -1094,7 +1094,7 @@ private val FadeEdges = Brush.verticalGradient(
     1f to Color.Transparent,
 )
 
-/** Ligne en cours ; se réveille pile à l'horodatage de la suivante plutôt que de sonder en boucle. */
+/** Current line; wakes up right at the next line's timestamp instead of polling in a loop. */
 @Composable
 private fun rememberSyncedIndex(np: NowPlaying, lines: List<LyricLine>): Int {
     var idx by remember { mutableIntStateOf(-1) }
@@ -1153,7 +1153,7 @@ private fun LikeButton(np: NowPlaying) {
         if (action == null) return@Box
         val icon = remember(np.likeIcon) { np.likeIcon?.toBitmap(96, 96)?.asImageBitmap() }
         if (icon != null) {
-            // Icône de l'appli source, recolorée en blanc : la forme pleine/vide indique l'état
+            // Source app icon, recolored white: the filled/empty shape shows the state
             Image(icon, action.name.toString(), Modifier.size(28.dp), colorFilter = ColorFilter.tint(LocalPalette.current.fg))
         } else {
             Icon(Icons.Rounded.FavoriteBorder, action.name.toString(), Modifier.size(28.dp), tint = LocalPalette.current.fg)
@@ -1171,7 +1171,7 @@ private fun Progress(np: NowPlaying) {
         while (true) {
             pos = np.currentPosition()
             if (!np.isPlaying) break
-            delay(1000 - pos % 1000 + 5) // se caler sur la seconde suivante
+            delay(1000 - pos % 1000 + 5) // line up with the next second
         }
     }
 
@@ -1206,7 +1206,7 @@ private fun VolumeRow(modifier: Modifier = Modifier) {
     val max = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
     var vol by remember { mutableIntStateOf(audio.getStreamVolume(AudioManager.STREAM_MUSIC)) }
 
-    // Suit aussi les touches volume physiques (le volume est persisté dans Settings.System)
+    // Also follows the physical volume keys (the volume is persisted in Settings.System)
     DisposableEffect(Unit) {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
@@ -1268,7 +1268,7 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
     }
 }
 
-/** Heure ou date formatée, mise à jour pile à chaque changement de minute. */
+/** Formatted time or date, updated right on each minute change. */
 @Composable
 fun rememberFormatted(pattern: String, locale: Locale): String {
     var text by remember { mutableStateOf("") }
@@ -1277,13 +1277,13 @@ fun rememberFormatted(pattern: String, locale: Locale): String {
         while (true) {
             val now = System.currentTimeMillis()
             text = fmt.format(Date(now))
-            delay(60_000 - now % 60_000) // réveil pile au changement de minute
+            delay(60_000 - now % 60_000) // wake up right on the minute change
         }
     }
     return text
 }
 
-/** Décalage aléatoire de ±amplitude dp toutes les intervalMs pour ne pas marquer l'AMOLED. */
+/** Random offset of ±amplitude dp every intervalMs to avoid AMOLED burn-in. */
 @Composable
 private fun rememberBurnInShift(enabled: Boolean, intervalMs: Long, amplitude: Int): DpOffset {
     var shift by remember { mutableStateOf(DpOffset(0.dp, 0.dp)) }

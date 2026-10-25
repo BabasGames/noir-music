@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
-/** Le mode nuit (texte et pochette atténués, luminosité de nuit) est-il actif en ce moment ? */
+/** Is night mode (dimmed text and artwork, night brightness) active right now? */
 @Composable
 fun rememberNightActive(prefs: Prefs): Boolean = when (prefs.nightMode) {
     Prefs.NIGHT_ALWAYS -> true
@@ -31,7 +31,7 @@ private fun rememberInSchedule(start: Int, end: Int): Boolean {
     LaunchedEffect(start, end) {
         while (true) {
             val h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-            // 22 h → 7 h passe minuit : c'est « après le début OU avant la fin »
+            // 22 h → 7 h crosses midnight: it's "after the start OR before the end"
             inside = if (start <= end) h in start until end else h >= start || h < end
             val now = System.currentTimeMillis()
             delay(60_000 - now % 60_000)
@@ -41,14 +41,14 @@ private fun rememberInSchedule(start: Int, end: Int): Boolean {
 }
 
 /**
- * Capteur de luminosité, avec deux seuils (sombre sous 10 lux, clair au-dessus de 30) et un délai :
- * une main qui passe devant le capteur ou une lampe allumée une seconde ne font pas basculer l'écran.
+ * Light sensor, with two thresholds (dark below 10 lux, bright above 30) and a delay:
+ * a hand passing over the sensor or a lamp switched on for a second won't flip the screen.
  */
 @Composable
 private fun rememberDarkRoom(): Boolean {
     val context = LocalContext.current
     var dark by remember { mutableStateOf(false) }
-    // -1 sombre, 0 entre les deux seuils, 1 clair : ne change (et ne recompose) qu'en franchissant un seuil
+    // -1 dark, 0 between the thresholds, 1 bright: only changes (and recomposes) when a threshold is crossed
     var zone by remember { mutableIntStateOf(0) }
 
     DisposableEffect(Unit) {

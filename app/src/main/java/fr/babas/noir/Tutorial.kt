@@ -45,7 +45,7 @@ private const val PAGES = 7
 
 const val GITHUB_URL = "https://github.com/BabasGames/noir-music"
 
-/** Premier lancement (ou « Revoir le tuto ») : langue d'abord, puis accès, gestes, paroles, voiture, écran. */
+/** First launch (or "Replay the tutorial"): language first, then access, gestures, lyrics, car, screen. */
 @Composable
 fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone: () -> Unit) {
     val s = LocalStrings.current
@@ -111,7 +111,7 @@ private fun Body(text: String) {
     Spacer(Modifier.height(12.dp))
 }
 
-/** Première page : la langue, avant tout le reste (la suite du tuto change aussitôt de langue). */
+/** First page: the language, before anything else (the rest of the tutorial switches language right away). */
 @Composable
 private fun LanguagePage(prefs: Prefs) {
     Column {
@@ -185,7 +185,7 @@ private fun CarPage() {
     }
 }
 
-/** Dernière page : l'appli est en développement, bugs et idées vont sur GitHub. */
+/** Last page: the app is in development, bugs and ideas go to GitHub. */
 @Composable
 private fun OpenSourcePage() {
     val s = LocalStrings.current

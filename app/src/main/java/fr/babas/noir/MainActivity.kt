@@ -67,14 +67,14 @@ class MainActivity : ComponentActivity() {
                     else -> false
                 }
                 val night = rememberNightActive(prefs)
-                // Aperçu pendant qu'on glisse un curseur de luminosité dans les réglages
+                // Preview while a brightness slider is being dragged in the settings
                 var preview by remember { mutableStateOf<Float?>(null) }
                 val brightness = preview ?: when {
                     night && prefs.nightBrightnessOn -> prefs.nightBrightness
                     prefs.customBrightness -> prefs.brightness
                     else -> null
                 }
-                // Fréquence réduite seulement sur le lecteur : tuto et réglages défilent à la fréquence normale
+                // Reduced refresh rate only on the player: tutorial and settings scroll at the normal rate
                 val onPlayer = prefs.tutorialDone && hasAccess && !showSettings
                 val lowRefresh = prefs.lowRefresh && onPlayer
                 LaunchedEffect(keepOn, lowRefresh, brightness) {
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             prefs = prefs,
                             lyricsRepo = lyrics,
-                            // Ce que le lecteur utilisera (les réglages, eux, tournent toujours à pleine fréquence)
+                            // What the player will use (the settings always run at full refresh rate)
                             displayInfo = rememberDisplayInfo().let { (cur, rates) ->
                                 (if (prefs.lowRefresh) lowestMode()?.refreshRate?.let(Math::round) ?: cur else cur) to rates
                             },
@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
         connect(attempt = 0)
     }
 
-    /** Juste après l'octroi de l'accès, le système peut refuser quelques instants : on réessaie. */
+    /** Right after access is granted, the system may refuse for a few moments: retry. */
     private fun connect(attempt: Int) {
         val granted = packageName in NotificationManagerCompat.getEnabledListenerPackages(this)
         hasAccess = granted && media.start()
@@ -175,13 +175,13 @@ class MainActivity : ComponentActivity() {
         val low = if (lowRefresh) lowestMode() else null
         window.attributes = window.attributes.apply {
             screenBrightness = brightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-            // 0 = laisser le système choisir
+            // 0 = let the system choose
             preferredDisplayModeId = low?.modeId ?: 0
         }
-        // Le mode seul n'est qu'un point de départ : SurfaceFlinger remonte à 60 Hz tant qu'aucune
-        // vue ne vote pour moins. Android 15+ : chaque vue peut voter sa fréquence d'images.
+        // The mode alone is only a starting point: SurfaceFlinger goes back up to 60 Hz as long as no
+        // view votes for less. Android 15+: each view can vote for its own frame rate.
         if (Build.VERSION.SDK_INT >= 35) {
-            val rate = low?.refreshRate ?: Float.NaN // NaN = pas de préférence
+            val rate = low?.refreshRate ?: Float.NaN // NaN = no preference
             window.decorView.post { setFrameRateVote(window.decorView, rate) }
         }
     }
@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
     @Suppress("DEPRECATION")
     private fun currentDisplay(): Display = display ?: windowManager.defaultDisplay
 
-    /** Mode le plus lent à la résolution actuelle (changer de résolution ferait clignoter l'écran). */
+    /** Slowest mode at the current resolution (changing resolution would make the screen flicker). */
     private fun lowestMode(): Display.Mode? {
         val d = currentDisplay()
         val cur = d.mode
@@ -205,8 +205,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Fréquence actuelle et liste des fréquences possibles (« 30, 60, 90, 120 »).
-     * Suivie en direct : le changement de mode arrive après coup, une lecture unique affichait l'ancienne valeur.
+     * Current refresh rate and list of supported rates ("30, 60, 90, 120").
+     * Tracked live: the mode change lands after the fact, so a one-off read showed the old value.
      */
     @Composable
     private fun rememberDisplayInfo(): Pair<Int, String> {
