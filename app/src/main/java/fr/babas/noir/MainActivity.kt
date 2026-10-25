@@ -16,7 +16,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import fr.babas.noir.i18n.Lang
+import fr.babas.noir.i18n.LocalLang
+import fr.babas.noir.i18n.LocalStrings
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +49,8 @@ class MainActivity : ComponentActivity() {
         lyrics = LyricsRepository(this)
 
         setContent {
+            val lang = Lang.resolve(prefs.language)
+            CompositionLocalProvider(LocalLang provides lang, LocalStrings provides lang.strings) {
             MaterialTheme(colorScheme = NoirColors) {
                 val np by media.state.collectAsState()
                 var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -55,7 +61,9 @@ class MainActivity : ComponentActivity() {
                     else -> false
                 }
                 val night = rememberNightActive(prefs)
-                val brightness = when {
+                // Aperçu pendant qu'on glisse un curseur de luminosité dans les réglages
+                var preview by remember { mutableStateOf<Float?>(null) }
+                val brightness = preview ?: when {
                     night && prefs.nightBrightnessOn -> prefs.nightBrightness
                     prefs.customBrightness -> prefs.brightness
                     else -> null
@@ -89,6 +97,7 @@ class MainActivity : ComponentActivity() {
                                 showSettings = false
                                 prefs.tutorialDone = false
                             },
+                            onPreviewBrightness = { preview = it },
                             onBack = { showSettings = false },
                         )
                     }
@@ -100,6 +109,7 @@ class MainActivity : ComponentActivity() {
                         onOpenSource = { np.controller?.packageName?.let(::openApp) },
                     )
                 }
+            }
             }
         }
     }
@@ -180,10 +190,11 @@ class MainActivity : ComponentActivity() {
             .minByOrNull { it.refreshRate }
     }
 
-    private fun displayInfo(): String {
+    /** Fréquence actuelle et liste des fréquences possibles (« 30, 60, 90, 120 »). */
+    private fun displayInfo(): Pair<Int, String> {
         val d = currentDisplay()
         val rates = d.supportedModes.map { Math.round(it.refreshRate) }.distinct().sorted()
-        return "Actuel : ${Math.round(d.refreshRate)} Hz · disponibles : ${rates.joinToString(", ")} Hz"
+        return Math.round(d.refreshRate) to rates.joinToString(", ")
     }
 }
 

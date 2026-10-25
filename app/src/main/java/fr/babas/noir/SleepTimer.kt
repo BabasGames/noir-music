@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.delay
 
 /** Minuteur de sommeil : met la musique en pause à une heure donnée ou à la fin du morceau. */
@@ -57,18 +58,19 @@ fun SleepTimerEffect(timer: SleepTimer, np: NowPlaying) {
 /** « 23 min », « fin du morceau », ou null si le minuteur est arrêté ; mis à jour à chaque minute entamée. */
 @Composable
 fun rememberSleepLabel(timer: SleepTimer): String? {
+    val str = LocalStrings.current
     val end = timer.endAt
     var label by remember(end) { mutableStateOf("") }
-    LaunchedEffect(end) {
+    LaunchedEffect(end, str) {
         while (end != null) {
             val left = end - SystemClock.elapsedRealtime()
             if (left <= 0) break
-            label = "${(left + 59_999) / 60_000} min"
+            label = str.minutes(((left + 59_999) / 60_000).toInt())
             delay((left - 1) % 60_000 + 1)
         }
     }
     return when {
-        timer.endOfTrack -> "fin du morceau"
+        timer.endOfTrack -> str.endOfTrack
         end != null -> label
         else -> null
     }

@@ -11,6 +11,10 @@ import kotlin.reflect.KProperty
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("noir", Context.MODE_PRIVATE)
 
+    /** Code de langue ("" = langue du téléphone) */
+    var language by string("language", "")
+    var carMode by bool("car_mode", false)
+
     // Disposition
     var showArt by bool("show_art", false)
     var swapArt by bool("swap_art", false)
@@ -19,6 +23,12 @@ class Prefs(context: Context) {
 
     // Affichage
     var clockSize by int("clock_size", CLOCK_BIG)
+    /** "", "serif", "mono", "sys:<fichier>" ou "custom" (voir ClockFonts) */
+    var clockFont by string("clock_font", "")
+    /** Nom affiché du fichier importé ; change à chaque import, ce qui recharge la police */
+    var clockFontName by string("clock_font_name", "")
+    var clockFormat by int("clock_format", FORMAT_AUTO)
+    var dateFormat by int("date_format", DATE_SHORT)
     var textScale by float("text_scale", 1f)
     var showDate by bool("show_date", true)
     var showSource by bool("show_source", true)
@@ -94,6 +104,14 @@ class Prefs(context: Context) {
         const val KEEP_ON_NEVER = 0
         const val KEEP_ON_PLAYING = 1
         const val KEEP_ON_ALWAYS = 2
+
+        const val FORMAT_AUTO = 0
+        const val FORMAT_24 = 1
+        const val FORMAT_12 = 2
+
+        const val DATE_SHORT = 0
+        const val DATE_LONG = 1
+        const val DATE_NUMERIC = 2
 
         const val NIGHT_OFF = 0
         const val NIGHT_ALWAYS = 1

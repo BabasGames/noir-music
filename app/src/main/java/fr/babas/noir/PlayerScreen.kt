@@ -126,6 +126,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.material.icons.rounded.DirectionsCar
+import fr.babas.noir.i18n.LocalLang
+import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -154,6 +157,8 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
     disabledActiveTrackColor = pal.faint,
     disabledInactiveTrackColor = Color(0xFF141414),
 )
+
+private enum class Mode { NORMAL, LYRICS, CAR }
 
 /** Paroles telles que les voient les dispositions ; null quand la fonction est coupée dans les réglages. */
 private class LyricsUi(val open: Boolean, val state: Lyrics, val toggle: () -> Unit)
@@ -238,7 +243,7 @@ fun PlayerScreen(
             SheetKind.NONE -> {}
         }
         AnimatedVisibility(standby, enter = fadeIn(tween(1500)), exit = fadeOut(tween(300))) {
-            StandbyScreen(prefs.standbyMode == Prefs.STANDBY_CLOCK) { lastTouch = SystemClock.elapsedRealtime() }
+            StandbyScreen(prefs.standbyMode == Prefs.STANDBY_CLOCK, clockPattern(prefs), rememberClockStyle(prefs)) { lastTouch = SystemClock.elapsedRealtime() }
         }
     }
 }
@@ -287,7 +292,13 @@ private fun Player(
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
-    val showLyrics = prefs.lyrics && prefs.lyricsOpen
+    // Voiture : pas de paroles, elles attirent le regard
+    val showLyrics = prefs.lyrics && prefs.lyricsOpen && !prefs.carMode
+    val mode = when {
+        prefs.carMode -> Mode.CAR
+        showLyrics -> Mode.LYRICS
+        else -> Mode.NORMAL
+    }
     val lyrics = rememberLyrics(lyricsRepo, np, showLyrics, prefs.lyricsOnMobile)
 
     CompositionLocalProvider(LocalPalette provides if (night) NightPalette else DayPalette) {
@@ -307,7 +318,7 @@ private fun Player(
                             if (abs(dragX) > abs(dragY)) {
                                 val tc = current.controller?.transportControls
                                 if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
-                            } else if (prefs.lyrics) {
+                            } else if (prefs.lyrics && !prefs.carMode) {
                                 if (dragY < -threshold) prefs.lyricsOpen = true else if (dragY > threshold) prefs.lyricsOpen = false
                             }
                             dragX = 0f
@@ -329,10 +340,11 @@ private fun Player(
         ) {
             SharedTransitionLayout(Modifier.fillMaxSize()) {
                 AnimatedContent(
-                    showLyrics,
+                    mode,
                     transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
-                    label = "paroles",
-                ) { open ->
+                    label = "disposition",
+                ) { m ->
+                    val open = m == Mode.LYRICS
                     CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
                         val lyr = if (prefs.lyrics) LyricsUi(open, lyrics) { prefs.lyricsOpen = !prefs.lyricsOpen } else null
                         val header: @Composable (Boolean) -> Unit = { withGear ->
@@ -344,8 +356,11 @@ private fun Player(
                                 onSource = { onSheet(SheetKind.SOURCE) },
                             )
                         }
-                        if (landscape) LandscapeLayout(np, prefs, lyr, header)
-                        else PortraitLayout(np, prefs, lyr, header, onOpenSettings)
+                        when {
+                            m == Mode.CAR -> CarLayout(np, prefs, landscape, header)
+                            landscape -> LandscapeLayout(np, prefs, lyr, header)
+                            else -> PortraitLayout(np, prefs, lyr, header, onOpenSettings)
+                        }
                     }
                 }
             }
@@ -466,11 +481,13 @@ private fun Header(
                 else -> 0f
             }
             if (clockSp > 0f) {
+                val style = rememberClockStyle(prefs)
                 Text(
-                    rememberFormatted(clockPattern()),
+                    rememberFormatted(clockPattern(prefs), LocalLang.current.locale),
                     fontSize = clockSp.sp,
                     lineHeight = (clockSp * 1.05f).sp,
-                    fontWeight = FontWeight.Thin,
+                    fontFamily = style.family,
+                    fontWeight = style.weight,
                     color = pal.fg,
                     modifier = Modifier
                         .shared("clock", scale = true)
@@ -507,13 +524,13 @@ private fun InfoLine(prefs: Prefs, sleep: SleepTimer, onClick: () -> Unit) {
     ) {
         if (prefs.showDate) {
             val (level, charging) = rememberBattery()
-            val date = rememberFormatted("EEE d MMM")
+            val date = rememberFormatted(datePattern(prefs), LocalLang.current.locale)
             Text(if (level >= 0) "$date · $level %" else date, fontSize = 15.sp, color = pal.fg2)
-            if (charging) Icon(Icons.Rounded.Bolt, "En charge", Modifier.size(16.dp), tint = pal.fg2)
+            if (charging) Icon(Icons.Rounded.Bolt, LocalStrings.current.charging, Modifier.size(16.dp), tint = pal.fg2)
         }
         if (sleepLabel != null) {
             if (prefs.showDate) Text(" · ", fontSize = 15.sp, color = pal.fg2)
-            Icon(Icons.Rounded.Bedtime, "Minuteur", Modifier.size(15.dp), tint = pal.fg2)
+            Icon(Icons.Rounded.Bedtime, LocalStrings.current.sleepTimer, Modifier.size(15.dp), tint = pal.fg2)
             Text(" $sleepLabel", fontSize = 15.sp, color = pal.fg2)
         }
     }
@@ -549,13 +566,14 @@ private fun SettingsButton(modifier: Modifier, onClick: () -> Unit) {
         modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Settings, "Paramètres", tint = LocalPalette.current.faint, modifier = Modifier.size(26.dp))
+        Icon(Icons.Rounded.Settings, LocalStrings.current.settings, tint = LocalPalette.current.faint, modifier = Modifier.size(26.dp))
     }
 }
 
 /** Titre, progression, boutons, volume : le bloc « contrôles ». */
 @Composable
 private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean = false, lyr: LyricsUi? = null) {
+    val str = LocalStrings.current
     val pal = LocalPalette.current
     val tc = np.controller?.transportControls
     val togglePlay = { if (np.isPlaying) tc?.pause() else tc?.play() }
@@ -572,7 +590,7 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
             ),
     ) {
         Text(
-            np.title.ifEmpty { "Rien en lecture" },
+            np.title.ifEmpty { str.nothingPlaying },
             fontSize = titleSp.sp,
             lineHeight = (titleSp * 1.2f).sp,
             fontWeight = FontWeight.Light,
@@ -581,7 +599,7 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            np.artist.ifEmpty { if (np.controller == null) "Lance la musique dans Deezer, Spotify…" else "" },
+            np.artist.ifEmpty { if (np.controller == null) str.startMusicHint else "" },
             fontSize = (19f * scale).sp,
             color = pal.fg2,
             maxLines = 1,
@@ -602,25 +620,129 @@ private fun ColumnScope.Controls(np: NowPlaying, prefs: Prefs, compact: Boolean 
     ) {
         val enabled = np.controller != null
         LikeButton(np)
-        CtrlButton(Icons.Rounded.SkipPrevious, "Précédent", 48.dp, enabled) { tc?.skipToPrevious() }
+        CtrlButton(Icons.Rounded.SkipPrevious, str.previous, 48.dp, enabled) { tc?.skipToPrevious() }
         CtrlButton(
             if (np.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            if (np.isPlaying) "Pause" else "Lecture",
+            if (np.isPlaying) str.pause else str.play,
             if (compact) 64.dp else 76.dp,
             enabled,
         ) { togglePlay() }
-        CtrlButton(Icons.Rounded.SkipNext, "Suivant", 48.dp, enabled) { tc?.skipToNext() }
+        CtrlButton(Icons.Rounded.SkipNext, str.next, 48.dp, enabled) { tc?.skipToNext() }
         // Bouton paroles, ou vide pour l'équilibre visuel avec le ♥
         if (lyr != null) LyricsButton(lyr) else Spacer(Modifier.size(56.dp))
     }
-    if (prefs.showVolume) VolumeRow()
+    // En bas à gauche : le bouton voiture, puis le volume s'il est affiché
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        CarButton(prefs)
+        if (prefs.showVolume) VolumeRow(Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun CarButton(prefs: Prefs) {
+    val pal = LocalPalette.current
+    Box(
+        Modifier.size(44.dp).clip(CircleShape).clickable { prefs.carMode = !prefs.carMode },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Rounded.DirectionsCar, LocalStrings.current.carMode, Modifier.size(24.dp),
+            tint = if (prefs.carMode) pal.fg else pal.faint,
+        )
+    }
+}
+
+/** Mode voiture : peu d'éléments, très gros, lisibles d'un coup d'œil ; pas de paroles. */
+@Composable
+private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: @Composable (Boolean) -> Unit) {
+    if (landscape) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
+                header(true)
+                Column {
+                    CarTitle(np, prefs, titleSp = 34f, artistSp = 22f, maxLines = 1)
+                    if (prefs.showProgress) Progress(np)
+                }
+                CarFooter(np, prefs)
+            }
+            Spacer(Modifier.width(24.dp))
+            CarButtons(np, Modifier.weight(1f), side = 72.dp, main = 112.dp)
+        }
+    } else {
+        Column(Modifier.fillMaxSize()) {
+            header(true)
+            Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
+                if (prefs.showArt) {
+                    Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
+                }
+            }
+            CarTitle(np, prefs, titleSp = 40f, artistSp = 26f, maxLines = 2)
+            if (prefs.showProgress) {
+                Spacer(Modifier.height(8.dp))
+                Progress(np)
+            }
+            Spacer(Modifier.height(8.dp))
+            CarButtons(np, Modifier.fillMaxWidth(), side = 80.dp, main = 120.dp)
+            Spacer(Modifier.height(8.dp))
+            CarFooter(np, prefs)
+        }
+    }
+}
+
+@Composable
+private fun CarTitle(np: NowPlaying, prefs: Prefs, titleSp: Float, artistSp: Float, maxLines: Int) {
+    val str = LocalStrings.current
+    val pal = LocalPalette.current
+    val tc = np.controller?.transportControls
+    val t = titleSp * prefs.textScale
+    Column(
+        Modifier.fillMaxWidth().clickable(remember { MutableInteractionSource() }, indication = null) {
+            if (np.isPlaying) tc?.pause() else tc?.play()
+        },
+    ) {
+        Text(
+            np.title.ifEmpty { str.nothingPlaying },
+            fontSize = t.sp, lineHeight = (t * 1.15f).sp, fontWeight = FontWeight.Normal, color = pal.fg,
+            maxLines = maxLines, overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            np.artist, fontSize = (artistSp * prefs.textScale).sp, color = pal.fg2,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun CarButtons(np: NowPlaying, modifier: Modifier, side: Dp, main: Dp) {
+    val str = LocalStrings.current
+    val tc = np.controller?.transportControls
+    val enabled = np.controller != null
+    Row(modifier, horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+        CtrlButton(Icons.Rounded.SkipPrevious, str.previous, side, enabled) { tc?.skipToPrevious() }
+        CtrlButton(
+            if (np.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+            if (np.isPlaying) str.pause else str.play,
+            main,
+            enabled,
+        ) { if (np.isPlaying) tc?.pause() else tc?.play() }
+        CtrlButton(Icons.Rounded.SkipNext, str.next, side, enabled) { tc?.skipToNext() }
+    }
+}
+
+@Composable
+private fun CarFooter(np: NowPlaying, prefs: Prefs) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        CarButton(prefs)
+        Spacer(Modifier.weight(1f))
+        LikeButton(np)
+    }
 }
 
 @Composable
 private fun LyricsButton(lyr: LyricsUi) {
     val pal = LocalPalette.current
     Box(Modifier.size(56.dp).clip(CircleShape).clickable(onClick = lyr.toggle), contentAlignment = Alignment.Center) {
-        Icon(Icons.Rounded.Lyrics, "Paroles", Modifier.size(28.dp), tint = if (lyr.open) pal.fg else pal.faint)
+        Icon(Icons.Rounded.Lyrics, LocalStrings.current.lyrics, Modifier.size(28.dp), tint = if (lyr.open) pal.fg else pal.faint)
     }
 }
 
@@ -642,6 +764,7 @@ private fun rememberLyrics(repo: LyricsRepository, np: NowPlaying, active: Boole
 
 @Composable
 private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: Modifier) {
+    val str = LocalStrings.current
     val pal = LocalPalette.current
     when (lyrics) {
         is Lyrics.Synced -> {
@@ -656,11 +779,11 @@ private fun LyricsPanel(np: NowPlaying, lyrics: Lyrics, prefs: Prefs, modifier: 
             val msg = when {
                 np.title.isEmpty() -> ""
                 lyrics == Lyrics.Loading -> "…"
-                lyrics == Lyrics.Instrumental -> "♪  Instrumental"
-                lyrics == Lyrics.Offline -> "Pas de réseau\n(nouvel essai toutes les 30 s)"
-                lyrics == Lyrics.Unavailable -> "Les sources de paroles ne répondent pas\n(nouvel essai toutes les 30 s)"
-                lyrics == Lyrics.MobileData -> "Paroles en pause sur données mobiles\n(réglable dans les paramètres)"
-                else -> "Pas de paroles trouvées"
+                lyrics == Lyrics.Instrumental -> str.lyricsInstrumental
+                lyrics == Lyrics.Offline -> str.lyricsOffline
+                lyrics == Lyrics.Unavailable -> str.lyricsUnavailable
+                lyrics == Lyrics.MobileData -> str.lyricsMobileData
+                else -> str.lyricsNotFound
             }
             Text(msg, fontSize = (18f * prefs.lyricsScale).sp, color = pal.faint, textAlign = TextAlign.Center)
         }
@@ -823,7 +946,7 @@ private fun Progress(np: NowPlaying) {
 }
 
 @Composable
-private fun VolumeRow() {
+private fun VolumeRow(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val audio = remember { context.getSystemService(AudioManager::class.java) }
     val max = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
@@ -845,9 +968,9 @@ private fun VolumeRow() {
         audio.setStreamVolume(AudioManager.STREAM_MUSIC, vol, 0)
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(44.dp).clip(CircleShape).clickable { set(vol - 1) }, contentAlignment = Alignment.Center) {
-            Icon(Icons.AutoMirrored.Rounded.VolumeDown, "Baisser", tint = LocalPalette.current.fg2)
+            Icon(Icons.AutoMirrored.Rounded.VolumeDown, LocalStrings.current.volumeDown, tint = LocalPalette.current.fg2)
         }
         Slider(
             value = vol.toFloat(),
@@ -857,7 +980,7 @@ private fun VolumeRow() {
             modifier = Modifier.weight(1f).height(32.dp),
         )
         Box(Modifier.size(44.dp).clip(CircleShape).clickable { set(vol + 1) }, contentAlignment = Alignment.Center) {
-            Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Monter", tint = LocalPalette.current.fg2)
+            Icon(Icons.AutoMirrored.Rounded.VolumeUp, LocalStrings.current.volumeUp, tint = LocalPalette.current.fg2)
         }
     }
 }
@@ -891,15 +1014,12 @@ private fun Artwork(art: Bitmap?, gray: Boolean, modifier: Modifier) {
     }
 }
 
-@Composable
-fun clockPattern(): String = if (DateFormat.is24HourFormat(LocalContext.current)) "HH:mm" else "h:mm"
-
 /** Heure ou date formatée, mise à jour pile à chaque changement de minute. */
 @Composable
-fun rememberFormatted(pattern: String): String {
+fun rememberFormatted(pattern: String, locale: Locale): String {
     var text by remember { mutableStateOf("") }
-    LaunchedEffect(pattern) {
-        val fmt = SimpleDateFormat(pattern, Locale.getDefault())
+    LaunchedEffect(pattern, locale) {
+        val fmt = SimpleDateFormat(pattern, locale)
         while (true) {
             val now = System.currentTimeMillis()
             text = fmt.format(Date(now))

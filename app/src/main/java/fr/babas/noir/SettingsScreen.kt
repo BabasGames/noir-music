@@ -1,15 +1,15 @@
 package fr.babas.noir
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,15 +18,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -35,169 +38,307 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.babas.noir.i18n.Lang
+import fr.babas.noir.i18n.LocalLang
+import fr.babas.noir.i18n.LocalStrings
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     prefs: Prefs,
-    displayInfo: String,
+    displayInfo: Pair<Int, String>,
     candidateApps: List<Pair<String, String>>,
     onOpenAccess: () -> Unit,
     onTutorial: () -> Unit,
+    onPreviewBrightness: (Float?) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Retour", tint = Color.White)
+    val s = LocalStrings.current
+    var languageSheet by remember { mutableStateOf(false) }
+
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+            // En-tête fixe : « ← Paramètres » reste accessible sans remonter tout en haut
+            Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, s.back, tint = Color.White)
+                }
+                Text(s.settings, fontSize = 22.sp, color = Color.White)
             }
-            Text("Paramètres", fontSize = 22.sp, color = Color.White)
-        }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1A1A1A)))
 
-        Section("Disposition")
-        Toggle("Afficher la pochette", null, prefs.showArt) { prefs.showArt = it }
-        Toggle(
-            "Inverser pochette et contrôles",
-            "Portrait : contrôles en haut · paysage : pochette à droite",
-            prefs.swapArt,
-            enabled = prefs.showArt,
-        ) { prefs.swapArt = it }
-        Toggle("Pochette en noir et blanc", null, prefs.grayArt, enabled = prefs.showArt) { prefs.grayArt = it }
-        Choice("Orientation", listOf("Auto", "Portrait", "Paysage"), prefs.orientation) { prefs.orientation = it }
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+            ) {
+                LanguageRow(prefs) { languageSheet = true }
 
-        Section("Affichage")
-        Choice("Horloge", listOf("Masquée", "Moyenne", "Grande"), prefs.clockSize) { prefs.clockSize = it }
-        Choice(
-            "Taille du texte",
-            TEXT_SCALES.map { it.second },
-            TEXT_SCALES.indexOfFirst { it.first == prefs.textScale }.coerceAtLeast(0),
-        ) { prefs.textScale = TEXT_SCALES[it].first }
-        Toggle("Date et batterie", "Sous l'heure · toucher l'heure lance le minuteur de sommeil", prefs.showDate) {
-            prefs.showDate = it
-        }
-        Toggle("Nom de l'appli source", "Le toucher permet de changer d'appli ou de l'ouvrir", prefs.showSource) {
-            prefs.showSource = it
-        }
-        Toggle("Barre de progression", null, prefs.showProgress) { prefs.showProgress = it }
-        Toggle("Volume", null, prefs.showVolume) { prefs.showVolume = it }
+                Section(s.sectionLayout)
+                Toggle(s.carMode, s.carModeSub, prefs.carMode) { prefs.carMode = it }
+                Toggle(s.showArt, null, prefs.showArt) { prefs.showArt = it }
+                Toggle(s.swapArt, s.swapArtSub, prefs.swapArt, enabled = prefs.showArt) { prefs.swapArt = it }
+                Toggle(s.grayArt, null, prefs.grayArt, enabled = prefs.showArt) { prefs.grayArt = it }
+                Choice(s.orientation, listOf(s.orientAuto, s.orientPortrait, s.orientLandscape), prefs.orientation) {
+                    prefs.orientation = it
+                }
 
-        Section("Nuit")
-        Choice("Mode nuit", listOf("Non", "Toujours", "Horaires", "Pénombre"), prefs.nightMode) { prefs.nightMode = it }
-        Text(
-            when (prefs.nightMode) {
-                Prefs.NIGHT_SCHEDULE -> "Texte gris et pochette assombrie pendant les heures choisies"
-                Prefs.NIGHT_DARK -> "S'active dans le noir, d'après le capteur de luminosité (quelques secondes de délai)"
-                else -> "Texte gris au lieu de blanc, pochette assombrie : pour la nuit, et moins d'usure AMOLED"
-            },
-            fontSize = 13.sp,
-            color = Gray,
-        )
-        if (prefs.nightMode == Prefs.NIGHT_SCHEDULE) {
-            HourStepper("Début", prefs.nightStart) { prefs.nightStart = it }
-            HourStepper("Fin", prefs.nightEnd) { prefs.nightEnd = it }
-        }
-        Toggle(
-            "Luminosité de nuit",
-            "Baisse l'écran quand le mode nuit est actif",
-            prefs.nightBrightnessOn,
-            enabled = prefs.nightMode != Prefs.NIGHT_OFF,
-        ) { prefs.nightBrightnessOn = it }
-        if (prefs.nightBrightnessOn && prefs.nightMode != Prefs.NIGHT_OFF) {
-            Slider(
-                value = prefs.nightBrightness,
-                onValueChange = { prefs.nightBrightness = it },
-                valueRange = 0.01f..0.5f,
-                colors = noirSliderColors(),
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
+                Section(s.sectionDisplay)
+                Choice(s.clock, listOf(s.clockHidden, s.clockMedium, s.clockBig), prefs.clockSize) { prefs.clockSize = it }
+                Choice(s.clockFormat, listOf(s.formatAuto, s.format24, s.format12), prefs.clockFormat) {
+                    prefs.clockFormat = it
+                }
+                ClockFontPicker(prefs)
+                Choice(
+                    s.textSize,
+                    textScaleLabels(),
+                    TEXT_SCALES.indexOfFirst { it == prefs.textScale }.coerceAtLeast(0),
+                ) { prefs.textScale = TEXT_SCALES[it] }
+                Toggle(s.dateBattery, s.dateBatterySub, prefs.showDate) { prefs.showDate = it }
+                if (prefs.showDate) {
+                    Choice(s.dateFormat, listOf(s.dateShort, s.dateLong, s.dateNumeric), prefs.dateFormat) {
+                        prefs.dateFormat = it
+                    }
+                    Text(
+                        rememberFormatted(datePattern(prefs), LocalLang.current.locale),
+                        fontSize = 15.sp,
+                        color = Gray,
+                    )
+                }
+                Toggle(s.sourceName, s.sourceNameSub, prefs.showSource) { prefs.showSource = it }
+                Toggle(s.progressBar, null, prefs.showProgress) { prefs.showProgress = it }
+                Toggle(s.volume, null, prefs.showVolume) { prefs.showVolume = it }
 
-        Section("Écran")
-        Choice("Toujours allumé", listOf("Non", "En lecture", "Toujours"), prefs.keepOnMode) { prefs.keepOnMode = it }
-        Toggle("Rafraîchissement réduit", displayInfo, prefs.lowRefresh) { prefs.lowRefresh = it }
-        Toggle(
-            "Décalage périodique",
-            "Anti-marquage : déplace tout l'affichage de quelques pixels, au hasard",
-            prefs.antiBurn,
-        ) { prefs.antiBurn = it }
-        if (prefs.antiBurn) {
-            Choice("Fréquence", Prefs.BURN_INTERVALS.map { it.second }, prefs.burnInterval) { prefs.burnInterval = it }
-            Choice(
-                "Amplitude",
-                Prefs.BURN_AMPLITUDES.map { "${it.second} (±${it.first})" },
-                prefs.burnAmplitude,
-            ) { prefs.burnAmplitude = it }
-        }
-        Choice("Veille quand rien ne joue", listOf("Non", "Horloge seule", "Écran noir"), prefs.standbyMode) {
-            prefs.standbyMode = it
-        }
-        if (prefs.standbyMode != Prefs.STANDBY_OFF) {
-            Choice("Après", Prefs.STANDBY_DELAYS.map { it.second }, prefs.standbyDelay) { prefs.standbyDelay = it }
-        }
-        Toggle("Luminosité personnalisée", "Ignore la luminosité système dans l'appli", prefs.customBrightness) {
-            prefs.customBrightness = it
-        }
-        if (prefs.customBrightness) {
-            Slider(
-                value = prefs.brightness,
-                onValueChange = { prefs.brightness = it },
-                valueRange = 0.01f..1f,
-                colors = noirSliderColors(),
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
+                Section(s.sectionNight)
+                Choice(s.nightMode, listOf(s.off, s.always, s.schedule, s.dark), prefs.nightMode) { prefs.nightMode = it }
+                Text(
+                    when (prefs.nightMode) {
+                        Prefs.NIGHT_SCHEDULE -> s.nightSubSchedule
+                        Prefs.NIGHT_DARK -> s.nightSubDark
+                        else -> s.nightSubDefault
+                    },
+                    fontSize = 13.sp,
+                    color = Gray,
+                )
+                if (prefs.nightMode == Prefs.NIGHT_SCHEDULE) {
+                    HourStepper(s.start, prefs.nightStart) { prefs.nightStart = it }
+                    HourStepper(s.end, prefs.nightEnd) { prefs.nightEnd = it }
+                }
+                Toggle(
+                    s.nightBrightness,
+                    s.nightBrightnessSub,
+                    prefs.nightBrightnessOn,
+                    enabled = prefs.nightMode != Prefs.NIGHT_OFF,
+                ) { prefs.nightBrightnessOn = it }
+                if (prefs.nightBrightnessOn && prefs.nightMode != Prefs.NIGHT_OFF) {
+                    // Pendant le glissement, l'écran prend cette luminosité pour juger du rendu
+                    BrightnessSlider(prefs.nightBrightness, 0.01f..0.5f, onPreviewBrightness) { prefs.nightBrightness = it }
+                }
 
-        Section("Musique")
-        Toggle("Gestes", "Double-tap : ♥︎ · appui long : ouvrir l'appli qui joue", prefs.gestures) { prefs.gestures = it }
-        Text("Appli préférée", fontSize = 17.sp, color = Color.White)
-        Text("Suivie en priorité dès qu'elle a une session, même en pause", fontSize = 13.sp, color = Gray)
-        Spacer(Modifier.height(4.dp))
-        val apps = listOf("" to "Automatique (ce qui joue)") + candidateApps
-        apps.forEach { (pkg, label) ->
-            Radio(label, selected = prefs.preferredApp == pkg) { prefs.preferredApp = pkg }
-        }
-        // Appli choisie auparavant mais plus détectée : la garder visible pour pouvoir la retirer
-        if (prefs.preferredApp.isNotEmpty() && apps.none { it.first == prefs.preferredApp }) {
-            Radio(prefs.preferredApp, selected = true) {}
-        }
+                Section(s.sectionScreen)
+                Choice(s.keepOn, listOf(s.off, s.keepOnPlaying, s.always), prefs.keepOnMode) { prefs.keepOnMode = it }
+                Toggle(
+                    s.lowRefresh,
+                    s.refreshInfo(displayInfo.first, displayInfo.second),
+                    prefs.lowRefresh,
+                ) { prefs.lowRefresh = it }
+                Toggle(s.burnShift, s.burnShiftSub, prefs.antiBurn) { prefs.antiBurn = it }
+                if (prefs.antiBurn) {
+                    Choice(s.frequency, Prefs.BURN_INTERVALS.map { it.second }, prefs.burnInterval) { prefs.burnInterval = it }
+                    Choice(
+                        s.amplitude,
+                        listOf(s.ampLow, s.ampMid, s.ampHigh).zip(Prefs.BURN_AMPLITUDES) { label, (dp, _) -> "$label (±$dp)" },
+                        prefs.burnAmplitude,
+                    ) { prefs.burnAmplitude = it }
+                }
+                Choice(s.standby, listOf(s.off, s.standbyClock, s.standbyBlack), prefs.standbyMode) {
+                    prefs.standbyMode = it
+                }
+                if (prefs.standbyMode != Prefs.STANDBY_OFF) {
+                    Choice(s.after, Prefs.STANDBY_DELAYS.map { it.second }, prefs.standbyDelay) { prefs.standbyDelay = it }
+                }
+                Toggle(s.customBrightness, s.customBrightnessSub, prefs.customBrightness) {
+                    prefs.customBrightness = it
+                }
+                if (prefs.customBrightness) {
+                    BrightnessSlider(prefs.brightness, 0.01f..1f, onPreviewBrightness) { prefs.brightness = it }
+                }
 
-        Section("Paroles")
-        Toggle("Paroles", "Glisser vers le haut ou bouton en bas à droite · sources : LRCLIB, NetEase", prefs.lyrics) {
-            prefs.lyrics = it
-        }
-        Toggle(
-            "Sur données mobiles",
-            "Sinon, seules les paroles déjà téléchargées s'affichent hors Wi-Fi",
-            prefs.lyricsOnMobile,
-            enabled = prefs.lyrics,
-        ) { prefs.lyricsOnMobile = it }
-        Choice(
-            "Taille des paroles",
-            TEXT_SCALES.map { it.second },
-            TEXT_SCALES.indexOfFirst { it.first == prefs.lyricsScale }.coerceAtLeast(0),
-        ) { prefs.lyricsScale = TEXT_SCALES[it].first }
+                Section(s.sectionMusic)
+                Toggle(s.gestures, s.gesturesSub, prefs.gestures) { prefs.gestures = it }
+                Text(s.preferredApp, fontSize = 17.sp, color = Color.White, modifier = Modifier.padding(top = 8.dp))
+                Text(s.preferredAppSub, fontSize = 13.sp, color = Gray)
+                Spacer(Modifier.height(4.dp))
+                val apps = listOf("" to s.automaticPlaying) + candidateApps
+                apps.forEach { (pkg, label) ->
+                    Radio(label, selected = prefs.preferredApp == pkg) { prefs.preferredApp = pkg }
+                }
+                // Appli choisie auparavant mais plus détectée : la garder visible pour pouvoir la retirer
+                if (prefs.preferredApp.isNotEmpty() && apps.none { it.first == prefs.preferredApp }) {
+                    Radio(prefs.preferredApp, selected = true) {}
+                }
 
-        Spacer(Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = onOpenAccess) { Text("Accès aux notifications", color = Color.White) }
-            OutlinedButton(onClick = onTutorial) { Text("Revoir le tuto", color = Color.White) }
+                Section(s.lyrics)
+                Toggle(s.lyrics, s.lyricsSub, prefs.lyrics) { prefs.lyrics = it }
+                Toggle(s.onMobile, s.onMobileSub, prefs.lyricsOnMobile, enabled = prefs.lyrics) { prefs.lyricsOnMobile = it }
+                Choice(
+                    s.lyricsSize,
+                    textScaleLabels(),
+                    TEXT_SCALES.indexOfFirst { it == prefs.lyricsScale }.coerceAtLeast(0),
+                ) { prefs.lyricsScale = TEXT_SCALES[it] }
+
+                Spacer(Modifier.height(24.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = onOpenAccess) { Text(s.notificationAccess, color = Color.White) }
+                    OutlinedButton(onClick = onTutorial) { Text(s.replayTutorial, color = Color.White) }
+                }
+                Spacer(Modifier.height(24.dp))
+            }
         }
-        Spacer(Modifier.height(24.dp))
+        if (languageSheet) {
+            Sheet(s.language, onDismiss = { languageSheet = false }) {
+                LanguageItems(prefs) { languageSheet = false }
+            }
+        }
     }
 }
 
-private val TEXT_SCALES = listOf(0.85f to "Petit", 1f to "Normal", 1.25f to "Grand", 1.5f to "Très grand")
+val TEXT_SCALES = listOf(0.85f, 1f, 1.25f, 1.5f)
+
+@Composable
+private fun textScaleLabels(): List<String> {
+    val s = LocalStrings.current
+    return listOf(s.sizeSmall, s.sizeNormal, s.sizeLarge, s.sizeHuge)
+}
+
+/** Première ligne des réglages : la langue actuelle, touchée pour en changer. */
+@Composable
+private fun LanguageRow(prefs: Prefs, onClick: () -> Unit) {
+    val s = LocalStrings.current
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(s.language, fontSize = 17.sp, color = Color.White, modifier = Modifier.weight(1f))
+        Text(
+            if (prefs.language.isEmpty()) s.languageAuto else LocalLang.current.nativeName,
+            fontSize = 15.sp,
+            color = Gray,
+        )
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Gray)
+    }
+}
+
+/** Liste des langues, chacune écrite dans sa propre langue ; sert aux réglages et au tuto. */
+@Composable
+fun LanguageItems(prefs: Prefs, onPicked: () -> Unit = {}) {
+    val s = LocalStrings.current
+    SheetItem(s.languageAuto, selected = prefs.language.isEmpty()) {
+        prefs.language = ""
+        onPicked()
+    }
+    Lang.entries.forEach { lang ->
+        SheetItem(lang.nativeName, selected = prefs.language == lang.code) {
+            prefs.language = lang.code
+            onPicked()
+        }
+    }
+}
+
+/** Aperçu de l'heure dans la police choisie, puis la liste des polices, chacune écrite dans son style. */
+@Composable
+private fun ClockFontPicker(prefs: Prefs) {
+    val s = LocalStrings.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf(false) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { ClockFonts.import(context, uri) }
+            error = !ok
+            if (ok) {
+                prefs.clockFontName = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "?"
+                prefs.clockFont = ClockFonts.CUSTOM
+            }
+        }
+    }
+    val ids = remember(prefs.clockFontName) { ClockFonts.ids(context) }
+
+    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Text(s.clockFont, fontSize = 17.sp, color = Color.White)
+        val style = rememberClockStyle(prefs)
+        Text(
+            rememberFormatted(clockPattern(prefs), LocalLang.current.locale),
+            fontSize = 72.sp,
+            lineHeight = 80.sp,
+            fontFamily = style.family,
+            fontWeight = style.weight,
+            color = Color.White,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+        ids.forEach { id ->
+            val st = remember(id, prefs.clockFontName) { ClockFonts.style(context, id, prefs.clockFontName) }
+            Radio(
+                ClockFonts.label(id, s, prefs.clockFontName),
+                selected = prefs.clockFont == id,
+                fontFamily = st.family,
+            ) { prefs.clockFont = id }
+        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { picker.launch(arrayOf("font/*", "application/x-font-ttf", "application/x-font-otf", "application/octet-stream")) }
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Icon(Icons.Rounded.Add, null, tint = Gray, modifier = Modifier.size(20.dp))
+            Text(s.fontPickFile, fontSize = 16.sp, color = Gray)
+        }
+        if (error) Text(s.fontFileError, fontSize = 13.sp, color = Color(0xFFB0B0B0))
+    }
+}
+
+@Composable
+private fun BrightnessSlider(
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    onPreview: (Float?) -> Unit,
+    onChange: (Float) -> Unit,
+) {
+    Slider(
+        value = value,
+        onValueChange = {
+            onChange(it)
+            onPreview(it)
+        },
+        onValueChangeFinished = { onPreview(null) },
+        valueRange = range,
+        colors = noirSliderColors(),
+        modifier = Modifier.padding(horizontal = 4.dp),
+    )
+}
 
 @Composable
 private fun Section(title: String) {
@@ -225,10 +366,16 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
                         .weight(1f)
                         .background(if (on) Color.White else Color.Black)
                         .clickable { onSelect(i) }
-                        .padding(vertical = 10.dp),
+                        .padding(horizontal = 4.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(label, fontSize = 14.sp, color = if (on) Color.Black else Gray, maxLines = 1)
+                    Text(
+                        label,
+                        fontSize = 14.sp,
+                        color = if (on) Color.Black else Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -236,7 +383,7 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
 }
 
 @Composable
-private fun Radio(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun Radio(label: String, selected: Boolean, fontFamily: FontFamily? = null, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -250,18 +397,19 @@ private fun Radio(label: String, selected: Boolean, onClick: () -> Unit) {
                 .clip(CircleShape)
                 .background(if (selected) Color.White else Color.Transparent),
         )
-        Text(label, fontSize = 16.sp, color = if (selected) Color.White else Gray)
+        Text(label, fontSize = 16.sp, color = if (selected) Color.White else Gray, fontFamily = fontFamily)
     }
 }
 
 /** Heure de 0 à 23 réglée par − / +, qui boucle (23 h + 1 = 0 h). */
 @Composable
 private fun HourStepper(label: String, hour: Int, onChange: (Int) -> Unit) {
+    val s = LocalStrings.current
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 17.sp, color = Color.White, modifier = Modifier.weight(1f))
-        IconButton(onClick = { onChange((hour + 23) % 24) }) { Icon(Icons.Rounded.Remove, "Moins", tint = Gray) }
-        Text("$hour h", fontSize = 17.sp, color = Color.White, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
-        IconButton(onClick = { onChange((hour + 1) % 24) }) { Icon(Icons.Rounded.Add, "Plus", tint = Gray) }
+        IconButton(onClick = { onChange((hour + 23) % 24) }) { Icon(Icons.Rounded.Remove, s.minus, tint = Gray) }
+        Text(s.hour(hour), fontSize = 17.sp, color = Color.White, modifier = Modifier.width(64.dp), textAlign = TextAlign.Center)
+        IconButton(onClick = { onChange((hour + 1) % 24) }) { Icon(Icons.Rounded.Add, s.plus, tint = Gray) }
     }
 }
 
@@ -302,6 +450,7 @@ fun Toggle(
 
 @Composable
 fun AccessScreen(onGrant: () -> Unit) {
+    val s = LocalStrings.current
     Column(
         Modifier
             .fillMaxSize()
@@ -311,15 +460,10 @@ fun AccessScreen(onGrant: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Noir", fontSize = 40.sp, color = Color.White)
+        Text("Noir", fontSize = 40.sp, fontWeight = FontWeight.Thin, color = Color.White)
         Spacer(Modifier.height(16.dp))
-        Text(
-            "Pour voir et piloter la musique des autres applis (Deezer, Spotify…), " +
-                "Android demande d'activer l'accès aux notifications pour Noir.",
-            color = Gray,
-            fontSize = 16.sp,
-        )
+        Text(s.accessText, color = Gray, fontSize = 16.sp)
         Spacer(Modifier.height(24.dp))
-        OutlinedButton(onClick = onGrant) { Text("Ouvrir le réglage", color = Color.White) }
+        OutlinedButton(onClick = onGrant) { Text(s.openSetting, color = Color.White) }
     }
 }

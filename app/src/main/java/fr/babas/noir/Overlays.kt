@@ -43,10 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.babas.noir.i18n.LocalLang
+import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -76,7 +77,7 @@ fun Sheet(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 12.dp),
         ) {
-            Text(title, fontSize = 13.sp, letterSpacing = 1.5.sp, color = Gray, modifier = Modifier.padding(20.dp, 8.dp))
+            Text(title.uppercase(), fontSize = 13.sp, letterSpacing = 1.5.sp, color = Gray, modifier = Modifier.padding(20.dp, 8.dp))
             content()
         }
     }
@@ -97,7 +98,7 @@ fun SheetItem(
     ) {
         if (icon != null) Icon(icon, null, Modifier.size(22.dp), tint = if (selected) Color.White else Gray)
         Column(Modifier.weight(1f)) {
-            Text(label, fontSize = 18.sp, color = if (selected) Color.White else Color(0xFFCCCCCC), maxLines = 1)
+            Text(label, fontSize = 18.sp, color = if (selected) Color.White else Color(0xFFCCCCCC), maxLines = 2)
             if (!sub.isNullOrEmpty()) {
                 Text(sub, fontSize = 14.sp, color = Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -108,19 +109,20 @@ fun SheetItem(
 
 @Composable
 fun SleepSheet(timer: SleepTimer, onDismiss: () -> Unit) {
-    Sheet("MINUTEUR DE SOMMEIL", onDismiss) {
+    val s = LocalStrings.current
+    Sheet(s.sleepTimerTitle, onDismiss) {
         listOf(15, 30, 45, 60).forEach { min ->
-            SheetItem(if (min == 60) "1 h" else "$min min") {
+            SheetItem(if (min == 60) s.oneHour else s.minutes(min)) {
                 timer.startMinutes(min)
                 onDismiss()
             }
         }
-        SheetItem("Fin du morceau", selected = timer.endOfTrack) {
+        SheetItem(s.endOfTrack, selected = timer.endOfTrack) {
             timer.startEndOfTrack()
             onDismiss()
         }
         if (timer.active) {
-            SheetItem("Arrêter le minuteur", icon = Icons.Rounded.Close) {
+            SheetItem(s.stopTimer, icon = Icons.Rounded.Close) {
                 timer.cancel()
                 onDismiss()
             }
@@ -137,14 +139,15 @@ fun SourceSheet(
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    Sheet("SOURCE", onDismiss) {
+    val str = LocalStrings.current
+    Sheet(str.sourceTitle, onDismiss) {
         if (sessions.isEmpty()) {
-            Text("Aucune appli ne joue de musique", color = Gray, fontSize = 16.sp, modifier = Modifier.padding(20.dp, 12.dp))
+            Text(str.noSession, color = Gray, fontSize = 16.sp, modifier = Modifier.padding(20.dp, 12.dp))
         }
         sessions.forEach { s ->
             SheetItem(
                 s.appName,
-                sub = listOf(if (s.isPlaying) "En lecture" else "En pause", s.title).filter { it.isNotEmpty() }.joinToString(" · "),
+                sub = listOf(if (s.isPlaying) str.playing else str.paused, s.title).filter { it.isNotEmpty() }.joinToString(" · "),
                 icon = if (s.isPlaying) Icons.Rounded.GraphicEq else Icons.Rounded.Pause,
                 selected = s.pkg == currentPkg,
             ) {
@@ -154,7 +157,7 @@ fun SourceSheet(
         }
         if (currentPkg != null) {
             Spacer(Modifier.height(4.dp))
-            SheetItem("Ouvrir $currentName", icon = Icons.AutoMirrored.Rounded.OpenInNew) {
+            SheetItem(str.openApp(currentName), icon = Icons.AutoMirrored.Rounded.OpenInNew) {
                 onOpen()
                 onDismiss()
             }
@@ -167,7 +170,7 @@ fun SourceSheet(
  * Le premier toucher ne fait que réveiller, il n'actionne rien en dessous.
  */
 @Composable
-fun StandbyScreen(withClock: Boolean, onWake: () -> Unit) {
+fun StandbyScreen(withClock: Boolean, pattern: String, style: ClockStyle, onWake: () -> Unit) {
     Box(
         Modifier
             .fillMaxSize()
@@ -188,9 +191,10 @@ fun StandbyScreen(withClock: Boolean, onWake: () -> Unit) {
             }
         }
         Text(
-            rememberFormatted(clockPattern()),
+            rememberFormatted(pattern, LocalLang.current.locale),
             fontSize = 72.sp,
-            fontWeight = FontWeight.Thin,
+            fontFamily = style.family,
+            fontWeight = style.weight,
             color = Color(0xFF5A5A5A),
             modifier = Modifier.align(BiasAlignment(bx, by)),
         )

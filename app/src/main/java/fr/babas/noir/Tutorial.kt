@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -37,13 +37,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.launch
 
-private const val PAGES = 4
+private const val PAGES = 6
 
-/** Premier lancement (ou « Revoir le tuto ») : accès, gestes, paroles, réglages. */
+/** Premier lancement (ou « Revoir le tuto ») : langue d'abord, puis accès, gestes, paroles, voiture, écran. */
 @Composable
 fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone: () -> Unit) {
+    val s = LocalStrings.current
     val pager = rememberPagerState { PAGES }
     val scope = rememberCoroutineScope()
     Column(
@@ -60,16 +62,18 @@ fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone
             ) {
                 Column(Modifier.widthIn(max = 520.dp).align(Alignment.CenterHorizontally)) {
                     when (page) {
-                        0 -> Welcome(hasAccess, onGrant)
-                        1 -> Gestures()
-                        2 -> LyricsPage(prefs)
+                        0 -> LanguagePage(prefs)
+                        1 -> Welcome(hasAccess, onGrant)
+                        2 -> Gestures()
+                        3 -> LyricsPage(prefs)
+                        4 -> CarPage()
                         else -> ScreenPage()
                     }
                 }
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onDone) { Text("Passer", color = Gray) }
+            TextButton(onClick = onDone) { Text(s.skip, color = Gray) }
             Spacer(Modifier.weight(1f))
             repeat(PAGES) { i ->
                 Box(
@@ -85,14 +89,14 @@ fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone
             OutlinedButton(onClick = {
                 if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
             }) {
-                Text(if (last) "C'est parti" else "Suivant", color = Color.White)
+                Text(if (last) s.letsGo else s.nextPage, color = Color.White)
             }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.Title(text: String) {
+private fun Title(text: String) {
     Text(text, fontSize = 40.sp, fontWeight = FontWeight.Thin, color = Color.White)
     Spacer(Modifier.height(20.dp))
 }
@@ -103,40 +107,48 @@ private fun Body(text: String) {
     Spacer(Modifier.height(12.dp))
 }
 
+/** Première page : la langue, avant tout le reste (la suite du tuto change aussitôt de langue). */
+@Composable
+private fun LanguagePage(prefs: Prefs) {
+    Column {
+        Title(LocalStrings.current.tutoLanguageTitle)
+        LanguageItems(prefs)
+    }
+}
+
 @Composable
 private fun Welcome(hasAccess: Boolean, onGrant: () -> Unit) {
+    val s = LocalStrings.current
     Column {
         Title("Noir")
-        Body("Un écran de contrôle pour la musique, en noir et blanc, fait pour rester allumé sur le bureau ou en voiture.")
-        Body(
-            "Il pilote la musique des autres applis (Deezer, Spotify, KDE Connect…). Pour ça, Android demande " +
-                "d'autoriser l'accès aux notifications : Noir ne les lit pas, c'est juste la porte d'entrée vers les lecteurs.",
-        )
+        Body(s.welcome1)
+        Body(s.welcome2)
         Spacer(Modifier.height(8.dp))
         if (hasAccess) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Check, null, tint = Color.White)
                 Spacer(Modifier.width(8.dp))
-                Text("Accès accordé", color = Color.White, fontSize = 17.sp)
+                Text(s.accessGranted, color = Color.White, fontSize = 17.sp)
             }
         } else {
-            OutlinedButton(onClick = onGrant) { Text("Autoriser l'accès", color = Color.White) }
+            OutlinedButton(onClick = onGrant) { Text(s.allowAccess, color = Color.White) }
         }
     }
 }
 
 @Composable
 private fun Gestures() {
+    val s = LocalStrings.current
     Column {
-        Title("Gestes")
+        Title(s.gestures)
         listOf(
-            "← →" to "Morceau suivant / précédent",
-            "↑ ↓" to "Ouvrir / fermer les paroles",
-            "Toucher le titre" to "Lecture / pause",
-            "Double-tap" to "♥︎ J'aime (si l'appli le permet)",
-            "Appui long" to "Ouvrir l'appli qui joue",
-            "Toucher l'heure" to "Minuteur de sommeil",
-            "Toucher le nom de l'appli" to "Changer de source",
+            "← →" to s.gestureSwipeH,
+            "↑ ↓" to s.gestureSwipeV,
+            s.gestureTapTitle to s.gestureTapTitleAction,
+            s.gestureDoubleTap to s.gestureDoubleTapAction,
+            s.gestureLongPress to s.gestureLongPressAction,
+            s.gestureTapClock to s.gestureTapClockAction,
+            s.gestureTapApp to s.gestureTapAppAction,
         ).forEach { (gesture, action) ->
             Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(gesture, color = Color.White, fontSize = 17.sp, modifier = Modifier.weight(1f))
@@ -148,29 +160,33 @@ private fun Gestures() {
 
 @Composable
 private fun LyricsPage(prefs: Prefs) {
+    val s = LocalStrings.current
     Column {
-        Title("Paroles")
-        Body(
-            "Glisse vers le haut pour les afficher, synchronisées avec la musique. Elles viennent d'internet " +
-                "(LRCLIB, puis NetEase en secours) et restent sur le tel une fois téléchargées.",
-        )
-        Toggle(
-            "Télécharger sur données mobiles",
-            "Sinon, hors Wi-Fi, seules les paroles déjà téléchargées s'affichent",
-            prefs.lyricsOnMobile,
-        ) { prefs.lyricsOnMobile = it }
+        Title(s.lyrics)
+        Body(s.tutoLyrics)
+        Toggle(s.downloadOnMobile, s.onMobileSub, prefs.lyricsOnMobile) { prefs.lyricsOnMobile = it }
+    }
+}
+
+@Composable
+private fun CarPage() {
+    val s = LocalStrings.current
+    Column {
+        Icon(Icons.Rounded.DirectionsCar, null, Modifier.size(48.dp), tint = Color.White)
+        Spacer(Modifier.height(12.dp))
+        Title(s.tutoCarTitle)
+        Body(s.tutoCar1)
+        Body(s.tutoCar2)
     }
 }
 
 @Composable
 private fun ScreenPage() {
+    val s = LocalStrings.current
     Column {
-        Title("Écran")
-        Body("En lecture, l'écran reste allumé et se rafraîchit moins souvent pour économiser la batterie.")
-        Body(
-            "Pour protéger l'AMOLED, l'affichage se décale de quelques pixels de temps en temps. " +
-                "Le mode nuit atténue le texte et la pochette, et la veille éteint tout quand rien ne joue.",
-        )
-        Body("Tout se règle avec la roue dentée ⚙, en haut à droite.")
+        Title(s.tutoScreenTitle)
+        Body(s.tutoScreen1)
+        Body(s.tutoScreen2)
+        Body(s.tutoScreen3)
     }
 }
