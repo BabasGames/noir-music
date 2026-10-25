@@ -1,0 +1,1 @@
+- Le tutoriel explique comment suivre les mises à jour quand l'appli vient de GitHub
