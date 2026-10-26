@@ -32,6 +32,8 @@ class Prefs(context: Context) {
     var clockFormat by int("clock_format", FORMAT_AUTO)
     var dateFormat by int("date_format", DATE_SHORT)
     var clockSide by int("clock_side", SIDE_AUTO)
+    /** Time beside the camera hole or below it (auto: beside unless it would get too small) */
+    var clockPlace by int("clock_place", PLACE_AUTO)
     /** Camera hole: position reported by Android, or set by hand when Android gets it wrong */
     var cameraPos by int("camera_pos", CAM_AUTO)
     var textScale by float("text_scale", 1f)
@@ -128,6 +130,10 @@ class Prefs(context: Context) {
         const val SIDE_AUTO = 0
         const val SIDE_LEFT = 1
         const val SIDE_RIGHT = 2
+
+        const val PLACE_AUTO = 0
+        const val PLACE_BESIDE = 1
+        const val PLACE_BELOW = 2
 
         const val DATE_SHORT = 0
         const val DATE_LONG = 1

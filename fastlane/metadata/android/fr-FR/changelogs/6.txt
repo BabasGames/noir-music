@@ -1,0 +1,3 @@
+- Nouveau réglage : horloge à côté ou en dessous du trou de la caméra
+- Titres des réglages plus visibles
+- Le tutoriel précise que les traductions sont automatiques

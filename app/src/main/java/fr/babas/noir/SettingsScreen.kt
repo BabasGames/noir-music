@@ -122,6 +122,7 @@ fun SettingsScreen(
                 Text(s.cameraSub, fontSize = 13.sp, color = Gray)
                 Choice(s.clockSide, listOf(s.formatAuto, s.sideLeft, s.sideRight), prefs.clockSide) { prefs.clockSide = it }
                 Text(s.clockSideSub, fontSize = 13.sp, color = Gray)
+                Choice(s.clockPlace, listOf(s.formatAuto, s.placeBeside, s.placeBelow), prefs.clockPlace) { prefs.clockPlace = it }
                 ClockFontPicker(prefs)
                 Choice(
                     s.textSize,
@@ -430,9 +431,12 @@ private fun BrightnessSlider(
 
 @Composable
 private fun Section(title: String) {
+    // A thin line, room around it and a bigger title: categories must stand out from the rows
+    Spacer(Modifier.height(32.dp))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF262626)))
     Spacer(Modifier.height(24.dp))
-    Text(title.uppercase(), fontSize = 12.sp, letterSpacing = 1.5.sp, color = Gray)
-    Spacer(Modifier.height(4.dp))
+    Text(title, fontSize = 24.sp, fontWeight = FontWeight.Medium, color = Color.White)
+    Spacer(Modifier.height(8.dp))
 }
 
 /** Row of mutually exclusive choices, segmented-button style. */

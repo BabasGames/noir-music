@@ -38,6 +38,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.babas.noir.i18n.Lang
+import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.LocalStrings
 import kotlinx.coroutines.launch
 
@@ -116,6 +118,8 @@ private fun Body(text: String) {
 private fun LanguagePage(prefs: Prefs) {
     Column {
         Title(LocalStrings.current.tutoLanguageTitle)
+        // French is the original: every other language was translated automatically
+        if (LocalLang.current != Lang.FR) Body(LocalStrings.current.machineTranslation)
         LanguageItems(prefs)
     }
 }

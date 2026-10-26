@@ -639,7 +639,12 @@ private fun Header(
             }
             // In the car the time must stay big: better below the hole than shrunk beside it
             val minBeside = if (car) 0.97f else 0.6f
-            if (hole != null && baseSp > 0f && fitBeside >= minBeside) {
+            val beside = when (prefs.clockPlace) {
+                Prefs.PLACE_BESIDE -> fitBeside > 0f
+                Prefs.PLACE_BELOW -> false
+                else -> fitBeside >= minBeside
+            }
+            if (hole != null && baseSp > 0f && beside) {
                 clockSp = baseSp * fitBeside
                 mainEndPad = groupW
             } else {

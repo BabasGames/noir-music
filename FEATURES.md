@@ -61,6 +61,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - The clock shrinks just enough to fit beside the hole, or moves below it if it would get too small.
 - Camera position detected automatically, or set by hand (left, center, right) when the phone reports it wrong.
 - Clock side: automatic (the side with more room), left or right.
+- Clock placement: automatic, always beside the hole, or always below it.
 
 ## Sleep timer
 
@@ -96,6 +97,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 
 - English, French, Spanish, German, Italian, Portuguese, Dutch, Polish, Turkish, Russian, Ukrainian, Japanese, Chinese and Korean.
 - Follows the phone's language automatically, or can be chosen in the settings; switches instantly, without restarting.
+- French is the original language; the others were translated automatically, so corrections are welcome on GitHub.
 
 ## Getting started
 

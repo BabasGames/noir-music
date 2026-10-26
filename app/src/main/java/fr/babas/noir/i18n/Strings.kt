@@ -230,6 +230,10 @@ interface Strings {
     val tutoOpen2: String
     /** Updates: GitHub installs are never told, F-Droid ones are */
     val tutoOpen3: String
+    val clockPlace: String
+    val placeBeside: String
+    val placeBelow: String
+    val machineTranslation: String
     val openGithub: String
 
     // ── Lyrics retention ──────────

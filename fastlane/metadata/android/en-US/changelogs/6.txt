@@ -1,0 +1,3 @@
+- New setting: clock beside or below the camera hole
+- Bigger section titles in the settings
+- The tutorial says the translations were made automatically
