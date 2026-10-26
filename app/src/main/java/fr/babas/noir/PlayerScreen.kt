@@ -131,6 +131,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
 import fr.babas.noir.i18n.LocalLang
 import fr.babas.noir.i18n.LocalStrings
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -142,6 +144,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.toSize
@@ -177,11 +181,18 @@ fun noirSliderColors(pal: Palette = LocalPalette.current): SliderColors = Slider
     disabledInactiveTrackColor = Color(0xFF141414),
 )
 
-private enum class Mode { NORMAL, LYRICS, CAR }
+private enum class Mode { NORMAL, LYRICS, FULL, CAR }
 
 /** Lyrics as the layouts see them; null when the feature is turned off in the settings. */
 /** [barred]: lyrics are on, but this track has none (the panel is hidden until the next one). */
-private class LyricsUi(val open: Boolean, val state: LyricsCtl, val barred: Boolean, val toggle: () -> Unit)
+private class LyricsUi(
+    val open: Boolean,
+    val state: LyricsCtl,
+    val barred: Boolean,
+    val full: Boolean,
+    val toggleFull: () -> Unit,
+    val toggle: () -> Unit,
+)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 private class SharedScopes(val layout: SharedTransitionScope, val content: AnimatedVisibilityScope)
@@ -370,15 +381,28 @@ private fun Player(
     var forcedFor by remember { mutableStateOf<String?>(null) }
     val hidden = wantLyrics && noLyrics && forcedFor != track
     val showLyrics = wantLyrics && !hidden
-    val setLyrics by rememberUpdatedState { open: Boolean ->
-        if (!open) {
-            prefs.lyricsOpen = false
-            forcedFor = null
-        } else if (prefs.lyricsOpen) forcedFor = track else prefs.lyricsOpen = true
+    // Full screen only once there are lyrics to show; while the next track loads it stays, so it doesn't flicker
+    val full = showLyrics && prefs.lyricsFull && !noLyrics
+    // Up goes one level higher (player, lyrics, full screen), down one level lower
+    val setLyrics by rememberUpdatedState { up: Boolean ->
+        when {
+            up && showLyrics && !noLyrics -> prefs.lyricsFull = true
+            up && prefs.lyricsOpen -> forcedFor = track
+            up -> prefs.lyricsOpen = true
+            full -> prefs.lyricsFull = false
+            else -> {
+                prefs.lyricsOpen = false
+                prefs.lyricsFull = false
+                forcedFor = null
+            }
+        }
     }
     val dream = LocalDream.current
+    // The screen saver has no back dispatcher: back leaves it anyway
+    if (!dream) BackHandler(enabled = full) { prefs.lyricsFull = false }
     val mode = when {
         prefs.carMode -> Mode.CAR
+        full -> Mode.FULL
         showLyrics -> Mode.LYRICS
         else -> Mode.NORMAL
     }
@@ -440,7 +464,8 @@ private fun Player(
                 ) { m ->
                     val open = m == Mode.LYRICS
                     CompositionLocalProvider(LocalShared provides SharedScopes(this@SharedTransitionLayout, this)) {
-                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics, barred = hidden) { setLyrics(!open) } else null
+                        val lyr = if (prefs.lyrics) LyricsUi(open, lyrics, barred = hidden, full = m == Mode.FULL,
+                            toggleFull = { prefs.lyricsFull = !prefs.lyricsFull }) { setLyrics(!open) } else null
                         val header: @Composable (Boolean) -> Unit = { withGear ->
                             Header(
                                 np, prefs, landscape, sleep,
@@ -454,6 +479,7 @@ private fun Player(
                         }
                         when {
                             m == Mode.CAR -> CarLayout(np, prefs, landscape, header)
+                            m == Mode.FULL && lyr != null -> FullLyrics(np, prefs, lyr)
                             landscape -> LandscapeLayout(np, prefs, lyr, header)
                             else -> PortraitLayout(np, prefs, lyr, header, onOpenSettings)
                         }
@@ -479,7 +505,7 @@ private fun PortraitLayout(
         Column(Modifier.fillMaxSize()) {
             header(true)
             val panel: @Composable () -> Unit = {
-                LyricsPanel(np, lyr.state, prefs, Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp))
+                LyricsPanel(np, lyr.state, prefs, Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp), onFull = lyr.toggleFull)
             }
             if (swap) {
                 Spacer(Modifier.height(16.dp))
@@ -541,7 +567,7 @@ private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
         // The lyrics take the artwork's place (or half the screen if there's none)
         val side: @Composable () -> Unit = {
-            if (open) LyricsPanel(np, lyr!!.state, prefs, Modifier.weight(1f).fillMaxHeight())
+            if (open) LyricsPanel(np, lyr!!.state, prefs, Modifier.weight(1f).fillMaxHeight(), onFull = lyr.toggleFull)
             else Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
         }
         val hasSide = open || prefs.showArt
@@ -1057,8 +1083,64 @@ private fun rememberLyrics(
     return LyricsCtl(value, busy, nothingOther, fallback, switch)
 }
 
+/**
+ * Full-screen lyrics: one discreet line on top (time · title), the rest for the lyrics. The line follows the
+ * same layout settings as the clock: its side, beside or below the camera hole, the 12/24 h format.
+ */
 @Composable
-private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: Modifier) {
+private fun FullLyrics(np: NowPlaying, prefs: Prefs, lyr: LyricsUi) {
+    val pal = LocalPalette.current
+    val density = LocalDensity.current
+    val hole = LocalHole.current?.takeIf { it.rect.bottom > 0f }
+    val mirror = mirrorClock(prefs, hole)
+    val time = if (prefs.clockSize == Prefs.CLOCK_HIDDEN) null else rememberFormatted(clockPattern(prefs), LocalLang.current.locale)
+    val line = listOfNotNull(time, np.title.ifEmpty { null }).joinToString(" · ")
+    val style = TextStyle(fontSize = (15f * prefs.textScale).sp)
+    val measurer = rememberTextMeasurer()
+    Column(Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val width = constraints.maxWidth.toFloat()
+            val lineW = remember(line, style) { measurer.measure(line, style).size.width.toFloat() }
+            var top = 0f
+            var maxW = width
+            if (hole != null) {
+                val free = (if (mirror) width - hole.rect.right else hole.rect.left) - hole.margin
+                val beside = when (prefs.clockPlace) {
+                    Prefs.PLACE_BESIDE -> free > 0f
+                    Prefs.PLACE_BELOW -> false
+                    else -> lineW <= free
+                }
+                if (beside) maxW = free else top = hole.rect.bottom + hole.margin
+            }
+            Text(
+                line,
+                style = style,
+                color = pal.fg2,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(if (mirror) Alignment.TopEnd else Alignment.TopStart)
+                    .padding(top = with(density) { top.toDp() })
+                    .widthIn(max = with(density) { maxW.toDp() }),
+            )
+        }
+        LyricsPanel(
+            np, lyr.state, prefs, Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp),
+            full = true, onFull = lyr.toggleFull,
+        )
+    }
+}
+
+@Composable
+private fun LyricsPanel(
+    np: NowPlaying,
+    ctl: LyricsCtl,
+    prefs: Prefs,
+    modifier: Modifier,
+    /** Full-screen page: bigger text, and the button leaves full screen instead of entering it */
+    full: Boolean = false,
+    onFull: (() -> Unit)? = null,
+) {
     val str = LocalStrings.current
     // Takes the taps that no line used: double tap (♥) stays for the rest of the screen
     @Suppress("NAME_SHADOWING")
@@ -1067,15 +1149,16 @@ private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: 
     when (val lyrics = ctl.value) {
         is Lyrics.Synced, is Lyrics.Plain -> Column(modifier) {
             val area = Modifier.weight(1f).fillMaxWidth()
+            val scale = prefs.lyricsScale * if (full) 1.35f else 1f
             if (lyrics is Lyrics.Synced) {
                 val texts = remember(lyrics) { lyrics.lines.map { it.text } }
-                LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, prefs.lyricsScale, area) { i ->
+                LyricLines(texts, rememberSyncedIndex(np, lyrics.lines), synced = true, scale, area) { i ->
                     np.controller?.transportControls?.seekTo(lyrics.lines[i].timeMs)
                 }
             } else if (lyrics is Lyrics.Plain) {
                 // No timestamps: scrolling estimated in proportion to the duration, and free to scroll by finger
                 LyricLines(
-                    lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), synced = false, prefs.lyricsScale, area,
+                    lyrics.lines, rememberEstimatedIndex(np, lyrics.lines.size), synced = false, scale, area,
                 )
             }
             // Discreet source label on its own line below the lyrics (placed on top, it hid some text);
@@ -1084,21 +1167,30 @@ private fun LyricsPanel(np: NowPlaying, ctl: LyricsCtl, prefs: Prefs, modifier: 
             // Without the fallback, LRCLIB is the only source: nothing to switch to (unless these
             // lyrics came from NetEase back when the fallback was on, then LRCLIB is the other one)
             val canSwitch = ctl.fallback || source != LyricsRepository.LRCLIB
-            Text(
-                when {
-                    ctl.busy -> "…"
-                    ctl.nothingOther -> str.lyricsNothingOther
-                    canSwitch -> "$source  ⇄"
-                    else -> source
-                },
-                fontSize = 12.sp,
-                color = pal.faint,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable(enabled = canSwitch, onClick = ctl.switch)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-            )
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                // Full screen in the opposite corner from the source
+                if (onFull != null) Icon(
+                    if (full) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
+                    str.lyricsFullScreen,
+                    Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onFull).padding(4.dp).size(22.dp),
+                    tint = pal.faint,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    when {
+                        ctl.busy -> "…"
+                        ctl.nothingOther -> str.lyricsNothingOther
+                        canSwitch -> "$source  ⇄"
+                        else -> source
+                    },
+                    fontSize = 12.sp,
+                    color = pal.faint,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(enabled = canSwitch, onClick = ctl.switch)
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                )
+            }
         }
         else -> Box(modifier, contentAlignment = Alignment.Center) {
             val msg = when {

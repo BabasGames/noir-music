@@ -21,6 +21,7 @@ object Ko : Strings {
     override val lyricsMobileData = "모바일 데이터 사용 시 가사 일시중지\n(설정에서 변경 가능)"
     override val lyricsInstrumental = "♪  연주곡"
     override val lyricsNotFound = "가사를 찾을 수 없음"
+    override val lyricsFullScreen = "전체 화면"
 
     override val sleepTimerTitle = "취침 타이머"
     override fun minutes(n: Int) = "${n}분"
@@ -147,7 +148,7 @@ object Ko : Strings {
     override val accessGranted = "권한 허용됨"
     override val allowAccess = "권한 허용"
     override val gestureSwipeH = "다음 곡 / 이전 곡"
-    override val gestureSwipeV = "가사 열기 / 닫기"
+    override val gestureSwipeV = "가사, 다음은 전체 화면 / 뒤로"
     override val gestureTapTitle = "곡 제목 탭"
     override val gestureTapTitleAction = "재생 / 일시정지"
     override val gestureDoubleTap = "두 번 탭"

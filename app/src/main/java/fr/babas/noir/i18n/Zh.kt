@@ -21,6 +21,7 @@ object Zh : Strings {
     override val lyricsMobileData = "使用移动数据时暂停获取歌词\n（可在设置中更改）"
     override val lyricsInstrumental = "♪  纯音乐"
     override val lyricsNotFound = "未找到歌词"
+    override val lyricsFullScreen = "全屏"
 
     override val sleepTimerTitle = "睡眠定时器"
     override fun minutes(n: Int) = "${n} 分钟"
@@ -147,7 +148,7 @@ object Zh : Strings {
     override val accessGranted = "已授权"
     override val allowAccess = "授予权限"
     override val gestureSwipeH = "下一首 / 上一首"
-    override val gestureSwipeV = "打开 / 关闭歌词"
+    override val gestureSwipeV = "歌词，再到全屏 / 返回"
     override val gestureTapTitle = "点按歌曲名"
     override val gestureTapTitleAction = "播放 / 暂停"
     override val gestureDoubleTap = "双击"

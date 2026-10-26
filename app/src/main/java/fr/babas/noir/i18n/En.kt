@@ -21,6 +21,7 @@ object En : Strings {
     override val lyricsMobileData = "Lyrics paused on mobile data\n(you can change this in settings)"
     override val lyricsInstrumental = "♪  Instrumental"
     override val lyricsNotFound = "No lyrics found"
+    override val lyricsFullScreen = "Full screen"
 
     override val sleepTimerTitle = "Sleep timer"
     override fun minutes(n: Int) = "$n min"
@@ -147,7 +148,7 @@ object En : Strings {
     override val accessGranted = "Access granted"
     override val allowAccess = "Allow access"
     override val gestureSwipeH = "Next / previous track"
-    override val gestureSwipeV = "Open / close lyrics"
+    override val gestureSwipeV = "Lyrics, then full screen / back"
     override val gestureTapTitle = "Tap the title"
     override val gestureTapTitleAction = "Play / pause"
     override val gestureDoubleTap = "Double-tap"

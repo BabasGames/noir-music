@@ -61,6 +61,7 @@ interface Strings {
     val lyricsMobileData: String
     val lyricsInstrumental: String
     val lyricsNotFound: String
+    val lyricsFullScreen: String
 
     // ── Timer and source ────
     val sleepTimerTitle: String

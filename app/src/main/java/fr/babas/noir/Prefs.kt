@@ -81,6 +81,8 @@ class Prefs(context: Context) {
     var lyricsKeep by int("lyrics_keep", 2)
     /** Lyrics open: remembered from one track to the next, and across launches */
     var lyricsOpen by bool("lyrics_open", false)
+    /** Full-screen lyrics: kept from one track to the next, but not saved (the app reopens on the player) */
+    var lyricsFull by mutableStateOf(false)
 
     var tutorialDone by bool("tutorial_done", false)
 

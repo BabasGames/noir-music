@@ -21,6 +21,7 @@ object Ja : Strings {
     override val lyricsMobileData = "モバイルデータ通信中は歌詞を取得しません\n（設定で変更できます）"
     override val lyricsInstrumental = "♪  インストゥルメンタル"
     override val lyricsNotFound = "歌詞が見つかりません"
+    override val lyricsFullScreen = "全画面"
 
     override val sleepTimerTitle = "スリープタイマー"
     override fun minutes(n: Int) = "${n}分"
@@ -147,7 +148,7 @@ object Ja : Strings {
     override val accessGranted = "アクセス許可済み"
     override val allowAccess = "アクセスを許可"
     override val gestureSwipeH = "次の曲／前の曲"
-    override val gestureSwipeV = "歌詞を開く／閉じる"
+    override val gestureSwipeV = "歌詞、次に全画面／戻る"
     override val gestureTapTitle = "曲名をタップ"
     override val gestureTapTitleAction = "再生／一時停止"
     override val gestureDoubleTap = "ダブルタップ"

@@ -35,6 +35,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Clear messages when there is no network, when the sources don't answer (automatic retry every 30 seconds) or when nothing is found.
 - Separate lyrics text size.
 - Open with a swipe up or the lyrics button, close with a swipe down; stays open from one track to the next and across restarts.
+- **Full-screen lyrics**: swipe up once more, or tap the button at the bottom left of the lyrics, for a page with only the lyrics in bigger text and a discreet time and title line on top (it follows the clock settings: side, camera hole, 12/24 h). Swipe down, back or the same button to leave. It stays on from one track to the next while the app is open.
 - Album art and clock shrink and slide up with an animation to make room for the lyrics.
 
 ## Car mode

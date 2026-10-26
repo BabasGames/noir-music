@@ -21,6 +21,7 @@ object Nl : Strings {
     override val lyricsMobileData = "Songteksten gepauzeerd op mobiele data\n(aan te passen in instellingen)"
     override val lyricsInstrumental = "♪  Instrumentaal"
     override val lyricsNotFound = "Geen songtekst gevonden"
+    override val lyricsFullScreen = "Volledig scherm"
 
     override val sleepTimerTitle = "Slaaptimer"
     override fun minutes(n: Int) = "$n min"
@@ -147,7 +148,7 @@ object Nl : Strings {
     override val accessGranted = "Toegang verleend"
     override val allowAccess = "Toegang geven"
     override val gestureSwipeH = "Volgend / vorig nummer"
-    override val gestureSwipeV = "Songtekst openen / sluiten"
+    override val gestureSwipeV = "Songtekst, dan volledig scherm / terug"
     override val gestureTapTitle = "Tik op de titel"
     override val gestureTapTitleAction = "Afspelen / pauzeren"
     override val gestureDoubleTap = "Dubbeltik"

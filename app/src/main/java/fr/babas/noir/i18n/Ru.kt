@@ -21,6 +21,7 @@ object Ru : Strings {
     override val lyricsMobileData = "Тексты на паузе в мобильной сети\n(можно изменить в настройках)"
     override val lyricsInstrumental = "♪  Инструментал"
     override val lyricsNotFound = "Текст не найден"
+    override val lyricsFullScreen = "Во весь экран"
 
     override val sleepTimerTitle = "Таймер сна"
     override fun minutes(n: Int) = "$n мин"
@@ -147,7 +148,7 @@ object Ru : Strings {
     override val accessGranted = "Доступ предоставлен"
     override val allowAccess = "Разрешить доступ"
     override val gestureSwipeH = "Следующий / предыдущий трек"
-    override val gestureSwipeV = "Открыть / закрыть текст"
+    override val gestureSwipeV = "Текст, затем во весь экран / назад"
     override val gestureTapTitle = "Касание названия"
     override val gestureTapTitleAction = "Пуск / пауза"
     override val gestureDoubleTap = "Двойное касание"

@@ -21,6 +21,7 @@ object Tr : Strings {
     override val lyricsMobileData = "Mobil veride şarkı sözleri duraklatıldı\n(ayarlardan değiştirilebilir)"
     override val lyricsInstrumental = "♪  Enstrümantal"
     override val lyricsNotFound = "Şarkı sözü bulunamadı"
+    override val lyricsFullScreen = "Tam ekran"
 
     override val sleepTimerTitle = "Uyku zamanlayıcısı"
     override fun minutes(n: Int) = "$n dk"
@@ -147,7 +148,7 @@ object Tr : Strings {
     override val accessGranted = "Erişim verildi"
     override val allowAccess = "Erişime izin ver"
     override val gestureSwipeH = "Sonraki / önceki parça"
-    override val gestureSwipeV = "Sözleri aç / kapat"
+    override val gestureSwipeV = "Sözler, sonra tam ekran / geri"
     override val gestureTapTitle = "Başlığa dokun"
     override val gestureTapTitleAction = "Oynat / duraklat"
     override val gestureDoubleTap = "Çift dokunma"

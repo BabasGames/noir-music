@@ -21,6 +21,7 @@ object Es : Strings {
     override val lyricsMobileData = "Letras en pausa con datos móviles\n(puedes cambiarlo en los ajustes)"
     override val lyricsInstrumental = "♪  Instrumental"
     override val lyricsNotFound = "No se ha encontrado la letra"
+    override val lyricsFullScreen = "Pantalla completa"
 
     override val sleepTimerTitle = "Temporizador de apagado"
     override fun minutes(n: Int) = "$n min"
@@ -147,7 +148,7 @@ object Es : Strings {
     override val accessGranted = "Acceso concedido"
     override val allowAccess = "Permitir acceso"
     override val gestureSwipeH = "Canción siguiente / anterior"
-    override val gestureSwipeV = "Abrir / cerrar la letra"
+    override val gestureSwipeV = "Letra, luego pantalla completa / volver"
     override val gestureTapTitle = "Tocar el título"
     override val gestureTapTitleAction = "Reproducir / pausa"
     override val gestureDoubleTap = "Doble toque"
