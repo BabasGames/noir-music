@@ -53,6 +53,7 @@ fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone
     val s = LocalStrings.current
     val pager = rememberPagerState { PAGES }
     val scope = rememberCoroutineScope()
+    val anim = LocalAnimations.current
     Column(
         Modifier
             .fillMaxSize()
@@ -93,7 +94,7 @@ fun TutorialScreen(prefs: Prefs, hasAccess: Boolean, onGrant: () -> Unit, onDone
             Spacer(Modifier.weight(1f))
             val last = pager.currentPage == PAGES - 1
             OutlinedButton(onClick = {
-                if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+                if (last) onDone() else scope.launch { if (anim) pager.animateScrollToPage(pager.currentPage + 1) else pager.scrollToPage(pager.currentPage + 1) }
             }) {
                 Text(if (last) s.letsGo else s.nextPage, color = Color.White)
             }

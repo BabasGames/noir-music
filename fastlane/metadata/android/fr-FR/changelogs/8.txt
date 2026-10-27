@@ -1,0 +1,4 @@
+- Changement de morceau plus fluide : la pochette glisse, la suivante arrive, le titre change en fondu
+- Effet machine à écrire en option pour le titre
+- Les animations peuvent être coupées dans les paramètres
+- Trou de la caméra : nouveau choix « Aucun » pour les caméras sous l'écran

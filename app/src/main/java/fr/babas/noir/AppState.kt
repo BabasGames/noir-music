@@ -1,5 +1,8 @@
 package fr.babas.noir
 
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.snap
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 
 /**
@@ -16,3 +19,10 @@ val LocalTimeTick = compositionLocalOf { 0 }
 
 /** True inside the screen saver (DreamService): no settings, car button or opening other apps there. */
 val LocalDream = compositionLocalOf { false }
+
+/** False when animations are off in the settings: transitions jump straight to their end. */
+val LocalAnimations = compositionLocalOf { true }
+
+/** The given spec, or an instant jump when animations are off. */
+@Composable
+fun <T> motion(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = if (LocalAnimations.current) spec else snap()

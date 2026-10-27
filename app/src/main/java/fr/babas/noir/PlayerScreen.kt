@@ -158,6 +158,14 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 
 val Gray = Color(0xFF9A9A9A)
 val Dim = Color(0xFF3A3A3A)
@@ -204,11 +212,113 @@ private val LocalShared = staticCompositionLocalOf<SharedScopes?> { null }
 @Composable
 private fun Modifier.shared(key: String, scale: Boolean = false): Modifier {
     val s = LocalShared.current ?: return this
+    if (!LocalAnimations.current) return this
     return with(s.layout) {
         val state = rememberSharedContentState(key)
         // Text doesn't re-measure smoothly from one font size to the next: so we scale it
         if (scale) this@shared.sharedBounds(state, s.content, resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds())
         else this@shared.sharedElement(state, s.content)
+    }
+}
+
+/**
+ * Swipe to change track: the artwork follows the finger, leaves on that side and the next one comes in from
+ * the other while the title fades through black (or gets typed). Without artwork the text follows instead.
+ */
+@Stable
+private class TrackSwipe(title: String, artist: String) {
+    /** Finger travel (px) while dragging, then the animated value once released */
+    var finger by mutableFloatStateOf(0f)
+    var dragging by mutableStateOf(false)
+    val settle = Animatable(0f)
+    val x: Float get() = if (dragging) finger else settle.value
+
+    /** Travel that takes the artwork fully off screen (set from the view width) */
+    var exit = 1f
+    /** Big artwork on screen: it's the one that moves; otherwise the text does */
+    var artShown = false
+
+    /** Old track leaving: its artwork stays put even if the next one arrives mid-way, its text stays hidden */
+    var leaving by mutableStateOf(false)
+    var heldArt by mutableStateOf<Bitmap?>(null)
+
+    /** Text on screen: lags behind the real track during the fade */
+    var title by mutableStateOf(title)
+    var artist by mutableStateOf(artist)
+    val textAlpha = Animatable(1f)
+    /** Typewriter progress, 0 to 1 */
+    val typed = Animatable(1f)
+
+    companion object {
+        /** Share of the finger travel applied to the artwork, and to the text when there's no artwork */
+        const val ART = 0.6f
+        const val TEXT = 0.3f
+    }
+}
+
+private val LocalSwipe = staticCompositionLocalOf<TrackSwipe?> { null }
+
+/** The big artwork, moved by the swipe. */
+private fun Modifier.swipeArt(s: TrackSwipe?): Modifier = if (s == null) this else graphicsLayer {
+    translationX = s.x * TrackSwipe.ART
+    alpha = (1f - abs(translationX) / s.exit).coerceIn(0f, 1f)
+}
+
+/** Title and artist: faded by the track change, moved by the swipe when no artwork is shown. */
+private fun Modifier.swipeText(s: TrackSwipe?): Modifier = if (s == null) this else graphicsLayer {
+    alpha = s.textAlpha.value
+    if (!s.artShown) translationX = s.x * TrackSwipe.TEXT
+}
+
+@Composable
+private fun shownArt(np: NowPlaying): Bitmap? {
+    val s = LocalSwipe.current
+    return if (s != null && s.leaving) s.heldArt else np.art
+}
+
+/** Title and artist as currently displayed (typed so far, with the typewriter). */
+@Composable
+private fun shownText(np: NowPlaying): Pair<String, String> {
+    val s = LocalSwipe.current ?: return np.title to np.artist
+    val t = s.title
+    val a = s.artist
+    val p = s.typed.value
+    if (p >= 1f) return t to a
+    val n = (p * (t.length + a.length)).roundToInt()
+    // A zero-width space keeps the line (and "nothing playing" away) before the first letter
+    return t.take(n).ifEmpty { "\u200B" } to a.take((n - t.length).coerceAtLeast(0))
+}
+
+/**
+ * Follows the track shown by the text: fade out, swap, fade in (or type). Restarted on every change and
+ * written so it can resume from any point, since the swipe and the metadata both restart it.
+ */
+@Composable
+private fun TrackTextEffect(s: TrackSwipe, np: NowPlaying, animate: Boolean, typewriter: Boolean) {
+    LaunchedEffect(np.title, np.artist, s.leaving, animate, typewriter) {
+        if (!animate) {
+            s.title = np.title
+            s.artist = np.artist
+            s.textAlpha.snapTo(1f)
+            s.typed.snapTo(1f)
+            return@LaunchedEffect
+        }
+        if (!typewriter) s.typed.snapTo(1f)
+        if (np.title != s.title || np.artist != s.artist) {
+            s.textAlpha.animateTo(0f, tween(150))
+            s.title = np.title
+            s.artist = np.artist
+            if (typewriter) s.typed.snapTo(0f)
+        }
+        if (s.leaving) {
+            s.textAlpha.animateTo(0f, tween(150))
+        } else if (s.typed.value < 1f) {
+            s.textAlpha.snapTo(1f)
+            val ms = ((s.title.length + s.artist.length) * 30).coerceIn(300, 1200)
+            s.typed.animateTo(1f, tween((ms * (1f - s.typed.value)).roundToInt(), easing = LinearEasing))
+        } else {
+            s.textAlpha.animateTo(1f, tween(250))
+        }
     }
 }
 
@@ -275,7 +385,7 @@ fun PlayerScreen(
             )
             SheetKind.NONE -> {}
         }
-        AnimatedVisibility(standby, enter = fadeIn(tween(1500)), exit = fadeOut(tween(300))) {
+        AnimatedVisibility(standby, enter = fadeIn(motion(tween(1500))), exit = fadeOut(motion(tween(300)))) {
             StandbyScreen(
                 standbyMode == Prefs.STANDBY_CLOCK,
                 clockPattern(prefs),
@@ -293,10 +403,14 @@ enum class SheetKind { NONE, SLEEP, SOURCE }
 @Composable
 private fun BoxScope.LikeFlash(trigger: Int) {
     val alpha = remember { Animatable(0f) }
+    val anim = LocalAnimations.current
     LaunchedEffect(trigger) {
         if (trigger == 0) return@LaunchedEffect
         alpha.snapTo(0.9f)
-        alpha.animateTo(0f, tween(900))
+        if (anim) alpha.animateTo(0f, tween(900)) else {
+            delay(600)
+            alpha.snapTo(0f)
+        }
     }
     Icon(
         Icons.Rounded.Favorite, null,
@@ -327,7 +441,7 @@ private fun Player(
         Prefs.BURN_AMPLITUDES.getOrElse(prefs.burnAmplitude) { Prefs.BURN_AMPLITUDES[1] },
     )
     // Slides to the new position instead of jumping; read inside offset {}: no recomposition per frame
-    val shift by animateValueAsState(burnTarget, DpOffset.VectorConverter, tween(1800, easing = FastOutSlowInEasing), label = "shift")
+    val shift by animateValueAsState(burnTarget, DpOffset.VectorConverter, motion(tween(1800, easing = FastOutSlowInEasing)), label = "shift")
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
@@ -340,7 +454,7 @@ private fun Player(
     val pad = if (landscape) PaddingValues(16.dp) else PaddingValues(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 36.dp)
     val reported = cutouts.firstOrNull { it.top <= 0 && it.bottom > 0 }
     // Manual position: same size as what Android reports (or a typical hole), recentered where it is
-    val camera = if (prefs.cameraPos == Prefs.CAM_AUTO) reported else with(density) {
+    val camera = if (prefs.cameraPos == Prefs.CAM_NONE) null else if (prefs.cameraPos == Prefs.CAM_AUTO) reported else with(density) {
         val w = reported?.width() ?: 36.dp.roundToPx()
         val h = reported?.bottom ?: 40.dp.roundToPx()
         val screen = view.width
@@ -406,6 +520,56 @@ private fun Player(
         showLyrics -> Mode.LYRICS
         else -> Mode.NORMAL
     }
+    val anim = LocalAnimations.current
+    val scope = rememberCoroutineScope()
+    val swipe = remember { TrackSwipe(np.title, np.artist) }
+    SideEffect {
+        swipe.exit = view.width.toFloat().coerceAtLeast(1f)
+        swipe.artShown = prefs.showArt && (mode == Mode.NORMAL || mode == Mode.CAR)
+    }
+    // Car mode: no typing, the title must be readable at a glance
+    TrackTextEffect(swipe, np, anim, prefs.typewriter && !prefs.carMode)
+    // Released before the threshold: back in place with a slight bounce
+    val springBack = {
+        if (swipe.dragging) {
+            swipe.dragging = false
+            scope.launch {
+                swipe.settle.snapTo(swipe.finger)
+                swipe.settle.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow))
+            }
+        }
+    }
+    // Past the threshold: the artwork leaves on the finger's side, the next comes in from the other once known.
+    // "Previous" often restarts the same track: nothing changes, so the old one comes back.
+    val changeTrack = { next: Boolean ->
+        swipe.dragging = false
+        if (anim) scope.launch {
+            val dir = if (next) -1f else 1f
+            val away = swipe.exit / TrackSwipe.ART
+            val before = current.title to current.artist
+            val beforeArt = current.art
+            swipe.heldArt = beforeArt
+            swipe.leaving = true
+            try {
+                swipe.settle.snapTo(swipe.finger)
+                swipe.settle.animateTo(dir * away, tween(220, easing = FastOutLinearInEasing))
+                val changed = withTimeoutOrNull(800) {
+                    snapshotFlow { current.title to current.artist }.first { it != before }
+                } != null
+                // The artwork often arrives a moment after the title: wait for it a little
+                if (changed && swipe.artShown) withTimeoutOrNull(300) {
+                    snapshotFlow { current.art }.first { it !== beforeArt }
+                }
+                swipe.leaving = false
+                swipe.heldArt = null
+                if (changed) swipe.settle.snapTo(-dir * away)
+                swipe.settle.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+            } finally {
+                swipe.leaving = false
+                swipe.heldArt = null
+            }
+        }
+    }
 
     CompositionLocalProvider(LocalPalette provides if (night) NightPalette else DayPalette) {
         Box(
@@ -421,21 +585,29 @@ private fun Player(
                 .pointerInput(Unit) {
                     val threshold = 96.dp.toPx()
                     detectDragGestures(
+                        onDragStart = { swipe.finger = 0f; swipe.dragging = true },
                         onDragEnd = {
                             if (abs(dragX) > abs(dragY)) {
                                 val tc = current.controller?.transportControls
-                                if (dragX < -threshold) tc?.skipToNext() else if (dragX > threshold) tc?.skipToPrevious()
-                            } else if (prefs.lyrics && !prefs.carMode) {
-                                if (dragY < -threshold) setLyrics(true) else if (dragY > threshold) setLyrics(false)
+                                val skip = abs(dragX) > threshold
+                                if (skip && dragX < 0) tc?.skipToNext() else if (skip) tc?.skipToPrevious()
+                                if (skip && tc != null) changeTrack(dragX < 0) else springBack()
+                            } else {
+                                springBack()
+                                if (prefs.lyrics && !prefs.carMode) {
+                                    if (dragY < -threshold) setLyrics(true) else if (dragY > threshold) setLyrics(false)
+                                }
                             }
                             dragX = 0f
                             dragY = 0f
                         },
-                        onDragCancel = { dragX = 0f; dragY = 0f },
+                        onDragCancel = { dragX = 0f; dragY = 0f; springBack() },
                     ) { change, amount ->
                         change.consume()
                         dragX += amount.x
                         dragY += amount.y
+                        // Without animations nothing follows the finger: the change just happens on release
+                        swipe.finger = if (anim && abs(dragX) > abs(dragY)) dragX else 0f
                     }
                 }
                 .windowInsetsPadding(
@@ -449,17 +621,17 @@ private fun Player(
                     val rects = view.rootWindowInsets?.displayCutout?.boundingRects.orEmpty()
                     if (rects != cutouts) cutouts = rects
                 }
-                .offset {
-                    val follow = if (abs(dragX) > abs(dragY)) (dragX * 0.3f).roundToInt() else 0
-                    IntOffset(shift.x.roundToPx() + follow, shift.y.roundToPx())
-                }
+                .offset { IntOffset(shift.x.roundToPx(), shift.y.roundToPx()) }
                 .padding(pad),
         ) {
-            CompositionLocalProvider(LocalHole provides hole) {
+            CompositionLocalProvider(LocalHole provides hole, LocalSwipe provides swipe) {
             SharedTransitionLayout(Modifier.fillMaxSize()) {
                 AnimatedContent(
                     mode,
-                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
+                    transitionSpec = {
+                        if (anim) fadeIn(tween(400)) togetherWith fadeOut(tween(400))
+                        else EnterTransition.None togetherWith ExitTransition.None
+                    },
                     label = "layout",
                 ) { m ->
                     val open = m == Mode.LYRICS
@@ -546,7 +718,7 @@ private fun PortraitLayout(
         val art: @Composable () -> Unit = {
             // The box takes all the free space; the artwork fits in it as the largest possible square
             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
-                Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
+                Artwork(shownArt(np), prefs.grayArt, Modifier.shared("art").swipeArt(LocalSwipe.current).aspectRatio(1f, matchHeightConstraintsFirst = true))
             }
         }
         if (swap) {
@@ -568,7 +740,7 @@ private fun LandscapeLayout(np: NowPlaying, prefs: Prefs, lyr: LyricsUi?, header
         // The lyrics take the artwork's place (or half the screen if there's none)
         val side: @Composable () -> Unit = {
             if (open) LyricsPanel(np, lyr!!.state, prefs, Modifier.weight(1f).fillMaxHeight(), onFull = lyr.toggleFull)
-            else Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
+            else Artwork(shownArt(np), prefs.grayArt, Modifier.shared("art").swipeArt(LocalSwipe.current).fillMaxHeight().aspectRatio(1f))
         }
         val hasSide = open || prefs.showArt
         if (hasSide && !swap) {
@@ -841,6 +1013,7 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
     val scale = prefs.textScale
     val titleSp = (if (compact) 26f else 30f) * scale
 
+    val (title, artist) = shownText(np)
     Column(
         Modifier
             .fillMaxWidth()
@@ -848,10 +1021,11 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = { togglePlay() },
-            ),
+            )
+            .swipeText(LocalSwipe.current),
     ) {
         Text(
-            np.title.ifEmpty { str.nothingPlaying },
+            title.ifEmpty { str.nothingPlaying },
             fontSize = titleSp.sp,
             lineHeight = (titleSp * 1.2f).sp,
             fontWeight = FontWeight.Light,
@@ -860,7 +1034,7 @@ private fun ColumnScope.ControlsContent(np: NowPlaying, prefs: Prefs, compact: B
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            np.artist.ifEmpty { if (np.controller == null) str.startMusicHint else "" },
+            artist.ifEmpty { if (np.controller == null) str.startMusicHint else "" },
             fontSize = (19f * scale).sp,
             color = pal.fg2,
             maxLines = 1,
@@ -917,7 +1091,7 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
         // row ◀ · ▶ · ▶▶ (· ♥) to fit the height
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             val art: @Composable () -> Unit = {
-                Artwork(np.art, prefs.grayArt, Modifier.shared("art").fillMaxHeight().aspectRatio(1f))
+                Artwork(shownArt(np), prefs.grayArt, Modifier.shared("art").swipeArt(LocalSwipe.current).fillMaxHeight().aspectRatio(1f))
             }
             val swap = prefs.swapArt
             if (prefs.showArt && !swap) {
@@ -946,7 +1120,7 @@ private fun CarLayout(np: NowPlaying, prefs: Prefs, landscape: Boolean, header: 
             header(true)
             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
                 if (prefs.showArt) {
-                    Artwork(np.art, prefs.grayArt, Modifier.shared("art").aspectRatio(1f, matchHeightConstraintsFirst = true))
+                    Artwork(shownArt(np), prefs.grayArt, Modifier.shared("art").swipeArt(LocalSwipe.current).aspectRatio(1f, matchHeightConstraintsFirst = true))
                 }
             }
             // The big buttons at the very bottom, under the thumb; the ♥ (if any) next to the title
@@ -970,18 +1144,22 @@ private fun CarTitle(np: NowPlaying, prefs: Prefs, titleSp: Float, artistSp: Flo
     val pal = LocalPalette.current
     val tc = np.controller?.transportControls
     val t = titleSp * prefs.textScale
+    val (title, artist) = shownText(np)
     Column(
-        Modifier.fillMaxWidth().clickable(remember { MutableInteractionSource() }, indication = null) {
-            if (np.isPlaying) tc?.pause() else tc?.play()
-        },
+        Modifier
+            .fillMaxWidth()
+            .clickable(remember { MutableInteractionSource() }, indication = null) {
+                if (np.isPlaying) tc?.pause() else tc?.play()
+            }
+            .swipeText(LocalSwipe.current),
     ) {
         Text(
-            np.title.ifEmpty { str.nothingPlaying },
+            title.ifEmpty { str.nothingPlaying },
             fontSize = t.sp, lineHeight = (t * 1.15f).sp, fontWeight = FontWeight.Normal, color = pal.fg,
             maxLines = maxLines, overflow = TextOverflow.Ellipsis,
         )
         Text(
-            np.artist, fontSize = (artistSp * prefs.textScale).sp, color = pal.fg2,
+            artist, fontSize = (artistSp * prefs.textScale).sp, color = pal.fg2,
             maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
     }
@@ -1220,6 +1398,7 @@ private fun LyricLines(
     val pal = LocalPalette.current
     val highlight = synced
     val list = rememberLazyListState()
+    val anim = LocalAnimations.current
     // Unsynced: can be scrolled by finger; auto-follow then waits 8 s
     val dragged by list.interactionSource.collectIsDraggedAsState()
     var touchedAt by remember { mutableLongStateOf(0L) }
@@ -1228,7 +1407,7 @@ private fun LyricLines(
         // The current line sits at a third of the height: a bit of the past shows, mostly what's coming
         val top = maxHeight * 0.3f
         LaunchedEffect(current) {
-            if (SystemClock.elapsedRealtime() - touchedAt > 8000) list.animateScrollToItem(current.coerceAtLeast(0))
+            if (SystemClock.elapsedRealtime() - touchedAt > 8000) if (anim) list.animateScrollToItem(current.coerceAtLeast(0)) else list.scrollToItem(current.coerceAtLeast(0))
         }
         LazyColumn(
             state = list,
@@ -1251,7 +1430,7 @@ private fun LyricLines(
                         i > current -> lerp(pal.faint, pal.fg2, 0.35f)
                         else -> pal.faint
                     },
-                    tween(300),
+                    motion(tween(300)),
                     label = "line",
                 )
                 Text(

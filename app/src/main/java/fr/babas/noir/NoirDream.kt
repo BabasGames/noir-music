@@ -72,6 +72,7 @@ class NoirDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
                 LocalLang provides lang,
                 LocalStrings provides lang.strings,
                 LocalTimeTick provides timeTick,
+                LocalAnimations provides prefs.animations,
                 LocalDream provides true,
             ) {
                 MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Color.Black)) {

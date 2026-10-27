@@ -234,6 +234,12 @@ interface Strings {
     val clockPlace: String
     val placeBeside: String
     val placeBelow: String
+    /** Camera hole choice: under-display camera, nothing to avoid */
+    val camNone: String
+    val animations: String
+    val animationsSub: String
+    val typewriter: String
+    val typewriterSub: String
     val machineTranslation: String
     val openGithub: String
 

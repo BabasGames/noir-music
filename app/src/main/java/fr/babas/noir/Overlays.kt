@@ -206,8 +206,8 @@ fun StandbyScreen(
                 ty = Random.nextInt(-shiftDp, shiftDp + 1).toFloat()
             }
         }
-        val dx by animateFloatAsState(tx, tween(2500), label = "standby x")
-        val dy by animateFloatAsState(ty, tween(2500), label = "standby y")
+        val dx by animateFloatAsState(tx, motion(tween(2500)), label = "standby x")
+        val dy by animateFloatAsState(ty, motion(tween(2500)), label = "standby y")
 
         val density = LocalDensity.current
         val size = 96.sp

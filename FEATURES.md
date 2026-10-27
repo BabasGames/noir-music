@@ -7,7 +7,8 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Works with any app that publishes a media session: Deezer, Spotify, YouTube Music, VLC, podcast apps, Bluetooth and casting bridges, and so on.
 - Shows the title, artist, album art, the name of the playing app, elapsed and total time.
 - Play / pause with the big button or by tapping the title.
-- Previous / next with the buttons or by swiping left / right (the screen follows your finger while you swipe).
+- Previous / next with the buttons or by swiping left / right: the album art follows your finger, slides out and the next one comes in from the other side, while the title fades through black. Without album art the title follows your finger instead. Let go too early and it springs back.
+- Optional typewriter effect: on a track change, the title is typed letter by letter.
 - Seek by dragging the progress bar.
 - Volume slider with − / + buttons, kept in sync with the phone's hardware volume keys.
 - ♥ / like button when the playing app exposes one, using the app's own icon so it shows the real state (liked or not). Also on double tap (anywhere but the lyrics).
@@ -60,7 +61,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 
 - The clock and buttons sit next to the front camera hole instead of leaving an empty band at the top.
 - The clock shrinks just enough to fit beside the hole, or moves below it if it would get too small.
-- Camera position detected automatically, or set by hand (left, center, right) when the phone reports it wrong.
+- Camera position detected automatically, or set by hand (left, center, right) when the phone reports it wrong, or "none" for under-display cameras.
 - Clock side: automatic (the side with more room), left or right.
 - Clock placement: automatic, always beside the hole, or always below it.
 
@@ -93,6 +94,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 - Lock the orientation to portrait or landscape, or follow the phone.
 - Hide the app name, the progress bar or the volume slider.
 - Text size: small, normal, large or very large.
+- Animations can be turned off: everything then appears at once, with no fades or slides.
 
 ## Languages
 

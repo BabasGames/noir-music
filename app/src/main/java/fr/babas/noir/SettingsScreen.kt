@@ -116,7 +116,7 @@ fun SettingsScreen(
                 Choice(s.clockFormat, listOf(s.formatAuto, s.format24, s.format12), prefs.clockFormat) {
                     prefs.clockFormat = it
                 }
-                Choice(s.camera, listOf(s.formatAuto, s.sideLeft, s.center, s.sideRight), prefs.cameraPos) {
+                Choice(s.camera, listOf(s.formatAuto, s.sideLeft, s.center, s.sideRight, s.camNone), prefs.cameraPos) {
                     prefs.cameraPos = it
                 }
                 Text(s.cameraSub, fontSize = 13.sp, color = Gray)
@@ -143,6 +143,8 @@ fun SettingsScreen(
                 Toggle(s.sourceName, s.sourceNameSub, prefs.showSource) { prefs.showSource = it }
                 Toggle(s.progressBar, null, prefs.showProgress) { prefs.showProgress = it }
                 Toggle(s.volume, null, prefs.showVolume) { prefs.showVolume = it }
+                Toggle(s.animations, s.animationsSub, prefs.animations) { prefs.animations = it }
+                Toggle(s.typewriter, s.typewriterSub, prefs.typewriter, enabled = prefs.animations) { prefs.typewriter = it }
 
                 Section(s.sectionNight)
                 Choice(s.nightMode, listOf(s.off, s.always, s.schedule, s.dark), prefs.nightMode) { prefs.nightMode = it }

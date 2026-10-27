@@ -29,7 +29,7 @@ Noir Music doesn't play music itself: it shows and controls whatever is playing 
 - **Synced lyrics**: swipe up to show lyrics that follow the music (tap a line to jump there, swipe up again for full screen), from [LRCLIB](https://lrclib.net), with NetEase as an optional fallback (off by default). Downloaded lyrics are kept for offline use.
 - **Car mode**: huge clock, big buttons at the bottom, no lyrics to keep your eyes on the road.
 - **Made to stay on**: keeps the screen awake while music plays, reduced refresh rate on the player, periodic pixel shifting against burn-in, night mode (always, on a schedule or in the dark), standby screen when nothing plays, sleep timer, optional screen saver for charging docks and display over the lock screen.
-- **Clock**: system fonts or your own font file, 12/24 h, localized date, and it fits next to the camera hole (detected automatically or set by hand).
+- **Clock**: system fonts or your own font file, 12/24 h, localized date, and it fits next to the camera hole (detected automatically, set by hand, or none for under-display cameras).
 - **Source picker**: switch between the apps that have a media session, or pin a preferred one.
 - **14 languages**: English, French, Spanish, German, Italian, Portuguese, Dutch, Polish, Turkish, Russian, Ukrainian, Japanese, Chinese, Korean.
 

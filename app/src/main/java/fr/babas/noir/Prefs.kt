@@ -41,6 +41,10 @@ class Prefs(context: Context) {
     var showSource by bool("show_source", true)
     var showProgress by bool("show_progress", true)
     var showVolume by bool("show_volume", true)
+    /** Off: everything appears at once (no fades or slides), for those who'd rather nothing moves */
+    var animations by bool("animations", true)
+    /** Track change: the new title is typed letter by letter instead of fading in */
+    var typewriter by bool("typewriter", false)
 
     // Screen
     var keepOnMode by int("keep_on_mode", KEEP_ON_PLAYING)
@@ -128,6 +132,8 @@ class Prefs(context: Context) {
         const val CAM_LEFT = 1
         const val CAM_CENTER = 2
         const val CAM_RIGHT = 3
+        /** Under-display camera: nothing to avoid, even if Android reports a cutout */
+        const val CAM_NONE = 4
 
         const val SIDE_AUTO = 0
         const val SIDE_LEFT = 1

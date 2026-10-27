@@ -1,0 +1,4 @@
+- Smoother track change: the album art slides out and the next one comes in, the title fades
+- Optional typewriter effect for the title
+- Animations can be turned off in the settings
+- Camera hole: new "None" choice for under-display cameras

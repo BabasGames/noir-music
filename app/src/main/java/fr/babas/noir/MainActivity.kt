@@ -83,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 LocalStrings provides lang.strings,
                 LocalVisible provides onScreen,
                 LocalTimeTick provides timeTick,
+                LocalAnimations provides prefs.animations,
             ) {
             MaterialTheme(colorScheme = NoirColors) {
                 val np by media.state.collectAsState()

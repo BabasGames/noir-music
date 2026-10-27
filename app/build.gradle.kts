@@ -12,8 +12,8 @@ android {
         applicationId = "fr.babas.noir"
         minSdk = 29
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.2.0"
+        versionCode = 8
+        versionName = "1.3.0"
     }
 
     // Release signing comes from Gradle properties kept outside the repo (~/.gradle/gradle.properties):
