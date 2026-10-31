@@ -240,6 +240,13 @@ interface Strings {
     val animationsSub: String
     val typewriter: String
     val typewriterSub: String
+    /** Tutorial: offer to set up the look now (optional) */
+    val tutoCustomizeTitle: String
+    val tutoCustomizeBody: String
+    val customize: String
+    val later: String
+    /** Last tutorial page, for those who chose "later" */
+    val tutoLater: String
     val machineTranslation: String
     val openGithub: String
 

@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                 SleepTimerEffect(sleep, np)
 
                 when {
-                    !prefs.tutorialDone -> TutorialScreen(prefs, hasAccess, ::openListenerSettings) {
+                    !prefs.tutorialDone -> TutorialScreen(prefs, np, hasAccess, ::openListenerSettings) {
                         prefs.tutorialDone = true
                     }
                     !hasAccess -> AccessScreen(onGrant = ::openListenerSettings)

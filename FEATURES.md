@@ -104,7 +104,7 @@ Everything the app does, grouped by area. For a quick overview, see the [README]
 
 ## Getting started
 
-- A short tutorial on first launch: language first, then notification access, gestures, lyrics, car mode, screen settings and how to report bugs.
+- A short tutorial on first launch: language first, then notification access, then an optional quick setup of the look (clock size and font, album art, text size, with a live preview; "Later" keeps the defaults), then gestures, lyrics, car mode, screen settings and how to report bugs.
 - Can be replayed from the settings.
 - The settings header stays visible while scrolling.
 

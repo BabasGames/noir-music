@@ -300,7 +300,7 @@ private fun LyricsStorage(prefs: Prefs, repo: LyricsRepository) {
 }
 
 @Composable
-private fun textScaleLabels(): List<String> {
+fun textScaleLabels(): List<String> {
     val s = LocalStrings.current
     return listOf(s.sizeSmall, s.sizeNormal, s.sizeLarge, s.sizeHuge)
 }
@@ -357,7 +357,7 @@ fun LanguageItems(prefs: Prefs, onPicked: () -> Unit = {}) {
 
 /** Preview of the time in the chosen font, then the list of fonts, each shown in its own style. */
 @Composable
-private fun ClockFontPicker(prefs: Prefs) {
+fun ClockFontPicker(prefs: Prefs) {
     val s = LocalStrings.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -443,7 +443,7 @@ private fun Section(title: String) {
 
 /** Row of mutually exclusive choices, segmented-button style. */
 @Composable
-private fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Text(title, fontSize = 17.sp, color = Color.White)
         Spacer(Modifier.height(8.dp))
