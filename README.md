@@ -21,7 +21,7 @@ Noir Music doesn't play music itself: it shows and controls whatever is playing 
 ## Download
 
 - **GitHub**: the signed APK is attached to each [release](https://github.com/BabasGames/noir-music/releases/latest).
-- **F-Droid**: submission in progress. Once accepted, the app will be at [f-droid.org/packages/fr.babas.noir](https://f-droid.org/packages/fr.babas.noir/).
+- **F-Droid**: planned for early 2027 (F-Droid only accepts apps maintained for more than 3 months). It will then be at [f-droid.org/packages/fr.babas.noir](https://f-droid.org/packages/fr.babas.noir/).
 
 ## Features
 
